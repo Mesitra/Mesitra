@@ -247,3 +247,4 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
 
   return null
 }
+
