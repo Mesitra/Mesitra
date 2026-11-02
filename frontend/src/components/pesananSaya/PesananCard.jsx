@@ -15,6 +15,10 @@ import {
   Star
 } from 'lucide-react'
 import { formatShortDate, formatLongDate } from '../../lib/dateHelpers'
+import {
+  isDisputeStatus,
+  isRejectedOrCancelledStatus
+} from './orderStatusConstants'
 
 export default function PesananCard({
   order,
@@ -31,6 +35,9 @@ export default function PesananCard({
   const navigate = useNavigate()
   const equipment = order.equipment || {}
   const status = order.status
+
+  const isDispute = isDisputeStatus(status)
+  const isRejected = isRejectedOrCancelledStatus(status)
 
   // Accordion state untuk toggle inline Detail Klaim (jika tidak via modal)
   const [isDisputeExpanded, setIsDisputeExpanded] = useState(false)
@@ -71,7 +78,26 @@ export default function PesananCard({
   const formatRupiah = (val) => `Rp ${(val || 0).toLocaleString('id-ID')}`
 
   const getStatusBadge = () => {
-    switch (status) {
+    // 1. Badge untuk Dispute / Klaim (tetap menampilkan visual Dispute / Klaim)
+    if (isDispute) {
+      return (
+        <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-300">
+          Dispute / Klaim
+        </span>
+      )
+    }
+
+    // 2. Badge untuk Ditolak / Dibatalkan
+    if (isRejected) {
+      return (
+        <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-red-50 text-red-700 ring-1 ring-red-200">
+          Ditolak
+        </span>
+      )
+    }
+
+    const s = String(status || '').trim().toUpperCase()
+    switch (s) {
       case 'MENUNGGU_PEMBAYARAN':
         return (
           <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">
@@ -108,19 +134,6 @@ export default function PesananCard({
             Selesai
           </span>
         )
-      case 'DISPUTE':
-        return (
-          <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-300">
-            Dispute (Klaim)
-          </span>
-        )
-      case 'DITOLAK':
-      case 'DIBATALKAN':
-        return (
-          <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-red-50 text-red-700 ring-1 ring-red-200">
-            Ditolak
-          </span>
-        )
       default:
         return (
           <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-slate-100 text-slate-700">
@@ -138,7 +151,14 @@ export default function PesananCard({
       {/* 1. Header: Invoice & Dates & Badge */}
       <div className="flex flex-row justify-between items-center pb-1">
         <div className="flex items-center gap-2.5">
-          <span className="text-xs font-bold text-slate-900 tracking-tight">{order.invoiceNumber}</span>
+          <button
+            type="button"
+            onClick={() => onViewDetail && onViewDetail(order)}
+            className="text-xs font-bold text-slate-900 tracking-tight hover:text-blue-600 transition-colors cursor-pointer text-left"
+            title="Klik untuk melihat Detail Pesanan"
+          >
+            {order.invoiceNumber}
+          </button>
           <span className="w-1 h-1 rounded-full bg-slate-400"></span>
           <span className="text-[11px] text-slate-500 font-medium">
             {startDateText} – {endDateText} {new Date(order.endDate).getFullYear()}
@@ -263,7 +283,7 @@ export default function PesananCard({
         </div>
       )}
 
-      {status === 'DISPUTE' && (
+      {isDispute && (
         <div className="flex items-start sm:items-center gap-3 p-3 bg-rose-50/80 border border-rose-200 rounded-xl">
           <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5 sm:mt-0" />
           <div className="flex-1 min-w-0">
@@ -294,7 +314,7 @@ export default function PesananCard({
         </div>
       )}
 
-      {(status === 'DITOLAK' || status === 'DIBATALKAN') && (
+      {isRejected && (
         <div className="flex items-center gap-3 p-3 bg-red-50/70 border border-red-200/60 rounded-xl">
           <AlertCircle className="w-4 h-4 text-red-700 shrink-0" />
           <div className="flex-1 min-w-0">
@@ -325,8 +345,8 @@ export default function PesananCard({
             Hubungi Pemilik
           </button>
 
-          {/* Khusus kartu berstatus DISPUTE: Tombol Detail Klaim bersebelahan dengan Hubungi Pemilik */}
-          {status === 'DISPUTE' && (
+          {/* Khusus kartu berstatus DISPUTE / Klaim: Tombol Detail Klaim bersebelahan dengan Hubungi Pemilik */}
+          {isDispute && (
             <button
               type="button"
               onClick={() => {
@@ -373,9 +393,16 @@ export default function PesananCard({
               <button
                 type="button"
                 onClick={() => onCancel(order)}
-                className="py-2 px-3 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 ring-1 ring-slate-200 rounded-xl transition-all"
+                className="py-2 px-3 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 ring-1 ring-slate-200 rounded-xl transition-all cursor-pointer"
               >
                 Batalkan
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewDetail && onViewDetail(order)}
+                className="py-2 px-3 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 ring-1 ring-slate-200 rounded-xl transition-all cursor-pointer"
+              >
+                Detail Pesanan
               </button>
               <button
                 type="button"
@@ -394,16 +421,16 @@ export default function PesananCard({
               <button
                 type="button"
                 onClick={() => onCancel(order)}
-                className="py-2 px-3 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 ring-1 ring-slate-200 rounded-xl transition-all"
+                className="py-2 px-3 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 ring-1 ring-slate-200 rounded-xl transition-all cursor-pointer"
               >
                 Batalkan
               </button>
               <button
                 type="button"
-                onClick={() => onViewDetail(order)}
-                className="py-2 px-3 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100/80 rounded-xl transition-all"
+                onClick={() => onViewDetail && onViewDetail(order)}
+                className="py-2 px-3 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100/80 rounded-xl transition-all cursor-pointer"
               >
-                Lihat Pengajuan
+                Detail Pesanan
               </button>
             </>
           )}
@@ -497,20 +524,29 @@ export default function PesananCard({
           )}
 
           {/* Status: DITOLAK / DIBATALKAN */}
-          {(status === 'DITOLAK' || status === 'DIBATALKAN') && (
-            <button
-              type="button"
-              onClick={() => navigate('/beranda-sewa')}
-              className="py-2 px-3 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all"
-            >
-              Cari Alat Lain
-            </button>
+          {isRejected && (
+            <>
+              <button
+                type="button"
+                onClick={() => onViewDetail && onViewDetail(order)}
+                className="py-2 px-3 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 ring-1 ring-slate-200 rounded-xl transition-all cursor-pointer"
+              >
+                Detail Pesanan
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/beranda-sewa')}
+                className="py-2 px-3 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all cursor-pointer"
+              >
+                Cari Alat Lain
+              </button>
+            </>
           )}
         </div>
       </div>
 
       {/* 5. Expandable Section: Detail Alasan Klaim Pemilik Alat */}
-      {status === 'DISPUTE' && isDisputeExpanded && (
+      {isDispute && isDisputeExpanded && (
         <div className="p-4 bg-rose-50/80 border border-rose-200/90 rounded-xl text-xs space-y-2 animate-in fade-in zoom-in-98 duration-150">
           <div className="flex items-center justify-between font-bold text-rose-900">
             <span className="flex items-center gap-1.5">

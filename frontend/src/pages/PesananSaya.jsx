@@ -14,7 +14,7 @@ import PesananCard from '../components/pesananSaya/PesananCard'
 import ModalPerpanjangSewa from '../components/pesananSaya/ModalPerpanjangSewa'
 import ModalHubungiPemilik from '../components/pesananSaya/ModalHubungiPemilik'
 import ModalLacakPengiriman from '../components/pesananSaya/ModalLacakPengiriman'
-import ModalDetailPengajuan from '../components/pesananSaya/ModalDetailPengajuan'
+import ModalDetailPesanan from '../components/pesananSaya/ModalDetailPesanan'
 import ModalBatalPesanan from '../components/pesananSaya/ModalBatalPesanan'
 import ModalDompet from '../components/pesananSaya/ModalDompet'
 import ModalKontrakSewa from '../components/checkout/ModalKontrakSewa'
@@ -28,6 +28,10 @@ import {
 } from '../lib/ordersApi'
 import { getSessionUser } from '../lib/userSession'
 import { formatLongDate, normalizeDate } from '../lib/dateHelpers'
+import {
+  isDitolakTabStatus,
+  matchOrderWithTab
+} from '../components/pesananSaya/orderStatusConstants'
 
 export default function PesananSaya() {
   const navigate = useNavigate()
@@ -89,13 +93,23 @@ export default function PesananSaya() {
   // Hitung jumlah tiap kategori status
   const counts = useMemo(() => {
     const total = orders.length
-    const menungguBayar = orders.filter((o) => o.status === 'MENUNGGU_PEMBAYARAN').length
-    const menunggu = orders.filter((o) => o.status === 'MENUNGGU_KONFIRMASI').length + menungguBayar
-    const sedangDisewa = orders.filter(
-      (o) => o.status === 'DIKIRIM' || o.status === 'SEWA_AKTIF' || o.status === 'INSPEKSI'
-    ).length
-    const selesai = orders.filter((o) => o.status === 'SELESAI').length
-    const ditolak = orders.filter((o) => o.status === 'DITOLAK' || o.status === 'DIBATALKAN' || o.status === 'DISPUTE').length
+    const menungguBayar = orders.filter((o) => {
+      const s = String(o.status || '').trim().toUpperCase()
+      return s === 'MENUNGGU_PEMBAYARAN'
+    }).length
+    const menunggu = orders.filter((o) => {
+      const s = String(o.status || '').trim().toUpperCase()
+      return s === 'MENUNGGU_KONFIRMASI' || s === 'MENUNGGU_PEMBAYARAN'
+    }).length
+    const sedangDisewa = orders.filter((o) => {
+      const s = String(o.status || '').trim().toUpperCase()
+      return s === 'DIKIRIM' || s === 'SEWA_AKTIF' || s === 'INSPEKSI'
+    }).length
+    const selesai = orders.filter((o) => {
+      const s = String(o.status || '').trim().toUpperCase()
+      return s === 'SELESAI'
+    }).length
+    const ditolak = orders.filter((o) => isDitolakTabStatus(o.status)).length
 
     return { total, menunggu, menungguBayar, sedangDisewa, selesai, ditolak }
   }, [orders])
@@ -103,24 +117,8 @@ export default function PesananSaya() {
   // Filter list pesanan berdasarkan tab aktif dan search query
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      // 1. Tab filter
-      if (activeTab === 'Menunggu' &&
-        order.status !== 'MENUNGGU_KONFIRMASI' &&
-        order.status !== 'MENUNGGU_PEMBAYARAN') {
-        return false
-      }
-      if (
-        activeTab === 'Sedang Disewa' &&
-        order.status !== 'DIKIRIM' &&
-        order.status !== 'SEWA_AKTIF' &&
-        order.status !== 'INSPEKSI'
-      ) {
-        return false
-      }
-      if (activeTab === 'Selesai' && order.status !== 'SELESAI') {
-        return false
-      }
-      if (activeTab === 'Ditolak' && order.status !== 'DITOLAK' && order.status !== 'DIBATALKAN' && order.status !== 'DISPUTE') {
+      // 1. Tab filter (Termasuk pengelompokan dispute/klaim ke dalam tab 'Ditolak')
+      if (!matchOrderWithTab(order.status, activeTab)) {
         return false
       }
 
@@ -486,13 +484,18 @@ export default function PesananSaya() {
         order={selectedOrder}
       />
 
-      <ModalDetailPengajuan
+      <ModalDetailPesanan
         isOpen={isDetailOpen}
         onClose={() => {
           setIsDetailOpen(false)
           setSelectedOrder(null)
         }}
         order={selectedOrder}
+        onViewContract={(ord) => {
+          setIsDetailOpen(false)
+          setSelectedOrder(ord)
+          setIsKontrakOpen(true)
+        }}
       />
 
       <ModalBatalPesanan
