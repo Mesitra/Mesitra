@@ -42,6 +42,8 @@ const EQUIPMENTS = [
     distance: 2.4,
     status: 'TERSEDIA',
     condition: 'Prima',
+    stock: 1,
+    deliveryFee: 45000,
     accessories: ['Portafilter 58mm', 'Tamper Stainless', 'Milk Pitcher', 'Kabel Power'],
     deliveryMethods: ['PICKUP', 'COURIER'],
     isDeleted: false,
@@ -68,7 +70,9 @@ const EQUIPMENTS = [
     distance: 3.1,
     status: 'TERSEDIA',
     condition: 'Prima',
-    accessories: ['Loyang 40x60 (4 pcs)', 'Selang Gas Regulator', 'Sarung Tangan Panas'],
+    stock: 1,
+    deliveryFee: 50000,
+    accessories: ['Loyang 40x60 (4 pcs)', 'Selang Gas Regulator', 'Sarung Tangan Panas', 'Timer Digital'],
     deliveryMethods: ['PICKUP', 'COURIER'],
     isDeleted: false,
     images: [
@@ -93,6 +97,8 @@ const EQUIPMENTS = [
     distance: 1.2,
     status: 'TERSEDIA',
     condition: 'Terawat',
+    stock: 2,
+    deliveryFee: 45000,
     accessories: ['Kabel Power', 'Sample Kantong Vakum', 'Nozzle Vakum', 'Kawat Pemanas Cadangan'],
     deliveryMethods: ['PICKUP', 'COURIER'],
     isDeleted: false,
@@ -120,11 +126,14 @@ const EQUIPMENTS = [
     distance: 5.8,
     status: 'TERSEDIA',
     condition: 'Prima',
+    stock: 1,
+    deliveryFee: 35000,
     accessories: ['Pedal Servo', 'Jarum Organ DBx1 (10 pcs)', 'Minyak Pelumas 100ml', 'Spool Cadangan'],
     deliveryMethods: ['PICKUP', 'COURIER'],
     isDeleted: false,
     images: [
-      'https://images.unsplash.com/photo-1528458876885-5b6eacdd3671?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1528458876885-5b6eacdd3671?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
     ]
   },
   {
@@ -144,11 +153,14 @@ const EQUIPMENTS = [
     distance: 4.0,
     status: 'TERSEDIA',
     condition: 'Prima',
+    stock: 1,
+    deliveryFee: 45000,
     accessories: ['Spiral Dough Hook', 'Whisk Ball', 'Flat Beater', 'Bowl Stainless 20L'],
     deliveryMethods: ['PICKUP', 'COURIER'],
     isDeleted: false,
     images: [
-      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80'
     ]
   },
   {
@@ -168,6 +180,8 @@ const EQUIPMENTS = [
     distance: 6.5,
     status: 'DISEWA',
     condition: 'Terawat',
+    stock: 1,
+    deliveryFee: 55000,
     accessories: ['Portafilter Double Spout (2 pcs)', 'Tamper 58mm', 'Knock Box', 'Pitcher Susu 600ml'],
     deliveryMethods: ['PICKUP', 'COURIER'],
     isDeleted: false,
@@ -194,6 +208,8 @@ const EQUIPMENTS = [
     distance: 1.8,
     status: 'TERSEDIA',
     condition: 'Prima',
+    stock: 1,
+    deliveryFee: 45000,
     accessories: ['Kabel Roll 25m', 'Corong Bensin', 'Kunci Busi', 'Manual Book'],
     deliveryMethods: ['PICKUP', 'COURIER'],
     isDeleted: false,
@@ -493,6 +509,8 @@ async function main() {
         distance: item.distance,
         status: item.status,
         condition: item.condition,
+        stock: item.stock ?? 1,
+        deliveryFee: item.deliveryFee ?? 45000,
         accessories: item.accessories,
         deliveryMethods: item.deliveryMethods,
         isDeleted: item.isDeleted,
@@ -794,6 +812,66 @@ async function main() {
       depositAmount: 750000,
       totalPaid: 1800000,
       status: 'SELESAI'
+    },
+    {
+      id: 'b2000000-0000-4000-8000-000000000009',
+      invoiceNumber: 'INV-2405-071',
+      userId: PENYEWA_2_ID,
+      equipmentId: 'a1000000-0000-4000-8000-000000000001',
+      startDate: new Date(now.getTime() - 18 * 86400000),
+      endDate: new Date(now.getTime() - 15 * 86400000),
+      rentalDays: 3,
+      deliveryMethod: 'COURIER',
+      rentalCost: 450000,
+      shippingCost: 45000,
+      depositAmount: 500000,
+      totalPaid: 995000,
+      status: 'SELESAI'
+    },
+    {
+      id: 'b2000000-0000-4000-8000-000000000010',
+      invoiceNumber: 'INV-2405-075',
+      userId: PENYEWA_2_ID,
+      equipmentId: 'a1000000-0000-4000-8000-000000000004',
+      startDate: new Date(now.getTime() - 16 * 86400000),
+      endDate: new Date(now.getTime() - 12 * 86400000),
+      rentalDays: 4,
+      deliveryMethod: 'COURIER',
+      rentalCost: 300000,
+      shippingCost: 35000,
+      depositAmount: 400000,
+      totalPaid: 735000,
+      status: 'SELESAI'
+    },
+    {
+      id: 'b2000000-0000-4000-8000-000000000021',
+      invoiceNumber: 'INV-2405-088',
+      userId: PENYEWA_3_ID,
+      equipmentId: 'a1000000-0000-4000-8000-000000000005',
+      startDate: new Date(now.getTime() - 22 * 86400000),
+      endDate: new Date(now.getTime() - 19 * 86400000),
+      rentalDays: 3,
+      deliveryMethod: 'COURIER',
+      rentalCost: 360000,
+      shippingCost: 45000,
+      depositAmount: 350000,
+      totalPaid: 755000,
+      status: 'SELESAI'
+    },
+    {
+      id: 'b2000000-0000-4000-8000-000000000022',
+      invoiceNumber: 'INV-2405-092',
+      userId: PENYEWA_3_ID,
+      equipmentId: 'a1000000-0000-4000-8000-000000000007',
+      startDate: new Date(now.getTime() - 14 * 86400000),
+      endDate: new Date(now.getTime() - 12 * 86400000),
+      rentalDays: 2,
+      deliveryMethod: 'PICKUP',
+      rentalCost: 500000,
+      shippingCost: 0,
+      depositAmount: 800000,
+      totalPaid: 1300000,
+      status: 'SELESAI'
     }
   ]
 
@@ -830,6 +908,16 @@ async function main() {
   // 8. Data Ulasan (Reviews) untuk toko Pemilik
   const REVIEW_SEEDS = [
     {
+      id: 'c3000000-0000-4000-8000-000000000001',
+      orderId: 'b2000000-0000-4000-8000-000000000009',
+      equipmentId: 'a1000000-0000-4000-8000-000000000001',
+      userId: PENYEWA_2_ID,
+      rating: 5,
+      comment:
+        'Ekstraksi espresso sangat mantap, PID stabil dan steam wand bertenaga untuk pesanan kafe kami.',
+      createdAt: new Date(now.getTime() - 14 * 86400000)
+    },
+    {
       id: 'c3000000-0000-4000-8000-000000000002',
       orderId: 'b2000000-0000-4000-8000-000000000008',
       equipmentId: 'a1000000-0000-4000-8000-000000000002',
@@ -848,6 +936,36 @@ async function main() {
       comment:
         'Mesin vakum food grade berkualitas dan pompa kering bersih. Membantu kemasan keripik kami jadi lebih higienis.',
       createdAt: new Date(now.getTime() - 20 * 86400000)
+    },
+    {
+      id: 'c3000000-0000-4000-8000-000000000004',
+      orderId: 'b2000000-0000-4000-8000-000000000010',
+      equipmentId: 'a1000000-0000-4000-8000-000000000004',
+      userId: PENYEWA_2_ID,
+      rating: 5,
+      comment:
+        'Mesin jahit sangat halus, motor direct drive hemat listrik dan jahitan presisi untuk seragam kerja.',
+      createdAt: new Date(now.getTime() - 11 * 86400000)
+    },
+    {
+      id: 'c3000000-0000-4000-8000-000000000005',
+      orderId: 'b2000000-0000-4000-8000-000000000021',
+      equipmentId: 'a1000000-0000-4000-8000-000000000005',
+      userId: PENYEWA_3_ID,
+      rating: 5,
+      comment:
+        'Kapasitas 20 liter sangat pas untuk batch adonan roti manis. Gearbox kokoh dan tidak panas.',
+      createdAt: new Date(now.getTime() - 18 * 86400000)
+    },
+    {
+      id: 'c3000000-0000-4000-8000-000000000007',
+      orderId: 'b2000000-0000-4000-8000-000000000022',
+      equipmentId: 'a1000000-0000-4000-8000-000000000007',
+      userId: PENYEWA_3_ID,
+      rating: 5,
+      comment:
+        'Genset silent handal dan tidak bising di lokasi booth outdoor. Konsumsi BBM irit dan daya stabil.',
+      createdAt: new Date(now.getTime() - 10 * 86400000)
     }
   ]
 

@@ -207,33 +207,31 @@ export default function NavbarPenyewa({
         <button
           type="button"
           onClick={handleNavPesan}
-          className={`box-border w-fit shrink-0 h-fit flex flex-row gap-1.5 py-[7px] px-3 justify-start items-center rounded-lg cursor-pointer transition-all border-0 ${
+          className={`box-border w-fit shrink-0 h-fit flex flex-col gap-1.5 py-[7px] px-3 justify-start items-center rounded-lg cursor-pointer transition-all border-0 ${
             resolvedActiveTab === 'pesan'
               ? 'bg-blue-50 text-blue-700 font-bold'
               : 'bg-transparent text-slate-600 hover:bg-slate-50 font-medium'
           }`}
         >
           <div className="relative flex items-center">
-            <MessageSquare className="w-3.5 h-3.5" />
+            <span className="text-[13px] whitespace-nowrap">Pesan</span>
             {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-blue-600 text-white text-[9px] font-bold px-1 rounded-full min-w-3.5 text-center leading-tight">
+              <span className="absolute -top-1.5 -right-2.5 bg-blue-600 text-white text-[9px] font-bold px-1 rounded-full min-w-3.5 text-center leading-tight">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </div>
-          <span className="text-[13px] whitespace-nowrap">Pesan</span>
         </button>
 
         <button
           type="button"
           onClick={handleNavDompet}
-          className={`box-border w-fit shrink-0 h-fit flex flex-row gap-1.5 py-[7px] px-3 justify-start items-center rounded-lg cursor-pointer transition-all border-0 ${
+          className={`box-border w-fit shrink-0 h-fit flex flex-col gap-1.5 py-[7px] px-3 justify-start items-center rounded-lg cursor-pointer transition-all border-0 ${
             resolvedActiveTab === 'dompet'
               ? 'bg-blue-50 text-blue-700 font-bold'
               : 'bg-transparent text-slate-600 hover:bg-slate-50 font-medium'
           }`}
         >
-          <Wallet className="w-3.5 h-3.5" />
           <span className="text-[13px] whitespace-nowrap">Dompet</span>
         </button>
       </nav>

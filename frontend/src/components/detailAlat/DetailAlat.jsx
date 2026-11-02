@@ -20,7 +20,13 @@ import AvailabilityCalendar from './AvailabilityCalendar'
 import CheckoutPanel from './CheckoutPanel'
 import { formatRupiah, getEquipment } from '../../lib/equipmentsApi'
 import { getSessionUser, getUserInitials, getUserPowerLimit } from '../../lib/userSession'
-import { diffDays, formatLongDate, isEquipmentAvailableInRange, normalizeDate } from '../../lib/dateHelpers'
+import {
+  MONTH_NAMES,
+  diffDays,
+  formatLongDate,
+  isEquipmentAvailableInRange,
+  normalizeDate
+} from '../../lib/dateHelpers'
 
 const STATUS_LABEL = {
   TERSEDIA: 'Tersedia',
@@ -179,6 +185,25 @@ export default function DetailAlat({
     equipment?.owner?.name ||
     'Pemilik Alat'
 
+  const ownerShopLocation =
+    equipment?.owner?.shopLocation ||
+    equipment?.location ||
+    'Jakarta Selatan'
+
+  const equipmentDistanceStr = `${Number(equipment?.distance ?? 2.5).toLocaleString('id-ID')} km`
+  const ownerFullAddress = equipment?.owner?.address
+    ? `${equipment.owner.address} (${equipmentDistanceStr})`
+    : `${ownerShopLocation} (${equipmentDistanceStr})`
+
+  const { calendarYear, calendarMonth } = useMemo(() => {
+    const candidate = getCandidateDateRange()
+    const target = normalizeDate(candidate?.start) || normalizeDate(candidate?.end) || normalizeDate(selectionStart)
+    if (target) {
+      return { calendarYear: target.getFullYear(), calendarMonth: target.getMonth() }
+    }
+    return { calendarYear: CALENDAR_YEAR, calendarMonth: CALENDAR_MONTH }
+  }, [selectionStart])
+
   const ownerPhoto = !avatarLoadFailed && equipment?.owner?.photo ? equipment.owner.photo : null
   const ownerInitials = equipment?.owner ? getUserInitials(equipment.owner) : '?'
 
@@ -302,7 +327,7 @@ export default function DetailAlat({
                   <div className="flex items-center gap-1.5 text-slate-600 tabular-nums">
                     <MapPin className="w-3.25 h-3.25 text-slate-400" />
                     <span>
-                      {Number(equipment.distance).toLocaleString('id-ID')} km · {equipment.location}
+                      {Number(equipment.distance).toLocaleString('id-ID')} km · {ownerShopLocation}
                     </span>
                   </div>
 
@@ -363,13 +388,14 @@ export default function DetailAlat({
 
           {/* Availability Calendar */}
           <AvailabilityCalendar
-            monthTitle="Ketersediaan Juni 2025"
-            year={CALENDAR_YEAR}
-            month={CALENDAR_MONTH}
+            monthTitle={`Ketersediaan ${MONTH_NAMES[calendarMonth]} ${calendarYear}`}
+            year={calendarYear}
+            month={calendarMonth}
             minRentDays={minRentDays}
             selectionStart={selectionStart}
             selectionEnd={selectionEnd}
             onSelectionChange={handleSelectionChange}
+            dayStatus={equipment.dayStatus}
           />
 
           {/* Deskripsi Alat Card */}
@@ -383,7 +409,7 @@ export default function DetailAlat({
           </div>
 
           {/* Kelengkapan Aksesoris Unit */}
-          {Array.isArray(equipment.accessories) && equipment.accessories.length > 0 && (
+          {Array.isArray(equipment.accessories) && equipment.accessories.length > 0 ? (
             <div className="box-border w-full h-fit shrink-0 flex flex-col gap-3 p-5 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px]">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-blue-600" />
@@ -403,6 +429,16 @@ export default function DetailAlat({
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2 p-5 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px]">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                <h2 className="text-sm text-slate-900 font-bold m-0">Kelengkapan Aksesoris Termasuk</h2>
+              </div>
+              <p className="text-xs text-slate-500 m-0 italic">
+                Unit standar tanpa aksesoris tambahan yang ditentukan pemilik.
+              </p>
             </div>
           )}
 
@@ -464,12 +500,27 @@ export default function DetailAlat({
                   <div key={rev.id} className="pt-3 first:pt-0 flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold flex items-center justify-center">
-                          {(rev.user?.fullName || 'P')[0]}
+                        {rev.user?.photo ? (
+                          <img
+                            src={rev.user.photo}
+                            alt={rev.user?.fullName || 'Penyewa'}
+                            className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-200"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold flex items-center justify-center">
+                            {(rev.user?.fullName || 'P')[0]}
+                          </div>
+                        )}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                          <span className="text-xs font-bold text-slate-900">
+                            {rev.user?.fullName || 'Penyewa Terverifikasi'}
+                          </span>
+                          {rev.user?.businessName && (
+                            <span className="text-[10px] text-slate-400 font-normal">
+                              ({rev.user.businessName})
+                            </span>
+                          )}
                         </div>
-                        <span className="text-xs font-bold text-slate-900">
-                          {rev.user?.fullName || 'Penyewa Terverifikasi'}
-                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
@@ -520,7 +571,7 @@ export default function DetailAlat({
               rentalDays={rentalDays}
               startDateText={startDateFormatted}
               endDateText={endDateFormatted}
-              ownerAddress={`${equipment.location} (${Number(equipment.distance).toLocaleString('id-ID')} km)`}
+              ownerAddress={ownerFullAddress}
               deliveryMethods={equipment.deliveryMethods}
               courierFee={equipment.deliveryFee ?? 45000}
               owner={equipment.owner}

@@ -274,9 +274,9 @@ export default function App() {
           }
         />
 
-        {/* Tanpa ID alat tidak ada detail yang bisa ditampilkan → kembali ke katalog. */}
-        <Route path="/alat" element={<Navigate to="/beranda-sewa" replace />} />
-        <Route path="/detail-alat" element={<Navigate to="/beranda-sewa" replace />} />
+        {/* Tanpa ID alat → buka alat demo utama (Mesin Kemasan Vakum Otomatis) */}
+        <Route path="/alat" element={<Navigate to="/alat/a1000000-0000-4000-8000-000000000003" replace />} />
+        <Route path="/detail-alat" element={<Navigate to="/alat/a1000000-0000-4000-8000-000000000003" replace />} />
 
         {/* Halaman Chat Fullscreen (/pesan) */}
         <Route

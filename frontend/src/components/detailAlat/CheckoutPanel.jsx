@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Lock, MessageSquare } from 'lucide-react'
+import { Lock, MessageSquare, MapPin } from 'lucide-react'
 
 export default function CheckoutPanel({
   dailyPrice = 320000,
@@ -160,7 +160,7 @@ export default function CheckoutPanel({
                 Diantar kurir toko
               </span>
               <span className="text-[10px] text-slate-400 font-normal text-left whitespace-nowrap">
-                Estimasi tiba 12 Jun pagi
+                Estimasi tiba {startDateText && startDateText !== 'Pilih tanggal' ? startDateText.replace(/^.*,\s*/, '') + ' pagi' : 'sesuai jadwal sewa'}
               </span>
             </div>
             <div className="text-xs text-slate-900 font-semibold text-right whitespace-nowrap">
@@ -282,6 +282,12 @@ export default function CheckoutPanel({
               <div className="text-[10px] text-slate-400 font-normal text-left truncate w-full">
                 {owner.email || '-'}
               </div>
+              {(owner.shopLocation || owner.address || owner.city) && (
+                <div className="text-[10px] text-slate-500 font-normal text-left truncate w-full flex items-center gap-1 pt-0.5">
+                  <MapPin className="w-2.75 h-2.75 text-slate-400 shrink-0" />
+                  <span className="truncate">{owner.shopLocation || owner.address || owner.city}</span>
+                </div>
+              )}
             </div>
 
             {/* Verified Badge */}

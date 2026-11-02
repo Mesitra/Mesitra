@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, TriangleAlert, X } from 'lucide-react'
 import {
   DEFAULT_DAYS_STATUS,
+  MONTH_NAMES,
   diffDays,
   formatShortDate,
   normalizeDate
@@ -22,13 +23,49 @@ export default function AvailabilityCalendar({
   dayStatus = DEFAULT_DAYS_STATUS
 }) {
   const [notice, setNotice] = useState(null)
+  const [currentYear, setCurrentYear] = useState(year)
+  const [currentMonth, setCurrentMonth] = useState(month)
 
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  useEffect(() => {
+    setCurrentYear(year)
+    setCurrentMonth(month)
+  }, [year, month])
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1)
   const minDays = Math.max(1, Number(minRentDays) || 1)
 
-  const toDate = (day) => new Date(year, month, day)
-  const getStatus = (day) => dayStatus[day] || 'tersedia'
+  const toDate = (day) => new Date(currentYear, currentMonth, day)
+  const getStatus = (day) => {
+    if (!dayStatus) return 'tersedia'
+    const key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    if (dayStatus[key]) return dayStatus[key]
+    if (dayStatus[day]) return dayStatus[day]
+    return 'tersedia'
+  }
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentYear((y) => y - 1)
+      setCurrentMonth(11)
+    } else {
+      setCurrentMonth((m) => m - 1)
+    }
+  }
+
+  const handleNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentYear((y) => y + 1)
+      setCurrentMonth(0)
+    } else {
+      setCurrentMonth((m) => m + 1)
+    }
+  }
+
+  const displayTitle =
+    currentYear === year && currentMonth === month && monthTitle
+      ? monthTitle
+      : `Ketersediaan ${MONTH_NAMES[currentMonth]} ${currentYear}`
 
   // Validasi bentrok tanggal saat mount / pembaruan props:
   // Jika rentang auto-fill menabrak jadwal 'terisi' atau 'buffer' (misal tgl 16),
@@ -50,7 +87,8 @@ export default function AvailabilityCalendar({
 
     while (current <= finish) {
       const day = current.getDate()
-      const s = getStatus(day)
+      const isoKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      const s = (dayStatus && (dayStatus[isoKey] || dayStatus[day])) || 'tersedia'
       if (s === 'terisi' || s === 'buffer') {
         isBlocked = true
         blockedDay = day
@@ -140,19 +178,21 @@ export default function AvailabilityCalendar({
       end = normalizeDate(selectionStart)
     }
 
-    const startDay = start.getDate()
-    const endDay = end.getDate()
-
     // LAKUKAN PENGECEKAN TANGGAL DI ANTARA Start dan End
     let blockedDay = null
     let blockedStatus = null
-    for (let d = startDay; d <= endDay; d++) {
-      const st = getStatus(d)
+    const cur = new Date(start.getTime())
+    const targetEnd = new Date(end.getTime())
+    while (cur <= targetEnd) {
+      const d = cur.getDate()
+      const isoKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+      const st = (dayStatus && (dayStatus[isoKey] || dayStatus[d])) || 'tersedia'
       if (st === 'terisi' || st === 'buffer') {
         blockedDay = d
         blockedStatus = st
         break
       }
+      cur.setDate(cur.getDate() + 1)
     }
 
     if (blockedDay !== null) {
@@ -194,7 +234,7 @@ export default function AvailabilityCalendar({
       <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
         <div className="box-border w-fit shrink-0 h-fit flex flex-col gap-0.5 justify-start items-start">
           <div className="text-[15px] text-slate-900 font-bold text-left whitespace-nowrap">
-            {monthTitle}
+            {displayTitle}
           </div>
           <div className="text-xs text-slate-500 font-normal text-left whitespace-nowrap">
             {subTitle}
@@ -205,12 +245,18 @@ export default function AvailabilityCalendar({
         <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-1.5 justify-start items-start">
           <button
             type="button"
+            onClick={handlePrevMonth}
+            aria-label="Bulan sebelumnya"
+            title="Bulan sebelumnya"
             className="box-border w-7.5 shrink-0 h-7.5 flex flex-row justify-center items-center ring-1 ring-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors cursor-pointer border-0"
           >
             <ChevronLeft className="w-3.75 h-3.75 text-slate-600" />
           </button>
           <button
             type="button"
+            onClick={handleNextMonth}
+            aria-label="Bulan berikutnya"
+            title="Bulan berikutnya"
             className="box-border w-7.5 shrink-0 h-7.5 flex flex-row justify-center items-center ring-1 ring-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors cursor-pointer border-0"
           >
             <ChevronRight className="w-3.75 h-3.75 text-slate-600" />
