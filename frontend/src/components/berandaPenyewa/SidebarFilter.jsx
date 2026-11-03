@@ -236,7 +236,7 @@ export default function SidebarFilter({
     dateRange.start && dateRange.end ? diffDays(dateRange.start, dateRange.end) + 1 : 0
 
   return (
-    <aside className={`box-border w-full shrink-0 sticky top-24 h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide flex flex-col gap-2 px-4 py-3 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
+    <aside className={`box-border w-full shrink-0 sticky top-24 h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide flex flex-col gap-4.5 p-5 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
       {/* Head */}
       <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
         <h2 className="text-sm text-slate-900 font-bold text-left whitespace-nowrap m-0">
@@ -254,13 +254,13 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Rentang Tanggal Popover Kalender Mini */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
         <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
           Rentang Tanggal
         </div>
 
         {/* Trigger Popover Buttons & Modal */}
-        <div className="relative w-full flex flex-col gap-1.5" ref={calendarRef}>
+        <div className="relative w-full flex flex-col gap-2" ref={calendarRef}>
           {/* 1. Tanggal Sewa (Mulai) */}
           <button
             type="button"
@@ -276,18 +276,18 @@ export default function SidebarFilter({
               }
             }}
             aria-expanded={activePicker === 'start'}
-            className={`box-border w-full flex items-center justify-between py-1.5 px-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
+            className={`box-border w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
               activePicker === 'start'
                 ? 'ring-2 ring-primary bg-white shadow-xs'
                 : 'ring-slate-200'
             }`}
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
-                <CalendarIcon className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
+                <CalendarIcon className="w-4 h-4" />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Tanggal Sewa
                 </span>
                 <span className="text-xs font-bold text-slate-800 truncate mt-0.5">
@@ -304,14 +304,14 @@ export default function SidebarFilter({
                     e.stopPropagation()
                     handleRangeChange(null, dateRange.end)
                   }}
-                  className="p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
                   title="Hapus tanggal sewa"
                 >
                   <X className="w-3.5 h-3.5" />
                 </span>
               )}
               <ChevronDown
-                className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                className={`w-4 h-4 text-slate-400 transition-transform ${
                   activePicker === 'start' ? 'rotate-180 text-primary' : ''
                 }`}
               />
@@ -334,18 +334,18 @@ export default function SidebarFilter({
               }
             }}
             aria-expanded={activePicker === 'end'}
-            className={`box-border w-full flex items-center justify-between py-1.5 px-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
+            className={`box-border w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
               activePicker === 'end'
                 ? 'ring-2 ring-primary bg-white shadow-xs'
                 : 'ring-slate-200'
             }`}
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
-                <CalendarIcon className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
+                <CalendarIcon className="w-4 h-4" />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Tanggal Akhir Sewa
                 </span>
                 <span className="text-xs font-bold text-slate-800 truncate mt-0.5">
@@ -362,14 +362,14 @@ export default function SidebarFilter({
                     e.stopPropagation()
                     handleRangeChange(dateRange.start, null)
                   }}
-                  className="p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
                   title="Hapus tanggal akhir sewa"
                 >
                   <X className="w-3.5 h-3.5" />
                 </span>
               )}
               <ChevronDown
-                className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                className={`w-4 h-4 text-slate-400 transition-transform ${
                   activePicker === 'end' ? 'rotate-180 text-primary' : ''
                 }`}
               />
@@ -508,7 +508,7 @@ export default function SidebarFilter({
         </div>
 
         {/* Ringkasan Durasi Sewa */}
-        <div className="text-[10px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
+        <div className="text-[11px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
           {rangeDays > 0
             ? `${rangeDays} hari sewa · 1 hari buffer`
             : dateRange.start && !dateRange.end
@@ -522,12 +522,12 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Sesuai Listrik Usaha Saya */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-row gap-2 justify-start items-center">
-        <div className="box-border flex-1 h-fit flex flex-col gap-0.5 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-row gap-2.5 justify-start items-center">
+        <div className="box-border flex-1 h-fit flex flex-col gap-1 justify-start items-start">
           <div className="text-xs text-slate-900 font-bold text-left whitespace-nowrap">
             Sesuai listrik usaha saya
           </div>
-          <div className="text-[10.5px] leading-tight w-full text-slate-500 font-normal text-left tabular-nums">
+          <div className="text-[11px] leading-[15px] w-full text-slate-500 font-normal text-left tabular-nums">
             {`Maks. ${powerLimit || 1300} W · hanya alat yang aman`}
           </div>
         </div>
@@ -536,18 +536,18 @@ export default function SidebarFilter({
           onClick={handleTogglePower}
           aria-label="Saring alat sesuai daya listrik usaha"
           aria-pressed={powerMatch}
-          className={`box-border w-8 shrink-0 h-4.5 flex flex-row p-0.5 items-center rounded-full transition-colors cursor-pointer border-0 ${
+          className={`box-border w-9 shrink-0 h-5 flex flex-row p-0.5 items-center rounded-full transition-colors cursor-pointer border-0 ${
             powerMatch ? 'justify-end bg-blue-600' : 'justify-start bg-slate-300'
           }`}
         >
-          <div className="box-border w-3.5 shrink-0 h-3.5 bg-white rounded-full shadow-xs"></div>
+          <div className="box-border w-4 shrink-0 h-4 bg-white rounded-full shadow-xs"></div>
         </button>
       </div>
 
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Harga Harian Maksimal */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2 justify-start items-start">
         <div className="flex items-baseline justify-between w-full">
           <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
             Harga harian maksimal
@@ -558,7 +558,7 @@ export default function SidebarFilter({
         </div>
 
         {/* Slider */}
-        <div className="w-full py-0.5">
+        <div className="w-full py-1">
           <input
             type="range"
             min={minPrice}
@@ -566,11 +566,11 @@ export default function SidebarFilter({
             step={priceStep}
             value={maxPrice}
             onChange={handlePriceChange}
-            className="w-full accent-blue-600 cursor-pointer h-1 bg-slate-200 rounded-lg appearance-none"
+            className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg appearance-none"
           />
         </div>
 
-        <div className="text-[10px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
+        <div className="text-[11px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
           {`${formatRupiah(minPrice)} — ${formatRupiah(maxPriceLimit)}`}
         </div>
       </div>
@@ -578,11 +578,11 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Batas Security Deposit */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2 justify-start items-start">
         <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
           Batas security deposit
         </div>
-        <div className="box-border w-full h-fit shrink-0 flex flex-row gap-1.5 justify-start items-start">
+        <div className="box-border w-full h-fit shrink-0 flex flex-row gap-2 justify-start items-start">
           {DEPOSIT_OPTIONS.map((opt) => {
             const isSelected = maxDeposit === opt.value
             return (
@@ -591,18 +591,18 @@ export default function SidebarFilter({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => handleDepositSelect(opt.value)}
-                className={`box-border flex-1 h-fit flex flex-row py-1 px-0 justify-center items-start rounded-md cursor-pointer transition-all border-0 ${
+                className={`box-border flex-1 h-fit flex flex-row py-1.5 px-0 justify-center items-start rounded-lg cursor-pointer transition-all border-0 ${
                   isSelected
                     ? 'bg-blue-50 ring-1 ring-blue-600 text-blue-700 font-bold'
                     : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:bg-slate-50 font-medium'
                 }`}
               >
-                <span className="text-[10.5px] whitespace-nowrap">{opt.label}</span>
+                <span className="text-[11px] whitespace-nowrap">{opt.label}</span>
               </button>
             )
           })}
         </div>
-        <div className="text-[10px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
+        <div className="text-[11px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
           {maxDeposit === 'semua'
             ? 'Tanpa batas deposit'
             : `Deposit maksimal ${formatRupiah(maxDeposit)}`}
@@ -612,7 +612,7 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Metode Pengiriman */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
         <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
           Metode pengiriman
         </div>
@@ -629,17 +629,17 @@ export default function SidebarFilter({
             }
           }}
           onClick={() => handleDeliveryToggle('selfPickup')}
-          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2 justify-start items-center cursor-pointer select-none"
+          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2.5 justify-start items-center cursor-pointer select-none"
         >
           <div
-            className={`box-border w-3.5 shrink-0 h-3.5 flex flex-row justify-center items-center rounded transition-colors ${
+            className={`box-border w-4 shrink-0 h-4 flex flex-row justify-center items-center rounded transition-colors ${
               internalDelivery.selfPickup
                 ? 'bg-blue-600'
                 : 'bg-white ring-1 ring-slate-300'
             }`}
           >
             {internalDelivery.selfPickup && (
-              <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+              <Check className="w-[11px] h-[11px] text-white stroke-[3]" />
             )}
           </div>
           <span className="text-xs text-slate-600 font-normal text-left whitespace-nowrap">
@@ -659,17 +659,17 @@ export default function SidebarFilter({
             }
           }}
           onClick={() => handleDeliveryToggle('courier')}
-          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2 justify-start items-center cursor-pointer select-none"
+          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2.5 justify-start items-center cursor-pointer select-none"
         >
           <div
-            className={`box-border w-3.5 shrink-0 h-3.5 flex flex-row justify-center items-center rounded transition-colors ${
+            className={`box-border w-4 shrink-0 h-4 flex flex-row justify-center items-center rounded transition-colors ${
               internalDelivery.courier
                 ? 'bg-blue-600'
                 : 'bg-white ring-1 ring-slate-300'
             }`}
           >
             {internalDelivery.courier && (
-              <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+              <Check className="w-[11px] h-[11px] text-white stroke-[3]" />
             )}
           </div>
           <span className="text-xs text-slate-600 font-normal text-left whitespace-nowrap">
@@ -681,20 +681,20 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Rating & Ulasan */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
         <div className="flex items-center justify-between w-full">
           <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
             Rating & Ulasan
           </div>
           {currentSortRating && (
-            <span className="text-[9.5px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-100">
+            <span className="text-[10px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
               {currentSortRating === 'desc' ? 'Tertinggi' : 'Terendah'}
             </span>
           )}
         </div>
 
         {/* 3 Opsi: Radio Cards Modern / Selectable Pills */}
-        <div className="box-border w-full flex flex-col gap-1 justify-start items-start">
+        <div className="box-border w-full flex flex-col gap-2 justify-start items-start">
           {RATING_SORT_OPTIONS.map((opt) => {
             const isSelected = (currentSortRating || '') === opt.value
             return (
@@ -704,22 +704,22 @@ export default function SidebarFilter({
                 role="radio"
                 aria-checked={isSelected}
                 onClick={() => handleRatingSortChange(opt.value)}
-                className={`box-border w-full flex flex-row items-center justify-between py-1.5 px-2.5 rounded-lg cursor-pointer transition-all border ${
+                className={`box-border w-full flex flex-row items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all border ${
                   isSelected
                     ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500/30 text-blue-900 font-medium shadow-2xs'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-normal'
                 }`}
               >
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                       isSelected
                         ? 'border-blue-600 bg-blue-600'
                         : 'border-slate-300 bg-white'
                     }`}
                   >
                     {isSelected && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white shadow-2xs" />
+                      <div className="w-2 h-2 rounded-full bg-white shadow-2xs" />
                     )}
                   </div>
                   <span className={`text-xs text-left truncate ${isSelected ? 'font-semibold text-blue-900' : 'text-slate-700'}`}>
@@ -730,13 +730,13 @@ export default function SidebarFilter({
                 {opt.badge && (
                   <div className="flex items-center gap-1 shrink-0 pl-2">
                     <Star
-                      className={`w-3 h-3 ${
+                      className={`w-3.5 h-3.5 ${
                         opt.value === 'desc'
                           ? 'text-amber-500 fill-amber-400'
                           : 'text-amber-400 fill-amber-300'
                       }`}
                     />
-                    <span className="text-[10px] font-semibold text-slate-700 tabular-nums">
+                    <span className="text-[11px] font-semibold text-slate-700 tabular-nums">
                       {opt.badge}
                     </span>
                   </div>
