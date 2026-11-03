@@ -236,7 +236,7 @@ export default function SidebarFilter({
     dateRange.start && dateRange.end ? diffDays(dateRange.start, dateRange.end) + 1 : 0
 
   return (
-    <aside className={`box-border w-full shrink-0 sticky top-40 h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide flex flex-col gap-4.5 p-5 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
+    <aside className={`box-border w-full shrink-0 sticky top-40 h-[calc(100vh-260px)] overflow-y-auto scrollbar-hide flex flex-col gap-4.5 p-5 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
       {/* Head */}
       <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
         <h2 className="text-sm text-slate-900 font-bold text-left whitespace-nowrap m-0">
