@@ -30,7 +30,8 @@ export default function NavbarPenyewa({
   dateRange: _dateRange,
   walletBalance: propWalletBalance,
   onNavigateTab,
-  onNavigateHome: _onNavigateHome
+  onNavigateHome: _onNavigateHome,
+  hideBottomNav = false
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -417,8 +418,8 @@ export default function NavbarPenyewa({
         onClose={() => setIsWalletModalOpen(false)}
       />
 
-      {/* Floating Mobile Bottom Navigation Dock (Disembunyikan di halaman chat agar kolom input dan tombol kirim tidak tertimpa) */}
-      {!isChatPage && (
+      {/* Floating Mobile Bottom Navigation Dock */}
+      {!hideBottomNav && (
         <div className="fixed bottom-5 inset-x-0 flex justify-center z-40 md:hidden pointer-events-none px-4 animate-in fade-in duration-200">
           <nav
             aria-label="Navigasi Menu Mobile"
