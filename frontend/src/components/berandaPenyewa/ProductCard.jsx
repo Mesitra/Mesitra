@@ -58,7 +58,7 @@ export default function ProductCard({
       className="group box-border w-full flex flex-col justify-between bg-white rounded-[18px] overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
     >
       {/* Foto Alat & Pita Kategori */}
-      <div className="box-border w-full h-[183px] shrink-0 flex flex-row gap-0 justify-start items-start rounded-b-[15px] overflow-hidden relative bg-slate-50">
+      <div className="box-border w-full h-64 shrink-0 flex flex-row gap-0 justify-start items-start rounded-b-[15px] overflow-hidden relative bg-slate-50">
         <img
           src={resolvedImage}
           alt={name || 'Alat'}
@@ -66,7 +66,7 @@ export default function ProductCard({
             e.currentTarget.onerror = null
             e.currentTarget.src = fallbackImage
           }}
-          className="object-cover size-full group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
         />
 
         {/* Pita Kategori */}
@@ -79,7 +79,7 @@ export default function ProductCard({
       </div>
 
       {/* Konten Informasi Produk */}
-      <div className="box-border w-full flex-1 flex flex-col justify-between p-[16px_18px_18px_18px]">
+      <div className="box-border w-full flex-1 flex flex-col justify-between pt-3 px-[18px] pb-[18px]">
         <div>
           {/* Judul: Nama Alat */}
           <h3
