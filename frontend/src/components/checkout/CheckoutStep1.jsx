@@ -243,7 +243,7 @@ export default function CheckoutStep1({ wizardData, updateWizard, onNext }) {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       {/* Top Bar */}
       <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 h-[68px] flex items-center justify-between">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-[68px] flex items-center justify-between">
           <div className="flex items-center gap-3.5">
             <button
               type="button"
@@ -272,7 +272,7 @@ export default function CheckoutStep1({ wizardData, updateWizard, onNext }) {
         </div>
       </header>
 
-      <main className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 flex flex-col gap-5 py-6 pb-12">
+      <main className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 flex flex-col gap-5 py-6 pb-12">
         {/* Tombol Navigasi Kembali ke Detail Alat (Breadcrumb Action) */}
         <div className="flex items-center justify-start">
           <button

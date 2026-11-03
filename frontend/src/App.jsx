@@ -434,7 +434,7 @@ function DashboardView({
 
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 backdrop-blur-md bg-white/90 border-b border-slate-200 py-3.5 transition-all">
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 flex items-center justify-between gap-4">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -519,7 +519,7 @@ function DashboardView({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 py-8 space-y-8">
+      <main className="flex-1 w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 py-8 space-y-8">
         {/* Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 to-indigo-800 p-6 sm:p-10 text-white shadow-md">
           <div className="relative z-10 max-w-2xl space-y-3">
@@ -625,7 +625,7 @@ function DashboardView({
           </div>
 
           {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 min-[1800px]:grid-cols-6 gap-5">
             {filteredRentals.map((item) => (
               <div
                 key={item.id}
@@ -724,7 +724,7 @@ function DashboardPemilikPlaceholder({ onLogout }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between text-slate-800 font-sans">
       <header className="sticky top-0 z-40 backdrop-blur-md bg-white/90 border-b border-slate-200 py-3.5">
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 flex items-center justify-between">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               type="button"

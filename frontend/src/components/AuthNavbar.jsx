@@ -12,7 +12,7 @@ import { ArrowLeft } from 'lucide-react'
 export default function AuthNavbar({ onBackToHome }) {
   return (
     <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-30">
-      <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 h-16 flex flex-row items-center justify-between">
+      <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-16 flex flex-row items-center justify-between">
         {/* Sisi Kiri: Logo Brand & Identitas Halaman */}
         <div className="flex items-center gap-3">
           <button

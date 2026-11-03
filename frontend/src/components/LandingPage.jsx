@@ -125,7 +125,7 @@ export default function LandingPage({
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-700">
       {/* 1. STICKY HEADER / NAVBAR */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-slate-200/80 transition-all">
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 h-18 flex items-center justify-between gap-4">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-18 flex items-center justify-between gap-4">
           {/* Brand Logo (Logo Saja) */}
           <div className="flex items-center">
             <button
@@ -246,7 +246,7 @@ export default function LandingPage({
         {/* Decorative Background Elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-gradient-to-b from-blue-100/50 via-indigo-50/20 to-transparent blur-3xl pointer-events-none -z-10" />
 
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="max-w-4xl mx-auto text-center flex flex-col items-center space-y-8">
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-extrabold text-slate-900 tracking-[-1px] leading-[1.15]">
@@ -318,7 +318,7 @@ export default function LandingPage({
 
       {/* 3. VALUE PROPOSITION & KEUNGGULAN (3 PILAR UTAMA) */}
       <section id="keunggulan" className="py-20 bg-white border-y border-slate-200/80">
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-16">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Mengapa Ekosistem MyRent Jadi Pilihan Utama UMKM?
@@ -425,7 +425,7 @@ export default function LandingPage({
 
       {/* 4. SEKSI CARA KERJA (HOW IT WORKS) DENGAN ROLE TABS */}
       <section id="cara-kerja" className="py-20 bg-slate-50">
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-10">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Bagaimana MyRent Bekerja?
@@ -631,7 +631,7 @@ export default function LandingPage({
 
       {/* 5. PREVIEW KATEGORI ALAT PRODUKSI (SHOWCASE GRID) */}
       <section id="kategori-alat" className="py-20 bg-white border-t border-slate-200/80">
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
@@ -717,7 +717,7 @@ export default function LandingPage({
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 relative z-10">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 relative z-10">
           <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 rounded-3xl p-8 sm:p-14 text-white shadow-2xl border border-blue-400/30">
             <div className="max-w-3xl space-y-4">
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
@@ -762,7 +762,7 @@ export default function LandingPage({
 
       {/* 7. FOOTER LENGKAP */}
       <footer className="bg-white border-t border-slate-200 pt-16 pb-12">
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-slate-200">
             {/* Col 1: Brand & Tagline */}
             <div className="lg:col-span-2 space-y-4">

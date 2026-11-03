@@ -23,7 +23,7 @@ export default function Pesan() {
       />
 
       {/* Main Container Fullscreen */}
-      <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 md:px-8 py-3 overflow-hidden flex flex-col">
+      <div className="flex-1 w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 py-3 overflow-hidden flex flex-col">
         <ChatPanel
           initialPartnerId={partnerId}
           initialPartnerName={partnerName}

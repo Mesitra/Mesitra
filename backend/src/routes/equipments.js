@@ -218,11 +218,37 @@ equipmentsRouter.get('/', async (req, res, next) => {
 
     const equipments = await prisma.equipment.findMany({
       where,
-      include: { owner: true },
+      include: {
+        owner: true,
+        orders: {
+          where: {
+            status: {
+              in: ['MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKIRIM', 'SEWA_AKTIF', 'INSPEKSI']
+            }
+          },
+          select: { id: true, startDate: true, endDate: true, status: true }
+        }
+      },
       orderBy
     })
 
-    res.json({ data: equipments.map((e) => presentEquipment(e)) })
+    const data = equipments.map((e) => {
+      const bookedRanges = (e.orders || []).map((o) => ({
+        id: o.id,
+        startDate: o.startDate.toISOString().slice(0, 10),
+        endDate: o.endDate.toISOString().slice(0, 10),
+        status: o.status
+      }))
+
+      const dayStatus = buildDayStatusFromOrders(e.orders || [], e.maintenanceBufferDays)
+
+      return {
+        ...presentEquipment(e, bookedRanges),
+        dayStatus
+      }
+    })
+
+    res.json({ data })
   } catch (error) {
     next(error)
   }
@@ -613,14 +639,6 @@ equipmentsRouter.get('/:id', async (req, res, next) => {
     }))
 
     const dayStatus = buildDayStatusFromOrders(equipment.orders, equipment.maintenanceBufferDays)
-
-    // Status demo kalender Juni 2025 agar kalender demo selalu konsisten jika belum ada order aktif di Juni 2025
-    for (let d = 1; d <= 9; d++) {
-      const key = `2025-06-0${d}`
-      if (!dayStatus[key]) dayStatus[key] = 'terisi'
-    }
-    if (!dayStatus['2025-06-10']) dayStatus['2025-06-10'] = 'buffer'
-    if (!dayStatus['2025-06-16']) dayStatus['2025-06-16'] = 'buffer'
 
     const reviews = (equipment.reviews || []).map((r) => {
       const userKyc = r.user?.kycData && typeof r.user.kycData === 'object' ? r.user.kycData : {}

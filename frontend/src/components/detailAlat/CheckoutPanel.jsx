@@ -4,9 +4,9 @@ import { Lock, MessageSquare, MapPin } from 'lucide-react'
 export default function CheckoutPanel({
   dailyPrice = 320000,
   depositAmount = 1200000,
-  rentalDays = 4,
-  startDateText = 'Kam, 12 Jun 2025',
-  endDateText = 'Min, 15 Jun 2025',
+  rentalDays = 1,
+  startDateText = 'Pilih tanggal',
+  endDateText = 'Pilih tanggal',
   ownerAddress = 'Tebet, Jakarta Selatan (6.5 km)',
   courierFee = 45000,
   deliveryMethods = ['PICKUP', 'COURIER'],

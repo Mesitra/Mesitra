@@ -76,18 +76,6 @@ export default function ProductCard({
           </span>
         </div>
 
-        {/* Badge Jarak ke Lokasi Pengguna di Atas Foto */}
-        {displayDistance && (
-          <div
-            title={`Jarak alat: ${displayDistance} dari ${displayUserLocation}${location ? ` (${location})` : ''}`}
-            className="box-border w-fit max-w-[62%] h-fit absolute right-[12px] top-[12px] flex flex-row gap-1 items-center px-2.5 py-1 bg-slate-950/75 backdrop-blur-md rounded-[999px] z-10 border border-white/20 text-white shadow-sm"
-          >
-            <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-            <span className="text-[10px] font-medium tracking-tight truncate whitespace-nowrap">
-              {displayDistance} dari {displayUserLocation}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Konten Informasi Produk */}

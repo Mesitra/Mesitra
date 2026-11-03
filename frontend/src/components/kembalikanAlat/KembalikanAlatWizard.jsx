@@ -290,7 +290,7 @@ export default function KembalikanAlatWizard() {
       />
 
       {/* Main Container */}
-      <main className="box-border w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 h-fit flex flex-col gap-4 py-6 pb-20">
+      <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-fit flex flex-col gap-4 py-6 pb-20">
         {/* Breadcrumb & Navigation */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs">

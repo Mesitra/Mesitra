@@ -266,12 +266,12 @@ export default function ChatPanel({
   return (
     <div
       className={`box-border w-full flex flex-col md:flex-row bg-white rounded-2xl ring-1 ring-slate-200 overflow-hidden shadow-xs ${
-        isEmbedded ? 'h-[720px]' : 'h-[calc(100vh-68px)] max-w-[1600px] mx-auto my-0'
+        isEmbedded ? 'h-[720px]' : 'h-[calc(100vh-68px)] max-w-[1920px] mx-auto my-0'
       }`}
     >
       {/* ── SIDEBAR KIRI: Daftar Percakapan Tersimpan ──────────────────────────── */}
       <aside
-        className={`w-full md:w-80 lg:w-96 shrink-0 border-r border-slate-200 bg-white flex flex-col h-full ${
+        className={`w-full md:w-80 lg:w-96 xl:w-[400px] shrink-0 border-r border-slate-200 bg-white flex flex-col h-full ${
           selectedChat ? 'hidden md:flex' : 'flex'
         }`}
       >
@@ -508,7 +508,7 @@ export default function ChatPanel({
 
                       {/* Gelembung Teks Pesan */}
                       <div
-                        className={`max-w-[85%] sm:max-w-[70%] px-4 py-2.5 text-xs rounded-2xl shadow-2xs break-words ${
+                        className={`max-w-[85%] sm:max-w-[70%] lg:max-w-[65%] xl:max-w-[60%] px-4 py-2.5 text-xs rounded-2xl shadow-2xs break-words ${
                           isOutgoing
                             ? 'bg-blue-600 text-white rounded-br-xs'
                             : 'bg-white text-slate-800 border border-slate-200 rounded-bl-xs'

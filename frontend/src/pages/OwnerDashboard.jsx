@@ -27,7 +27,8 @@ import {
   MessageSquare,
   ChevronRight,
   BadgeCheck,
-  Check
+  Check,
+  ShieldAlert
 } from 'lucide-react'
 import { listOrders, acceptOrder, rejectOrder } from '../lib/ordersApi'
 import { listEquipments, createEquipment, updateEquipment, deleteEquipment, formatRupiah } from '../lib/equipmentsApi'
@@ -868,7 +869,7 @@ export default function OwnerDashboard() {
       </aside>
 
       {/* ── KONTEN UTAMA ─────────────────────────────────────────────────── */}
-      <main className="flex-1 p-4 md:p-7 overflow-y-auto max-w-[1600px] mx-auto w-full space-y-5">
+      <main className="flex-1 p-6 md:px-10 lg:px-12 py-5 overflow-y-auto max-w-[1920px] mx-auto w-full space-y-5">
         {/* TopBar & Notification Bell (Task 2: Popover Dropdown) */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
           <div>

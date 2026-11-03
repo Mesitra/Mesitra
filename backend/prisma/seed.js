@@ -217,6 +217,33 @@ const EQUIPMENTS = [
       'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
     ]
+  },
+  {
+    id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    name: 'Coffee Grinder Review Test',
+    category: 'Mesin Kopi',
+    description:
+      'Grinder kopi komersial dengan flat burr presisi tinggi dan mikro-kalibrasi tingkat kehalusan bubuk kopi. Cocok untuk espresso, manual brew, dan kebutuhan kafe harian.',
+    pricePerDay: 50000,
+    deposit: 100000,
+    powerWatt: 300,
+    weightKg: 5,
+    dimensions: '20x15x30 cm',
+    minRentDays: 1,
+    maintenanceBufferDays: 1,
+    location: 'Kec. Cilandak, Jakarta Selatan',
+    distance: 1.0,
+    status: 'TERSEDIA',
+    condition: 'Prima',
+    stock: 1,
+    deliveryFee: 45000,
+    accessories: ['Hopper Biji Kopi', 'Catch Cup Stainless', 'Kuas Pembersih', 'Kabel Power'],
+    deliveryMethods: ['PICKUP', 'COURIER'],
+    isDeleted: false,
+    images: [
+      'https://images.unsplash.com/photo-1589396575653-c09c794ff6a6?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80'
+    ]
   }
 ]
 
@@ -872,6 +899,21 @@ async function main() {
       depositAmount: 800000,
       totalPaid: 1300000,
       status: 'SELESAI'
+    },
+    {
+      id: 'b2000000-0000-4000-8000-000000000028',
+      invoiceNumber: 'INV-2405-095',
+      userId: PENYEWA_2_ID,
+      equipmentId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+      startDate: new Date(now.getTime() - 15 * 86400000),
+      endDate: new Date(now.getTime() - 12 * 86400000),
+      rentalDays: 3,
+      deliveryMethod: 'PICKUP',
+      rentalCost: 150000,
+      shippingCost: 0,
+      depositAmount: 100000,
+      totalPaid: 250000,
+      status: 'SELESAI'
     }
   ]
 
@@ -965,6 +1007,16 @@ async function main() {
       rating: 5,
       comment:
         'Genset silent handal dan tidak bising di lokasi booth outdoor. Konsumsi BBM irit dan daya stabil.',
+      createdAt: new Date(now.getTime() - 10 * 86400000)
+    },
+    {
+      id: 'c3000000-0000-4000-8000-000000000008',
+      orderId: 'b2000000-0000-4000-8000-000000000028',
+      equipmentId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+      userId: PENYEWA_2_ID,
+      rating: 5,
+      comment:
+        'Hasil gilingan kopi sangat konsisten dan halus presisi untuk ekstraksi espresso kafe kami.',
       createdAt: new Date(now.getTime() - 10 * 86400000)
     }
   ]

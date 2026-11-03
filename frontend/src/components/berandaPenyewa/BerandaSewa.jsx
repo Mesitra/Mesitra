@@ -545,7 +545,7 @@ export default function BerandaSewa({
       />
 
       {/* 2. Main Content */}
-      <main className="box-border w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 py-7 pb-10 flex flex-col justify-start items-start">
+      <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 py-7 pb-10 flex flex-col justify-start items-start">
         {/* Header Halaman (Judul, Jumlah Alat, & Filter/Urutkan) */}
         <div className="box-border w-full flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 lg:mb-8">
           {/* Sisi Kiri: Teks Judul & Jumlah Alat (Rata Kiri, Sejajar Tepi Kiri Sidebar) */}
@@ -683,7 +683,7 @@ export default function BerandaSewa({
         {/* Wrapper Utama: Penjajaran Sidebar dan Grid Produk */}
         <div className="box-border w-full flex flex-col lg:flex-row gap-8 justify-start items-start">
           {/* Sisi Kiri: Filter Sidebar */}
-          <div className="w-full lg:w-1/4 shrink-0">
+          <div className="w-full lg:w-72 xl:w-80 shrink-0">
             <SidebarFilter
               filters={filters}
               onFiltersChange={setFilters}
@@ -698,23 +698,11 @@ export default function BerandaSewa({
               deliveryMethods={deliveryMethods}
               onDeliveryMethodChange={handleDeliveryMethodChange}
               onReset={resetFilters}
-              onApply={(next) => {
-                handlePowerMatchChange(next.powerMatch)
-                handleMaxPriceChange(next.maxPrice)
-                if (next.deliveryMethods) {
-                  handleDeliveryMethodChange(next.deliveryMethods)
-                }
-                setFilters((prev) => ({
-                  ...prev,
-                  maxDeposit: next.maxDeposit,
-                  dateRange: next.dateRange || prev.dateRange
-                }))
-              }}
             />
           </div>
 
           {/* Sisi Kanan: Catalog Grid Area */}
-          <section className="box-border w-full lg:w-3/4 flex-1 min-w-0 h-fit flex flex-col gap-6 justify-start items-start">
+          <section className="box-border w-full flex-1 min-w-0 h-fit flex flex-col gap-6 justify-start items-start">
             {/* Status pemuatan / error */}
             {loading && (
               <div className="w-full bg-white rounded-2xl border border-slate-200 p-12 flex flex-col gap-3 items-center justify-center text-slate-500">
@@ -747,7 +735,7 @@ export default function BerandaSewa({
               </div>
             ) : (
               !loading && !error && (
-                <div className="box-border w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="box-border w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[1800px]:grid-cols-5 min-[2200px]:grid-cols-6 gap-5">
                   {sortedProducts.map((product) => (
                     <ProductCard
                       key={product.id}

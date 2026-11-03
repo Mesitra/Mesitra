@@ -249,7 +249,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       {/* Top Bar */}
       <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 h-[68px] flex items-center justify-between">
+        <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-[68px] flex items-center justify-between">
           <div className="flex items-center gap-3.5">
             <button onClick={() => navigate('/beranda-sewa')} className="text-[18px] text-blue-600 font-extrabold tracking-[-0.3px] cursor-pointer">
               SewaAlat
@@ -261,7 +261,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
         </div>
       </header>
 
-      <main className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 flex flex-col gap-5 py-7 pb-12">
+      <main className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 flex flex-col gap-5 py-7 pb-12">
         <WizardSteps current={2} />
 
         {/* Tombol Kembali */}

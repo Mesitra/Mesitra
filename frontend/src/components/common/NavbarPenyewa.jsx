@@ -169,7 +169,7 @@ export default function NavbarPenyewa({
 
   return (
     <header className="box-border w-full bg-white border-b border-slate-200 sticky top-0 z-40 transition-all">
-      <div className="w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 h-[68px] flex flex-row gap-4 lg:gap-7 items-center justify-between">
+      <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-[68px] flex flex-row gap-4 lg:gap-7 items-center justify-between">
         {/* Wordmark Logo */}
         <Link
           to="/beranda-sewa"

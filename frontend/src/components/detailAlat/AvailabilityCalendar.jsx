@@ -11,24 +11,30 @@ import {
 export { DEFAULT_DAYS_STATUS }
 
 export default function AvailabilityCalendar({
-  monthTitle = 'Ketersediaan Juni 2025',
+  monthTitle,
   subTitle = 'Pilih tanggal mulai & selesai sewa',
-  year = 2025,
-  month = 5, // 0-based → 5 = Juni
+  year,
+  month,
   minRentDays = 1,
   // Tanggal mulai & selesai terpilih (Date | null), dikontrol dari parent.
   selectionStart = null,
   selectionEnd = null,
   onSelectionChange,
-  dayStatus = DEFAULT_DAYS_STATUS
+  dayStatus: propDayStatus,
+  equipment
 }) {
+  const now = new Date()
+  const initialYear = Number.isInteger(year) ? year : now.getFullYear()
+  const initialMonth = Number.isInteger(month) ? month : now.getMonth()
+
+  const dayStatus = propDayStatus || equipment?.dayStatus || equipment?.availability || {}
   const [notice, setNotice] = useState(null)
-  const [currentYear, setCurrentYear] = useState(year)
-  const [currentMonth, setCurrentMonth] = useState(month)
+  const [currentYear, setCurrentYear] = useState(initialYear)
+  const [currentMonth, setCurrentMonth] = useState(initialMonth)
 
   useEffect(() => {
-    setCurrentYear(year)
-    setCurrentMonth(month)
+    if (Number.isInteger(year)) setCurrentYear(year)
+    if (Number.isInteger(month)) setCurrentMonth(month)
   }, [year, month])
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
@@ -40,7 +46,6 @@ export default function AvailabilityCalendar({
     if (!dayStatus) return 'tersedia'
     const key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     if (dayStatus[key]) return dayStatus[key]
-    if (dayStatus[day]) return dayStatus[day]
     return 'tersedia'
   }
 
@@ -88,7 +93,7 @@ export default function AvailabilityCalendar({
     while (current <= finish) {
       const day = current.getDate()
       const isoKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const s = (dayStatus && (dayStatus[isoKey] || dayStatus[day])) || 'tersedia'
+      const s = dayStatus?.[isoKey] || 'tersedia'
       if (s === 'terisi' || s === 'buffer') {
         isBlocked = true
         blockedDay = day
@@ -186,7 +191,7 @@ export default function AvailabilityCalendar({
     while (cur <= targetEnd) {
       const d = cur.getDate()
       const isoKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-      const st = (dayStatus && (dayStatus[isoKey] || dayStatus[d])) || 'tersedia'
+      const st = dayStatus?.[isoKey] || 'tersedia'
       if (st === 'terisi' || st === 'buffer') {
         blockedDay = d
         blockedStatus = st

@@ -36,7 +36,6 @@ export default function SidebarFilter({
   deliveryMethods = { selfPickup: false, courier: false },
   onDeliveryMethodChange,
   onReset,
-  onApply,
   className = ''
 }) {
   const [internalDelivery, setInternalDelivery] = useState(deliveryMethods)
@@ -648,23 +647,6 @@ export default function SidebarFilter({
           </span>
         </label>
       </div>
-
-      {/* Terapkan Filter Button */}
-      <button
-        type="button"
-        onClick={() => onApply && onApply({
-          powerMatch,
-          maxPrice,
-          maxDeposit,
-          dateRange,
-          deliveryMethods: internalDelivery
-        })}
-        className="box-border w-full h-fit shrink-0 flex flex-row gap-2 py-[11px] px-4 justify-center items-center bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all rounded-[10px] cursor-pointer border-0 mt-1 shadow-xs"
-      >
-        <span className="text-[13px] text-white font-semibold text-left whitespace-nowrap">
-          Terapkan Filter
-        </span>
-      </button>
     </aside>
   )
 }

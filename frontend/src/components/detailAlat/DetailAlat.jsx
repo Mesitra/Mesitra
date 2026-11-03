@@ -34,10 +34,6 @@ const STATUS_LABEL = {
   MAINTENANCE: 'Pemeliharaan'
 }
 
-// Bulan kalender ketersediaan alat (Juni 2025), 0-based.
-const CALENDAR_YEAR = 2025
-const CALENDAR_MONTH = 5
-
 export default function DetailAlat({
   onBack,
   onNavigateHome,
@@ -201,7 +197,8 @@ export default function DetailAlat({
     if (target) {
       return { calendarYear: target.getFullYear(), calendarMonth: target.getMonth() }
     }
-    return { calendarYear: CALENDAR_YEAR, calendarMonth: CALENDAR_MONTH }
+    const now = new Date()
+    return { calendarYear: now.getFullYear(), calendarMonth: now.getMonth() }
   }, [selectionStart])
 
   const ownerPhoto = !avatarLoadFailed && equipment?.owner?.photo ? equipment.owner.photo : null
@@ -274,7 +271,7 @@ export default function DetailAlat({
       />
 
       {/* 2. Main Detail Page Layout: Two Columns */}
-      <main className="box-border w-full max-w-[1600px] mx-auto px-4 md:px-12 lg:px-20 h-fit flex flex-col lg:flex-row gap-6 py-7 pb-12 justify-start items-start">
+      <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-fit flex flex-col lg:flex-row gap-6 py-7 pb-12 justify-start items-start">
         {/* Left Column: Media, Specs, Warning, Calendar, Description */}
         <section className="box-border flex-1 min-w-0 w-full h-fit flex flex-col gap-5.5 justify-start items-start">
           {/* Breadcrumb Navigation */}
