@@ -683,7 +683,7 @@ export default function BerandaSewa({
         {/* Wrapper Utama: Penjajaran Sidebar dan Grid Produk */}
         <div className="box-border w-full flex flex-col lg:flex-row gap-8 justify-start items-start">
           {/* Sisi Kiri: Filter Sidebar */}
-          <div className="w-full lg:w-72 xl:w-80 shrink-0">
+          <div className="w-full lg:w-72 xl:w-80 shrink-0 sticky top-24">
             <SidebarFilter
               filters={filters}
               onFiltersChange={setFilters}
