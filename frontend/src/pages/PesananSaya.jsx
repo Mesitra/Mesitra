@@ -401,7 +401,7 @@ export default function PesananSaya() {
           </div>
         ) : (
           /* Order Cards List */
-          <div className="flex flex-col gap-5 sm:gap-6">
+          <div className="flex flex-col gap-4 sm:gap-4.5">
             {filteredOrders.map((order) => (
               <PesananCard
                 key={order.id}
