@@ -58,7 +58,7 @@ export default function ProductCard({
       className="group box-border w-full flex flex-col justify-between bg-white rounded-[18px] overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
     >
       {/* Foto Alat & Pita Kategori */}
-      <div className="box-border w-full h-64 shrink-0 flex flex-row gap-0 justify-start items-start rounded-b-[15px] overflow-hidden relative bg-slate-50">
+      <div className="box-border w-full h-55 shrink-0 flex flex-row gap-0 justify-start items-start rounded-b-[15px] overflow-hidden relative bg-slate-50">
         <img
           src={resolvedImage}
           alt={name || 'Alat'}
