@@ -244,6 +244,141 @@ const EQUIPMENTS = [
       'https://images.unsplash.com/photo-1589396575653-c09c794ff6a6?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80'
     ]
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000008',
+    name: 'Deep Fryer Gas Komersial 17 Liter',
+    category: 'Kelengkapan Usaha',
+    description:
+      'Deep fryer gas kapasitas 17 liter dengan thermostat otomatis dan basket ganda stainless steel. Ideal untuk fried chicken, kentang goreng, dan aneka gorengan renyah.',
+    pricePerDay: 85000,
+    deposit: 250000,
+    powerWatt: 100,
+    weightKg: 18,
+    dimensions: '50 × 40 × 60 cm',
+    minRentDays: 1,
+    maintenanceBufferDays: 1,
+    location: 'Kec. Mampang Prapatan, Jakarta Selatan',
+    distance: 2.1,
+    status: 'TERSEDIA',
+    condition: 'Prima',
+    stock: 2,
+    deliveryFee: 40000,
+    accessories: ['Keranjang Fryer (2 pcs)', 'Tutup Stainless', 'Selang Regulator Gas'],
+    deliveryMethods: ['PICKUP', 'COURIER'],
+    isDeleted: false,
+    images: [
+      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+    ]
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000009',
+    name: 'Mesin Cup Sealer Otomatis Digital',
+    category: 'Mesin Kemasan',
+    description:
+      'Cup sealer otomatis dengan sensor optik presisi dan penghitung digital. Kecepatan segel 300-500 cup per jam untuk boba, kopi, dan jus kemasan.',
+    pricePerDay: 45000,
+    deposit: 150000,
+    powerWatt: 350,
+    weightKg: 14,
+    dimensions: '35 × 30 × 50 cm',
+    minRentDays: 1,
+    maintenanceBufferDays: 1,
+    location: 'Kec. Pancoran, Jakarta Selatan',
+    distance: 2.8,
+    status: 'TERSEDIA',
+    condition: 'Prima',
+    stock: 3,
+    deliveryFee: 30000,
+    accessories: ['Ring Adaptor 90/95mm', 'Rol Plastik Sealer Bonus', 'Kabel Power'],
+    deliveryMethods: ['PICKUP', 'COURIER'],
+    isDeleted: false,
+    images: [
+      'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=800&q=80'
+    ]
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000010',
+    name: 'Mesin Waffle Maker Komersial Rotasi',
+    category: 'Oven & Bakery',
+    description:
+      'Waffle maker komersial sistem putar 180 derajat untuk kematangan merata luar-dalam. Dilengkapi timer presisi dan lapisan teflon anti lengket food grade.',
+    pricePerDay: 60000,
+    deposit: 200000,
+    powerWatt: 1000,
+    weightKg: 8,
+    dimensions: '32 × 25 × 28 cm',
+    minRentDays: 1,
+    maintenanceBufferDays: 1,
+    location: 'Kec. Setiabudi, Jakarta Selatan',
+    distance: 3.5,
+    status: 'TERSEDIA',
+    condition: 'Prima',
+    stock: 2,
+    deliveryFee: 35000,
+    accessories: ['Kuas Minyak Silikon', 'Capitan Stainless', 'Buku Petunjuk & Resep'],
+    deliveryMethods: ['PICKUP', 'COURIER'],
+    isDeleted: false,
+    images: [
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1589396575653-c09c794ff6a6?auto=format&fit=crop&w=800&q=80'
+    ]
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000011',
+    name: 'Mesin Obras Industri 4 Benang Yamato',
+    category: 'Konveksi',
+    description:
+      'Mesin obras kecepatan tinggi 4 benang dengan direct-drive servo motor hemat listrik dan getaran rendah. Sangat cocok untuk produksi kaos, jersey, dan gamis.',
+    pricePerDay: 80000,
+    deposit: 350000,
+    powerWatt: 450,
+    weightKg: 15,
+    dimensions: '48 × 30 × 38 cm',
+    minRentDays: 2,
+    maintenanceBufferDays: 1,
+    location: 'Kec. Jagakarsa, Jakarta Selatan',
+    distance: 4.8,
+    status: 'TERSEDIA',
+    condition: 'Prima',
+    stock: 1,
+    deliveryFee: 40000,
+    accessories: ['Pedal Kaki Servo', 'Pinset Obras', 'Kunci Pembuka Jarum', 'Benang Cadangan'],
+    deliveryMethods: ['PICKUP', 'COURIER'],
+    isDeleted: false,
+    images: [
+      'https://images.unsplash.com/photo-1528458876885-5b6eacdd3671?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80'
+    ]
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000012',
+    name: 'Ice Crusher & Shaver Salju Komersial',
+    category: 'Kelengkapan Usaha',
+    description:
+      'Mesin serut es elektrik pisau ganda baja anti karat dengan output hingga 65 kg/jam. Menghasilkan tekstur es halus selembut salju untuk es campur, bingsu, dan mocktail.',
+    pricePerDay: 40000,
+    deposit: 100000,
+    powerWatt: 300,
+    weightKg: 6,
+    dimensions: '40 × 18 × 31 cm',
+    minRentDays: 1,
+    maintenanceBufferDays: 1,
+    location: 'Kec. Tebet, Jakarta Selatan',
+    distance: 1.5,
+    status: 'TERSEDIA',
+    condition: 'Prima',
+    stock: 2,
+    deliveryFee: 25000,
+    accessories: ['Mangkuk Penampung Stainless', 'Pisau Cadangan', 'Kabel Power'],
+    deliveryMethods: ['PICKUP', 'COURIER'],
+    isDeleted: false,
+    images: [
+      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+    ]
   }
 ]
 
