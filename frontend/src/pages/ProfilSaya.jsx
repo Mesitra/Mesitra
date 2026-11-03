@@ -382,7 +382,7 @@ export default function ProfilSaya() {
       <NavbarPenyewa activeTab="profil" />
 
       {/* Main Container */}
-      <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 md:px-8 lg:px-12 py-8 space-y-6">
+      <main className="flex-1 w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 py-8 space-y-6">
         {/* Tombol Kembali & Breadcrumb */}
         <div className="flex items-center justify-between">
           <button

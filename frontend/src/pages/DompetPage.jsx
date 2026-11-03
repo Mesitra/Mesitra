@@ -75,7 +75,7 @@ export default function DompetPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative">
       <NavbarPenyewa activeTab="dompet" />
 
-      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 md:pb-14 flex flex-col gap-6 flex-1">
+      <main className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 py-8 pb-28 md:pb-14 flex flex-col gap-6 flex-1">
         {/* Header Breadcrumbs / Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-1.5">
