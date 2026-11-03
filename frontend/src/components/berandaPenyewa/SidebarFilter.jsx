@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, Star, X } from 'lucide-react'
 import {
   daysInMonth,
   diffDays,
@@ -15,9 +15,17 @@ const DEPOSIT_OPTIONS = [
   { label: 'Semua', value: 'semua' }
 ]
 
+// Opsi pengurutan rating ulasan pelanggan
+const RATING_SORT_OPTIONS = [
+  { label: 'Relevansi', value: '', description: 'Default' },
+  { label: 'Rating Tertinggi', value: 'desc', badge: '5.0' },
+  { label: 'Rating Terendah', value: 'asc', badge: '1.0' }
+]
+
 const DEFAULT_FILTERS = {
   dateRange: { start: null, end: null },
-  maxDeposit: 'semua'
+  maxDeposit: 'semua',
+  sortRating: ''
 }
 
 export default function SidebarFilter({
@@ -25,6 +33,8 @@ export default function SidebarFilter({
   // setter React (`setFilters`) supaya bisa menerima updater function.
   filters = DEFAULT_FILTERS,
   onFiltersChange,
+  sortRating: externalSortRating,
+  onSortRatingChange,
   powerMatch = true,
   onPowerMatchChange,
   powerLimit = 1300,
@@ -52,6 +62,24 @@ export default function SidebarFilter({
 
   const dateRange = filters.dateRange ?? { start: null, end: null }
   const maxDeposit = filters.maxDeposit ?? 'semua'
+
+  // Nilai aktif sortRating (mendukung external prop atau state filters)
+  const currentSortRating =
+    externalSortRating !== undefined
+      ? externalSortRating
+      : filters.sortRating ?? ''
+
+  const handleRatingSortChange = (value) => {
+    if (onSortRatingChange) {
+      onSortRatingChange(value)
+    }
+    if (onFiltersChange) {
+      onFiltersChange((prev) => ({
+        ...prev,
+        sortRating: value
+      }))
+    }
+  }
 
   // Popover kalender mini: 'start' (Tanggal Sewa) | 'end' (Tanggal Akhir Sewa) | null
   const [activePicker, setActivePicker] = useState(null)
@@ -646,6 +674,75 @@ export default function SidebarFilter({
             Diantar kurir toko
           </span>
         </label>
+      </div>
+
+      <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
+
+      {/* Rating & Ulasan */}
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
+        <div className="flex items-center justify-between w-full">
+          <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
+            Rating & Ulasan
+          </div>
+          {currentSortRating && (
+            <span className="text-[10px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+              {currentSortRating === 'desc' ? 'Tertinggi' : 'Terendah'}
+            </span>
+          )}
+        </div>
+
+        {/* 3 Opsi: Radio Cards Modern / Selectable Pills */}
+        <div className="box-border w-full flex flex-col gap-2 justify-start items-start">
+          {RATING_SORT_OPTIONS.map((opt) => {
+            const isSelected = (currentSortRating || '') === opt.value
+            return (
+              <button
+                key={opt.label}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => handleRatingSortChange(opt.value)}
+                className={`box-border w-full flex flex-row items-center justify-between py-2.5 px-3 rounded-xl cursor-pointer transition-all border ${
+                  isSelected
+                    ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500/30 text-blue-900 font-medium shadow-2xs'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-normal'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-600'
+                        : 'border-slate-300 bg-white'
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white shadow-2xs" />
+                    )}
+                  </div>
+                  <span className={`text-xs text-left truncate ${isSelected ? 'font-semibold text-blue-900' : 'text-slate-700'}`}>
+                    {opt.label}
+                  </span>
+                </div>
+
+                {opt.badge && (
+                  <div className="flex items-center gap-1 shrink-0 pl-2">
+                    <Star
+                      className={`w-3.5 h-3.5 ${
+                        opt.value === 'desc'
+                          ? 'text-amber-500 fill-amber-400'
+                          : 'text-amber-400 fill-amber-300'
+                      }`}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-700 tabular-nums">
+                      {opt.badge}
+                    </span>
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </aside>
   )

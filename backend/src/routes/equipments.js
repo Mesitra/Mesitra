@@ -176,10 +176,11 @@ function buildDayStatusFromOrders(orders, bufferDays = 1) {
  *  - `status`         → filter status spesifik (TERSEDIA, DISEWA, INSPEKSI, NONAKTIF)
  *  - `allStatus`      → jika 'true', kembalikan semua status
  *  - `includeDeleted` → jika 'true', ikut sertakan item yang di-soft-delete
+ *  - `sortRating`     → 'desc' untuk rating tertinggi, 'asc' untuk rating terendah
  */
 equipmentsRouter.get('/', async (req, res, next) => {
   try {
-    const { category, search, ownerId, status, allStatus, includeDeleted } = req.query ?? {}
+    const { category, search, ownerId, status, allStatus, includeDeleted, sortRating } = req.query ?? {}
 
     const where = {}
 
@@ -220,6 +221,9 @@ equipmentsRouter.get('/', async (req, res, next) => {
       where,
       include: {
         owner: true,
+        reviews: {
+          select: { id: true, rating: true }
+        },
         orders: {
           where: {
             status: {
@@ -242,11 +246,48 @@ equipmentsRouter.get('/', async (req, res, next) => {
 
       const dayStatus = buildDayStatusFromOrders(e.orders || [], e.maintenanceBufferDays)
 
+      const revList = e.reviews || []
+      const ratingCount = revList.length
+      const averageRating =
+        ratingCount > 0
+          ? Number((revList.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / ratingCount).toFixed(1))
+          : null
+
       return {
         ...presentEquipment(e, bookedRanges),
-        dayStatus
+        dayStatus,
+        averageRating,
+        ratingCount
       }
     })
+
+    if (sortRating === 'desc' || sortRating === 'asc') {
+      data.sort((a, b) => {
+        const aHas = typeof a.averageRating === 'number' && !isNaN(a.averageRating)
+        const bHas = typeof b.averageRating === 'number' && !isNaN(b.averageRating)
+
+        // Null handling: alat tanpa ulasan selalu ditempatkan di paling bawah
+        if (!aHas && !bHas) return 0
+        if (!aHas) return 1
+        if (!bHas) return -1
+
+        if (sortRating === 'desc') {
+          if (b.averageRating !== a.averageRating) {
+            return b.averageRating - a.averageRating
+          }
+        } else {
+          if (a.averageRating !== b.averageRating) {
+            return a.averageRating - b.averageRating
+          }
+        }
+
+        // Secondary sorting: review terbanyak, lalu jarak terdekat
+        if (b.ratingCount !== a.ratingCount) {
+          return b.ratingCount - a.ratingCount
+        }
+        return (a.distance ?? 0) - (b.distance ?? 0)
+      })
+    }
 
     res.json({ data })
   } catch (error) {

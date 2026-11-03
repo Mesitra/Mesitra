@@ -322,6 +322,13 @@ paths:
           description: Filter berdasarkan pemilik alat
           schema:
             type: string
+        - name: sortRating
+          in: query
+          description: Urutkan berdasarkan rata-rata rating ulasan ('desc' untuk tertinggi, 'asc' untuk terendah)
+          schema:
+            type: string
+            enum: [asc, desc]
+          example: desc
       responses:
         '200':
           description: Daftar alat tersedia

@@ -331,3 +331,53 @@ test('DELETE /api/equipments/:id mendukung hard delete jika belum ada order dan 
   await prisma.equipment.delete({ where: { id: tempWithOrder.id } })
 })
 
+test('GET /api/equipments mendukung sorting sortRating=desc dan sortRating=asc dengan null handling', async () => {
+  const resDesc = await api('/api/equipments?sortRating=desc')
+  assert.equal(resDesc.status, 200)
+  const bodyDesc = await resDesc.json()
+  assert.ok(Array.isArray(bodyDesc.data))
+
+  // Pastikan field averageRating dan ratingCount ada di response
+  const firstWithRating = bodyDesc.data.find((e) => e.averageRating !== null)
+  if (firstWithRating) {
+    assert.equal(typeof firstWithRating.averageRating, 'number')
+    assert.equal(typeof firstWithRating.ratingCount, 'number')
+  }
+
+  // Verifikasi urutan desc: rated items muncul lebih dulu, terurut menurun
+  const ratedDesc = bodyDesc.data.filter((e) => e.averageRating !== null)
+  for (let i = 0; i < ratedDesc.length - 1; i++) {
+    assert.ok(
+      ratedDesc[i].averageRating >= ratedDesc[i + 1].averageRating,
+      `Harus descending: ${ratedDesc[i].averageRating} >= ${ratedDesc[i + 1].averageRating}`
+    )
+  }
+
+  // Verifikasi null handling: item dengan averageRating === null berada di bagian akhir
+  const firstNullIdxDesc = bodyDesc.data.findIndex((e) => e.averageRating === null)
+  if (firstNullIdxDesc !== -1) {
+    for (let i = firstNullIdxDesc; i < bodyDesc.data.length; i++) {
+      assert.equal(bodyDesc.data[i].averageRating, null)
+    }
+  }
+
+  // Verifikasi urutan asc: rated items terurut menaik, null tetap di akhir
+  const resAsc = await api('/api/equipments?sortRating=asc')
+  assert.equal(resAsc.status, 200)
+  const bodyAsc = await resAsc.json()
+  const ratedAsc = bodyAsc.data.filter((e) => e.averageRating !== null)
+  for (let i = 0; i < ratedAsc.length - 1; i++) {
+    assert.ok(
+      ratedAsc[i].averageRating <= ratedAsc[i + 1].averageRating,
+      `Harus ascending: ${ratedAsc[i].averageRating} <= ${ratedAsc[i + 1].averageRating}`
+    )
+  }
+  const firstNullIdxAsc = bodyAsc.data.findIndex((e) => e.averageRating === null)
+  if (firstNullIdxAsc !== -1) {
+    for (let i = firstNullIdxAsc; i < bodyAsc.data.length; i++) {
+      assert.equal(bodyAsc.data[i].averageRating, null)
+    }
+  }
+})
+
+

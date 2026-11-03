@@ -28,7 +28,8 @@ const DEFAULT_DELIVERY_METHODS = { selfPickup: false, courier: false }
 
 const DEFAULT_FILTERS = {
   dateRange: { start: null, end: null },
-  maxDeposit: 'semua'
+  maxDeposit: 'semua',
+  sortRating: ''
 }
 
 const parseDeliveryQuery = (val) => {
@@ -47,6 +48,15 @@ const formatDeliveryQuery = (delivery) => {
 }
 
 const createInitialFilters = () => {
+  let initialSortRating = ''
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const urlRating = params.get('sortRating')
+    if (urlRating === 'desc' || urlRating === 'asc') {
+      initialSortRating = urlRating
+    }
+  } catch {}
+
   try {
     const saved = sessionStorage.getItem(FILTER_STORAGE_KEY)
     if (saved) {
@@ -57,7 +67,8 @@ const createInitialFilters = () => {
             start: parsed.dateRange?.start ?? null,
             end: parsed.dateRange?.end ?? null
           },
-          maxDeposit: parsed.maxDeposit ?? 'semua'
+          maxDeposit: parsed.maxDeposit ?? 'semua',
+          sortRating: initialSortRating || parsed.sortRating || ''
         }
       }
     }
@@ -65,7 +76,10 @@ const createInitialFilters = () => {
     // Abaikan jika parsing gagal, gunakan nilai awal default
   }
 
-  return DEFAULT_FILTERS
+  return {
+    ...DEFAULT_FILTERS,
+    sortRating: initialSortRating
+  }
 }
 
 const createInitialPowerMatch = () => {
@@ -192,6 +206,18 @@ export default function BerandaSewa({
       sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters))
     } catch {
       // Abaikan bila storage penuh atau diblokir
+    }
+
+    try {
+      const url = new URL(window.location.href)
+      if (filters.sortRating) {
+        url.searchParams.set('sortRating', filters.sortRating)
+      } else {
+        url.searchParams.delete('sortRating')
+      }
+      window.history.replaceState({}, '', url.toString())
+    } catch {
+      // Abaikan bila URL update gagal
     }
   }, [filters])
 
@@ -355,7 +381,11 @@ export default function BerandaSewa({
       setError(null)
 
       try {
-        const data = await listEquipments()
+        const params = {}
+        if (filters.sortRating) {
+          params.sortRating = filters.sortRating
+        }
+        const data = await listEquipments(params)
         if (isActive) setEquipments(data)
       } catch (err) {
         if (isActive) {
@@ -372,7 +402,7 @@ export default function BerandaSewa({
     return () => {
       isActive = false
     }
-  }, [])
+  }, [filters.sortRating])
 
   // Kategori chip dihitung dari data yang benar-benar ada di database.
   const categories = useMemo(() => {
@@ -484,6 +514,18 @@ export default function BerandaSewa({
   const sortedProducts = useMemo(() => {
     const list = [...filteredProducts]
 
+    // Jika filter rating di sidebar aktif, pertahankan agregasi sorting dari backend
+    // kecuali pengguna memilih sorting harga spesifik di dropdown
+    if (filters.sortRating) {
+      if (sortBy === 'termurah') {
+        return list.sort((a, b) => Number(a.pricePerDay) - Number(b.pricePerDay))
+      }
+      if (sortBy === 'termahal') {
+        return list.sort((a, b) => Number(b.pricePerDay) - Number(a.pricePerDay))
+      }
+      return list
+    }
+
     if (sortBy === 'termurah') {
       return list.sort((a, b) => Number(a.pricePerDay) - Number(b.pricePerDay))
     }
@@ -494,7 +536,7 @@ export default function BerandaSewa({
 
     // 'terdekat' → jarak (km) terdekat lebih dulu
     return list.sort((a, b) => Number(a.distance) - Number(b.distance))
-  }, [filteredProducts, sortBy])
+  }, [filteredProducts, sortBy, filters.sortRating])
 
   // Label rentang tanggal untuk header & navbar.
   const dateRangeLabel = useMemo(() => {
@@ -526,6 +568,7 @@ export default function BerandaSewa({
       url.searchParams.delete('maxPrice')
       url.searchParams.delete('powerFilter')
       url.searchParams.delete('delivery')
+      url.searchParams.delete('sortRating')
       window.history.replaceState({}, '', url.toString())
     } catch {
       // Abaikan jika gagal

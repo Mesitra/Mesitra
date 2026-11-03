@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin } from 'lucide-react'
+import { MapPin, Star } from 'lucide-react'
 import { formatRupiah } from '../../lib/equipmentsApi'
 import fallbackImage from '../../assets/beranda/item_1.jpg'
 
@@ -21,6 +21,8 @@ export default function ProductCard({
   location = '',
   distance,
   userLocation = '',
+  averageRating,
+  ratingCount,
   onSelectDate,
   onClick
 }) {
@@ -76,6 +78,18 @@ export default function ProductCard({
           </span>
         </div>
 
+        {/* Badge Rating & Ulasan */}
+        {averageRating != null && Number(averageRating) > 0 && (
+          <div
+            title={`Rating: ${Number(averageRating).toFixed(1)} (${ratingCount || 0} ulasan)`}
+            className="box-border w-fit h-fit absolute right-[12px] top-[12px] flex flex-row gap-1 items-center px-2 py-1 bg-white/90 backdrop-blur-xs rounded-[999px] z-10 border border-gray-200/80 shadow-xs"
+          >
+            <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+            <span className="text-[10.5px] font-bold text-gray-800 tabular-nums">
+              {Number(averageRating).toFixed(1)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Konten Informasi Produk */}

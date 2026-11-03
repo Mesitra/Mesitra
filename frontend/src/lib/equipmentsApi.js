@@ -12,7 +12,7 @@ export const API_BASE = 'http://localhost:3000/api'
 /**
  * Ambil daftar alat yang tersedia disewa.
  *
- * @param {object} [params] - query string opsional (category, search, ownerId)
+ * @param {object} [params] - query string opsional (category, search, ownerId, sortRating)
  * @returns {Promise<object[]>} daftar alat
  */
 export async function listEquipments(params = {}) {
