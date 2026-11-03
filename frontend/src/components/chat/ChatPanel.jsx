@@ -24,7 +24,9 @@ export default function ChatPanel({
   initialPartnerName = null,
   initialContextType = null,
   initialContextData = null,
-  isEmbedded = false
+  isEmbedded = false,
+  onChatSelectChange = null,
+  onBack = null
 }) {
   const currentUser = getSessionUser()
   const currentUserId = currentUser?.id
@@ -48,6 +50,13 @@ export default function ChatPanel({
   const scrollToBottom = (behavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior })
   }
+
+  // Notifikasi perubahan obrolan terpilih ke parent (Pesan.jsx)
+  useEffect(() => {
+    if (onChatSelectChange) {
+      onChatSelectChange(selectedChat)
+    }
+  }, [selectedChat, onChatSelectChange])
 
   // ── 1. Muat Seluruh Percakapan Tersimpan dari Backend ──────────────────────────
   const fetchConversations = async (keepSelection = true) => {
@@ -266,7 +275,7 @@ export default function ChatPanel({
   return (
     <div
       className={`box-border w-full flex flex-col md:flex-row bg-white rounded-2xl ring-1 ring-slate-200 overflow-hidden shadow-xs ${
-        isEmbedded ? 'h-[720px]' : 'h-[calc(100vh-68px)] max-w-[1920px] mx-auto my-0'
+        isEmbedded ? 'h-[720px]' : 'flex-1 min-h-0 h-full max-w-[1920px] mx-auto my-0'
       }`}
     >
       {/* ── SIDEBAR KIRI: Daftar Percakapan Tersimpan ──────────────────────────── */}
@@ -276,11 +285,24 @@ export default function ChatPanel({
         }`}
       >
         {/* Header Sidebar */}
-        <div className="p-4 border-b border-slate-100 flex flex-col gap-3">
+        <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-              <h2 className="text-base font-bold text-slate-900 m-0">Pesan Masuk</h2>
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="inline-flex md:hidden items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                  title="Kembali"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Kembali</span>
+                </button>
+              )}
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-600 shrink-0" />
+                <h2 className="text-base font-bold text-slate-900 m-0 whitespace-nowrap">Pesan Masuk</h2>
+              </div>
             </div>
             <span className="text-xs text-slate-400 font-medium">
               {conversations.length} obrolan
@@ -310,7 +332,7 @@ export default function ChatPanel({
         </div>
 
         {/* Daftar Obrolan List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 pb-24 md:pb-4">
           {loadingChats ? (
             <div className="flex flex-col items-center justify-center p-8 text-slate-400 gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
@@ -417,15 +439,24 @@ export default function ChatPanel({
             {/* Header Ruang Obrolan */}
             <div className="px-4 sm:px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                {/* Tombol Kembali ke Daftar Percakapan (Mobile) */}
+                {/* Tombol Kembali (Mobile) */}
                 <button
                   type="button"
-                  onClick={() => setSelectedChat(null)}
-                  className="flex md:hidden items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer border-0 shrink-0"
-                  title="Kembali ke Daftar Obrolan"
-                  aria-label="Kembali ke Daftar Obrolan"
+                  onClick={() => {
+                    if (conversations.length > 0) {
+                      setSelectedChat(null)
+                    } else if (onBack) {
+                      onBack()
+                    } else {
+                      setSelectedChat(null)
+                    }
+                  }}
+                  className="inline-flex md:hidden items-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200 shrink-0"
+                  title="Kembali"
+                  aria-label="Kembali"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-4 h-4 text-slate-600" />
+                  <span>Kembali</span>
                 </button>
 
                 {selectedChat.partner?.photo ? (
