@@ -384,6 +384,14 @@ export default function App() {
             </PemilikProtectedRoute>
           }
         />
+        <Route
+          path="/dashboard-pemilik/alat-saya"
+          element={
+            <PemilikProtectedRoute>
+              <Navigate to="/dashboard-pemilik?tab=alat-saya" replace />
+            </PemilikProtectedRoute>
+          }
+        />
 
         {/* Portal Rahasia Internal HQ Admin (2-Step Verification) */}
         <Route
