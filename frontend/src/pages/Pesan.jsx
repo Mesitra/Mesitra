@@ -30,7 +30,7 @@ export default function Pesan() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 flex flex-col overflow-hidden">
+    <div className="w-full h-screen h-[100dvh] bg-slate-50 flex flex-col overflow-hidden">
       {/* Navbar Global Penyewa */}
       <NavbarPenyewa
         activeTab="pesan"
@@ -59,7 +59,7 @@ export default function Pesan() {
       </div>
 
       {/* Main Container Fullscreen */}
-      <div className="flex-1 w-full max-w-[1920px] mx-auto px-4 md:px-10 lg:px-12 py-2 pb-3 overflow-hidden flex flex-col min-h-0">
+      <div className="flex-1 w-full max-w-[1920px] mx-auto px-4 md:px-10 lg:px-12 py-2 pb-3 md:pb-4 overflow-hidden flex flex-col min-h-0">
         <ChatPanel
           initialPartnerId={partnerId}
           initialPartnerName={partnerName}

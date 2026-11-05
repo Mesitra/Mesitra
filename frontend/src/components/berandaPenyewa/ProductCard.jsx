@@ -46,7 +46,6 @@ export default function ProductCard({
   // Perhitungan spesifikasi & format data
   const minHari = minRentDays ?? maintenanceBufferDays ?? 1
   const displayWatt = powerWatt ? `${Number(powerWatt).toLocaleString('id-ID')} Watt` : '0 Watt'
-  const displayCategory = (category || 'Alat').toUpperCase()
   const displayDistance =
     distance != null && !isNaN(Number(distance))
       ? `${Number(distance).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 })} km`
@@ -59,7 +58,7 @@ export default function ProductCard({
       onClick={handleCardClick}
       className="group box-border w-full flex flex-col justify-between bg-white rounded-[18px] overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
     >
-      {/* Foto Alat & Pita Kategori */}
+      {/* Foto Alat */}
       <div className="box-border w-full h-55 shrink-0 flex flex-row gap-0 justify-start items-start rounded-b-[15px] overflow-hidden relative bg-slate-50">
         <img
           src={resolvedImage}
@@ -70,13 +69,6 @@ export default function ProductCard({
           }}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
         />
-
-        {/* Pita Kategori */}
-        <div className="box-border w-fit h-fit absolute left-[12px] top-[12px] flex flex-row gap-0 p-[5px_9px] justify-start items-start bg-white/90 backdrop-blur-xs rounded-[999px] z-10 border border-gray-200/80 shadow-xs">
-          <span className="text-[9.5px]/[normal] box-border text-gray-700 font-medium tracking-[0.8px] text-left uppercase whitespace-nowrap">
-            {displayCategory}
-          </span>
-        </div>
 
         {/* Badge Rating & Ulasan */}
         {averageRating != null && Number(averageRating) > 0 && (

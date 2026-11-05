@@ -275,12 +275,12 @@ export default function ChatPanel({
   return (
     <div
       className={`box-border w-full flex flex-col md:flex-row bg-white rounded-2xl ring-1 ring-slate-200 overflow-hidden shadow-xs ${
-        isEmbedded ? 'h-[720px]' : 'flex-1 min-h-0 h-full max-w-[1920px] mx-auto my-0'
+        isEmbedded ? 'h-[720px]' : 'flex-1 min-h-0 max-w-[1920px] mx-auto my-0'
       }`}
     >
       {/* ── SIDEBAR KIRI: Daftar Percakapan Tersimpan ──────────────────────────── */}
       <aside
-        className={`w-full md:w-80 lg:w-96 xl:w-[400px] shrink-0 border-r border-slate-200 bg-white flex flex-col h-full ${
+        className={`w-full md:w-80 lg:w-96 xl:w-[400px] shrink-0 border-r border-slate-200 bg-white flex flex-col flex-1 md:flex-none min-h-0 self-stretch ${
           selectedChat ? 'hidden md:flex' : 'flex'
         }`}
       >
@@ -332,7 +332,7 @@ export default function ChatPanel({
         </div>
 
         {/* Daftar Obrolan List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 pb-24 md:pb-4">
+        <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 pb-24 md:pb-4">
           {loadingChats ? (
             <div className="flex flex-col items-center justify-center p-8 text-slate-400 gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
@@ -430,7 +430,7 @@ export default function ChatPanel({
 
       {/* ── PANEL KANAN: Ruang Obrolan Aktif ───────────────────────────────────── */}
       <main
-        className={`flex-1 flex flex-col h-full bg-slate-50 min-w-0 relative ${
+        className={`flex-1 flex flex-col bg-slate-50 min-w-0 min-h-0 relative self-stretch ${
           !selectedChat ? 'hidden md:flex' : 'flex'
         }`}
       >
@@ -501,7 +501,7 @@ export default function ChatPanel({
             </div>
 
             {/* Area Scroll Gelembung Pesan (Chat Bubbles) */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3.5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 space-y-3.5">
               {selectedChat.isDraft && messages.length === 0 ? (
                 <div className="text-center py-8 px-4 text-slate-500 max-w-sm mx-auto">
                   <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -634,7 +634,7 @@ export default function ChatPanel({
           </>
         ) : (
           /* Empty State: Belum ada obrolan yang dipilih */
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
+          <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 text-center text-slate-400">
             <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
               <MessageSquare className="w-8 h-8 text-slate-300" />
             </div>
