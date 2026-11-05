@@ -1,101 +1,40 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import axios from 'axios'
 import {
   Search,
   SlidersHorizontal,
   Plus,
   ChevronDown,
   Check,
-  Package
+  Package,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react'
 import InventoryCard from './InventoryCard'
+import { getUserToken } from '../../lib/userSession'
+import { API_BASE } from '../../lib/equipmentsApi'
 
 // Re-export InventoryCard agar bisa diimpor dari AlatSaya maupun file terpisah
 export { InventoryCard }
 
-// 4 Alat dari Desain Figma HTML HalamanAlatSaya.html
-const DUMMY_EQUIPMENTS = [
-  {
-    id: 'eq-1',
-    nama: 'Mesin Kemasan Vakum',
-    daya: '900 W',
-    powerWatt: 900,
-    kategori: 'Peralatan dapur',
-    icon: 'package',
-    fotoCount: 4,
-    status: 'Tersedia',
-    deskripsi: 'Kondisi prima · Minimal sewa 1 hari · Jeda perawatan 1 hari',
-    harga: 'Rp 85.000',
-    hargaNominal: 85000,
-    deposit: 'Deposit Rp 500.000',
-    depositNominal: 500000
-  },
-  {
-    id: 'eq-2',
-    nama: 'Mesin Espresso 2 Grup',
-    daya: '2.800 W',
-    powerWatt: 2800,
-    kategori: 'Kopi & barista',
-    icon: 'coffee',
-    fotoCount: 4,
-    status: 'Sedang disewa',
-    deskripsi: 'Kondisi terawat · Minimal sewa 1 hari · Siap dikelola',
-    harga: 'Rp 250.000',
-    hargaNominal: 250000,
-    deposit: 'Deposit Rp 1.500.000',
-    depositNominal: 1500000
-  },
-  {
-    id: 'eq-3',
-    nama: 'Grinder Kopi Flat Burr',
-    daya: '350 W',
-    powerWatt: 350,
-    kategori: 'Kopi & barista',
-    icon: 'settings-2',
-    fotoCount: 4,
-    status: 'Inspeksi',
-    deskripsi: 'Kondisi terawat · Minimal sewa 1 hari · Siap dikelola',
-    harga: 'Rp 65.000',
-    hargaNominal: 65000,
-    deposit: 'Deposit Rp 300.000',
-    depositNominal: 300000
-  },
-  {
-    id: 'eq-4',
-    nama: 'Oven Deck Bakery',
-    daya: '3.200 W',
-    powerWatt: 3200,
-    kategori: 'Peralatan dapur',
-    icon: 'flame',
-    fotoCount: 4,
-    status: 'Nonaktif',
-    deskripsi: 'Kondisi terawat · Minimal sewa 1 hari · Siap dikelola',
-    harga: 'Rp 175.000',
-    hargaNominal: 175000,
-    deposit: 'Deposit Rp 1.000.000',
-    depositNominal: 1000000
-  }
-]
-
 /**
  * Halaman "Alat Saya" untuk Dashboard Pemilik Alat.
- * Dikonversi dari Figma HTML (HalamanAlatSaya.html) dengan penyesuaian tema MyRent:
- * - Background slate/white
- * - Font sans & text slate-900
- * - Tombol aksi primer biru khas MyRent (bg-blue-600 hover:bg-blue-700)
- * - Badge status Tersedia (hijau), Sedang disewa (biru), Inspeksi (kuning), Nonaktif (abu-abu)
- * - Hanya merender konten utama (sebelah kanan) tanpa menduplikasi Sidebar.
+ * Mengintegrasikan data inventaris langsung dari database backend (/api/equipments/me)
+ * dengan kalkulasi status ketersediaan real-time (Tersedia, Sedang disewa, Inspeksi, Nonaktif).
  */
 export default function AlatSaya({
   initialEquipments,
   onOpenAddModal,
   onOpenManageModal
 }) {
-  // State data inventaris awal (berisi 4 alat sesuai desain Figma)
-  const [equipments, _setEquipments] = useState(
-    Array.isArray(initialEquipments) && initialEquipments.length > 0
-      ? initialEquipments
-      : DUMMY_EQUIPMENTS
+  const [equipments, setEquipments] = useState(
+    Array.isArray(initialEquipments) ? initialEquipments : []
   )
+  const [loading, setLoading] = useState(
+    !Array.isArray(initialEquipments) || initialEquipments.length === 0
+  )
+  const [error, setError] = useState(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL') // 'ALL' | 'TERSEDIA' | 'DISEWA' | 'INSPEKSI' | 'NONAKTIF'
@@ -103,7 +42,55 @@ export default function AlatSaya({
   const [sortOrder, setSortOrder] = useState('newest') // 'newest' | 'price_desc' | 'price_asc' | 'power_desc' | 'name_asc'
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
 
-  // Hitung jumlah alat per kategori status (sinkron dengan pill badge)
+  // Mount & refresh effect: ambil data inventaris pemilik dari backend menggunakan Axios & token
+  useEffect(() => {
+    let isCancelled = false
+
+    const fetchMyEquipments = async () => {
+      try {
+        setError(null)
+
+        const token = getUserToken()
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+
+        const endpoint = `${API_BASE || 'http://localhost:3000/api'}/equipments/me`
+        const response = await axios.get(endpoint, { headers })
+        const data = Array.isArray(response.data?.data) ? response.data.data : []
+        if (!isCancelled) {
+          setEquipments(data)
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          const errorMsg =
+            err?.response?.data?.error?.message ||
+            err?.message ||
+            'Gagal memuat inventaris alat dari server'
+          setError(errorMsg)
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchMyEquipments()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [refreshTrigger])
+
+  // Tombol segarkan manual
+  const handleRefresh = useCallback(() => {
+    setLoading(true)
+    setRefreshTrigger((prev) => prev + 1)
+  }, [])
+
+  // Hitung jumlah alat per kategori status (sinkron dengan pill badge & status real-time)
   const counts = useMemo(() => {
     let all = 0
     let tersedia = 0
@@ -113,15 +100,30 @@ export default function AlatSaya({
 
     equipments.forEach((item) => {
       all++
+      const code = String(item.statusCode || '').toUpperCase()
       const st = String(item.status || '').toUpperCase()
-      if (st === 'TERSEDIA') {
+
+      if (code === 'TERSEDIA' || st === 'TERSEDIA') {
         tersedia++
-      } else if (st === 'SEDANG DISEWA' || st === 'DISEWA') {
+      } else if (
+        code === 'DISEWA' ||
+        st === 'SEDANG DISEWA' ||
+        st === 'DISEWA' ||
+        st === 'SEWA_AKTIF' ||
+        st === 'DIKIRIM'
+      ) {
         disewa++
-      } else if (st === 'INSPEKSI' || st === 'MAINTENANCE') {
+      } else if (
+        code === 'INSPEKSI' ||
+        st === 'INSPEKSI' ||
+        st === 'MAINTENANCE' ||
+        st === 'DISPUTE'
+      ) {
         inspeksi++
-      } else {
+      } else if (code === 'NONAKTIF' || st === 'NONAKTIF') {
         nonaktif++
+      } else {
+        tersedia++
       }
     })
 
@@ -132,49 +134,73 @@ export default function AlatSaya({
   const categories = useMemo(() => {
     const list = new Set()
     equipments.forEach((item) => {
-      if (item.kategori) list.add(item.kategori)
+      const cat = item.kategori || item.category
+      if (cat) list.add(cat)
     })
     return Array.from(list)
   }, [equipments])
 
-  // Filter & Pengurutan data
+  // Filter & Pengurutan data inventaris real-time
   const filteredEquipments = useMemo(() => {
     return equipments
       .filter((item) => {
+        const code = String(item.statusCode || '').toUpperCase()
         const st = String(item.status || '').toUpperCase()
 
+        const isTersedia = code === 'TERSEDIA' || st === 'TERSEDIA'
+        const isDisewa =
+          code === 'DISEWA' ||
+          st === 'SEDANG DISEWA' ||
+          st === 'DISEWA' ||
+          st === 'SEWA_AKTIF' ||
+          st === 'DIKIRIM'
+        const isInspeksi =
+          code === 'INSPEKSI' ||
+          st === 'INSPEKSI' ||
+          st === 'MAINTENANCE' ||
+          st === 'DISPUTE'
+        const isNonaktif = code === 'NONAKTIF' || st === 'NONAKTIF'
+
         // Filter Status Pills
-        if (statusFilter === 'TERSEDIA' && st !== 'TERSEDIA') return false
-        if (statusFilter === 'DISEWA' && st !== 'SEDANG DISEWA' && st !== 'DISEWA') return false
-        if (statusFilter === 'INSPEKSI' && st !== 'INSPEKSI' && st !== 'MAINTENANCE') return false
-        if (statusFilter === 'NONAKTIF' && st !== 'NONAKTIF') return false
+        if (statusFilter === 'TERSEDIA' && !isTersedia) return false
+        if (statusFilter === 'DISEWA' && !isDisewa) return false
+        if (statusFilter === 'INSPEKSI' && !isInspeksi) return false
+        if (statusFilter === 'NONAKTIF' && !isNonaktif) return false
 
         // Filter Kategori Dropdown
-        if (categoryFilter !== 'ALL' && item.kategori !== categoryFilter) return false
+        const itemCat = item.kategori || item.category
+        if (categoryFilter !== 'ALL' && itemCat !== categoryFilter) return false
 
         // Search Query
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim()
-          const nameMatch = item.nama?.toLowerCase().includes(q)
-          const catMatch = item.kategori?.toLowerCase().includes(q)
-          const descMatch = item.deskripsi?.toLowerCase().includes(q)
+          const nameMatch = (item.nama || item.name || '').toLowerCase().includes(q)
+          const catMatch = (itemCat || '').toLowerCase().includes(q)
+          const descMatch = (item.deskripsi || item.description || '').toLowerCase().includes(q)
           if (!nameMatch && !catMatch && !descMatch) return false
         }
 
         return true
       })
       .sort((a, b) => {
+        const priceA = Number(a.hargaNominal ?? a.pricePerDay ?? a.harga ?? 0)
+        const priceB = Number(b.hargaNominal ?? b.pricePerDay ?? b.harga ?? 0)
+        const powerA = Number(a.powerWatt ?? 0)
+        const powerB = Number(b.powerWatt ?? 0)
+        const nameA = a.nama || a.name || ''
+        const nameB = b.nama || b.name || ''
+
         if (sortOrder === 'price_desc') {
-          return (b.hargaNominal || 0) - (a.hargaNominal || 0)
+          return priceB - priceA
         }
         if (sortOrder === 'price_asc') {
-          return (a.hargaNominal || 0) - (b.hargaNominal || 0)
+          return priceA - priceB
         }
         if (sortOrder === 'power_desc') {
-          return (b.powerWatt || 0) - (a.powerWatt || 0)
+          return powerB - powerA
         }
         if (sortOrder === 'name_asc') {
-          return (a.nama || '').localeCompare(b.nama || '')
+          return nameA.localeCompare(nameB)
         }
         return 0
       })
@@ -194,7 +220,7 @@ export default function AlatSaya({
     if (onOpenManageModal) {
       onOpenManageModal(item)
     } else {
-      alert(`Kelola alat: ${item.nama}`)
+      alert(`Kelola alat: ${item.nama || item.name}`)
     }
   }
 
@@ -207,14 +233,14 @@ export default function AlatSaya({
             Alat Saya
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-            Kelola ketersediaan, harga, dan detail alat sewaan Anda.
+            Kelola ketersediaan, harga, dan detail alat sewaan Anda secara real-time.
           </p>
         </div>
 
-        {/* Action Controls: Search, Filter, & Tambah Alat */}
-        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+        {/* Action Controls: Search, Filter, Refresh, & Tambah Alat */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Kolom Pencarian */}
-          <div className="relative flex-1 sm:w-56">
+          <div className="relative flex-1 sm:w-52">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="text"
@@ -288,6 +314,18 @@ export default function AlatSaya({
               </div>
             )}
           </div>
+
+          {/* Tombol Segarkan Data Real-Time */}
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Segarkan data inventaris"
+            className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            aria-label="Segarkan data"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
+          </button>
 
           {/* Tombol Aksi Primer: Tambah Alat (Biru Khas MyRent) */}
           <button
@@ -429,8 +467,31 @@ export default function AlatSaya({
         </div>
       </div>
 
-      {/* ── DAFTAR KARTU INVENTARIS (MAPPING INVENTORYCARD) ─────────────── */}
-      {filteredEquipments.length === 0 ? (
+      {/* ── DAFTAR KARTU INVENTARIS / LOADING / ERROR STATE ─────────────── */}
+      {loading ? (
+        <div className="p-12 text-center bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3">
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-medium">Memuat inventaris alat Anda dari database…</p>
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center bg-red-50/70 border border-red-200 rounded-2xl shadow-xs space-y-3">
+          <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-red-800">Gagal Memuat Inventaris</h3>
+            <p className="text-xs text-red-600 max-w-sm mx-auto mt-0.5">{error}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Coba Lagi</span>
+          </button>
+        </div>
+      ) : filteredEquipments.length === 0 ? (
         <div className="p-12 text-center bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto font-bold">
             <Package className="w-6 h-6" />
@@ -460,15 +521,19 @@ export default function AlatSaya({
           {filteredEquipments.map((item) => (
             <InventoryCard
               key={item.id}
-              nama={item.nama}
-              daya={item.daya}
+              item={item}
+              nama={item.nama || item.name}
+              daya={item.daya || (item.powerWatt ? `${item.powerWatt} W` : '-')}
               status={item.status}
-              harga={item.harga}
+              harga={item.harga ?? item.pricePerDay}
               deposit={item.deposit}
-              kategori={item.kategori}
+              kategori={item.kategori || item.category}
               icon={item.icon}
-              deskripsi={item.deskripsi}
-              fotoCount={item.fotoCount}
+              deskripsi={item.deskripsi || item.description}
+              fotoCount={
+                item.fotoCount ||
+                (Array.isArray(item.images) && item.images.length > 0 ? item.images.length : 1)
+              }
               onKelola={() => handleManageClick(item)}
             />
           ))}

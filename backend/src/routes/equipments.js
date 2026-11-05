@@ -296,6 +296,165 @@ equipmentsRouter.get('/', async (req, res, next) => {
 })
 
 /**
+ * Middleware untuk memastikan request memiliki token JWT valid dan role PEMILIK atau ADMIN.
+ */
+function requireOwnerAuth(req, res, next) {
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: { code: 'UNAUTHORIZED', message: 'Token otentikasi wajib disertakan' }
+    })
+  }
+
+  try {
+    const token = authHeader.split(' ')[1]
+    const decoded = jwt.verify(token, config.jwtSecret)
+    const role = String(decoded.role || '').toUpperCase()
+
+    if (role !== 'PEMILIK' && role !== 'ADMIN') {
+      return res.status(403).json({
+        error: { code: 'FORBIDDEN', message: 'Akses khusus untuk akun pemilik alat' }
+      })
+    }
+
+    req.user = { id: decoded.userId, ...decoded }
+    req.userId = decoded.userId
+    req.userRole = role
+    next()
+  } catch {
+    return res.status(401).json({
+      error: { code: 'INVALID_TOKEN', message: 'Token tidak valid atau kedaluwarsa' }
+    })
+  }
+}
+
+/**
+ * GET /api/equipments/me
+ *
+ * Endpoint privat untuk akun pemilik alat (autentikasi JWT).
+ * Menampilkan daftar alat milik akun yang sedang login dengan status ketersediaan
+ * yang dikalkulasi secara real-time berdasarkan pesanan (Order) aktif:
+ * - Order aktif berstatus DISEWA / SEWA_AKTIF / DIKIRIM -> "Sedang disewa"
+ * - Order aktif berstatus INSPEKSI / DISPUTE            -> "Inspeksi"
+ * - Tidak ada order pengunci dan isActive true         -> "Tersedia"
+ * - isActive false (atau NONAKTIF/soft-delete)          -> "Nonaktif"
+ */
+equipmentsRouter.get('/me', requireOwnerAuth, async (req, res, next) => {
+  try {
+    const ownerId = req.user.id
+
+    const equipments = await prisma.equipment.findMany({
+      where: {
+        ownerId
+      },
+      include: {
+        owner: true,
+        orders: {
+          where: {
+            status: {
+              in: [
+                'MENUNGGU_PEMBAYARAN',
+                'MENUNGGU_KONFIRMASI',
+                'DIKIRIM',
+                'SEWA_AKTIF',
+                'INSPEKSI',
+                'DISPUTE'
+              ]
+            }
+          },
+          select: {
+            id: true,
+            status: true,
+            startDate: true,
+            endDate: true,
+            rentalCost: true,
+            depositAmount: true,
+            totalPaid: true
+          }
+        },
+        reviews: {
+          select: { id: true, rating: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const data = equipments.map((eq) => {
+      const orders = eq.orders || []
+
+      // Order aktif dengan status sewa aktif
+      const hasDisewa = orders.some((o) => {
+        const st = String(o.status || '').toUpperCase()
+        return st === 'DISEWA' || st === 'SEWA_AKTIF' || st === 'DIKIRIM'
+      })
+
+      // Order aktif dengan status inspeksi atau sengketa klaim
+      const hasInspeksi = orders.some((o) => {
+        const st = String(o.status || '').toUpperCase()
+        return st === 'INSPEKSI' || st === 'DISPUTE'
+      })
+
+      // Cek apakah alat berstatus aktif
+      const isActive =
+        (eq.isActive !== undefined ? Boolean(eq.isActive) : true) &&
+        !eq.isDeleted &&
+        String(eq.status || '').toUpperCase() !== 'NONAKTIF'
+
+      // Kalkulasi status ketersediaan real-time
+      let calculatedStatus = 'Tersedia'
+      let statusCode = 'TERSEDIA'
+
+      if (hasDisewa) {
+        calculatedStatus = 'Sedang disewa'
+        statusCode = 'DISEWA'
+      } else if (hasInspeksi) {
+        calculatedStatus = 'Inspeksi'
+        statusCode = 'INSPEKSI'
+      } else if (!isActive) {
+        calculatedStatus = 'Nonaktif'
+        statusCode = 'NONAKTIF'
+      } else {
+        calculatedStatus = 'Tersedia'
+        statusCode = 'TERSEDIA'
+      }
+
+      const bookedRanges = orders.map((o) => ({
+        id: o.id,
+        startDate: o.startDate.toISOString().slice(0, 10),
+        endDate: o.endDate.toISOString().slice(0, 10),
+        status: o.status
+      }))
+
+      const presented = presentEquipment(eq, bookedRanges)
+
+      return {
+        ...presented,
+        status: calculatedStatus,
+        statusCode,
+        rawStatus: eq.status,
+        isActive,
+        nama: eq.name,
+        name: eq.name,
+        daya: `${eq.powerWatt || 0} W`,
+        powerWatt: eq.powerWatt || 0,
+        kategori: eq.category,
+        category: eq.category,
+        deskripsi: eq.description,
+        description: eq.description,
+        harga: eq.pricePerDay,
+        pricePerDay: eq.pricePerDay,
+        deposit: eq.deposit,
+        fotoCount: Array.isArray(presented.images) && presented.images.length > 0 ? presented.images.length : 1
+      }
+    })
+
+    res.json({ data })
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
  * POST /api/equipments
  *
  * Tambah alat baru oleh pemilik (autentikasi JWT).

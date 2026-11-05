@@ -80,19 +80,23 @@ export default function InventoryCard({
   price,
   category,
   description,
-  onManage
+  onManage,
+  rawItem,
+  item
 }) {
-  const itemNama = nama || name || 'Alat Tanpa Nama'
-  const itemDaya = daya || power || '0 W'
-  const itemStatus = status || 'Tersedia'
-  const itemHarga = harga || price || 'Rp 0'
-  const itemDeposit = deposit || 'Deposit Rp 0'
-  const itemKategori = kategori || category || 'Peralatan'
-  const itemDeskripsi = deskripsi || description || 'Kondisi prima · Siap disewa'
+  const itemData = rawItem || item || {}
+  const itemNama = nama || name || itemData.nama || itemData.name || 'Alat Tanpa Nama'
+  const itemDaya = daya || power || (itemData.powerWatt ? `${itemData.powerWatt} W` : (itemData.daya || '0 W'))
+  const itemStatus = status || itemData.status || 'Tersedia'
+  const itemHarga = harga ?? price ?? itemData.harga ?? itemData.pricePerDay ?? 'Rp 0'
+  const itemDeposit = deposit ?? itemData.deposit ?? 'Deposit Rp 0'
+  const itemKategori = kategori || category || itemData.kategori || itemData.category || 'Peralatan'
+  const itemDeskripsi = deskripsi || description || itemData.deskripsi || itemData.description || 'Kondisi prima · Siap disewa'
+  const itemFotoCount = fotoCount ?? (Array.isArray(itemData.images) && itemData.images.length > 0 ? itemData.images.length : 1)
   const handleKelola = onKelola || onManage
 
   const statusConfig = getStatusBadgeConfig(itemStatus)
-  const renderedIcon = getEquipmentIcon(icon, itemKategori)
+  const renderedIcon = getEquipmentIcon(icon || itemData.icon, itemKategori)
 
   return (
     <div className="bg-white border border-slate-200/90 hover:border-blue-200 rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
@@ -114,7 +118,7 @@ export default function InventoryCard({
           {/* Indikator Jumlah Foto */}
           <div className="text-[9px] font-medium text-slate-500 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200/60 shadow-2xs w-fit flex items-center gap-1">
             <span>▧</span>
-            <span>{fotoCount} foto</span>
+            <span>{itemFotoCount} foto</span>
           </div>
         </div>
 
@@ -160,7 +164,7 @@ export default function InventoryCard({
         {/* Tombol Aksi Primer: Kelola Alat (Biru MyRent) */}
         <button
           type="button"
-          onClick={() => handleKelola && handleKelola({ nama: itemNama, status: itemStatus })}
+          onClick={() => handleKelola && handleKelola(rawItem || item || { ...itemData, nama: itemNama, status: itemStatus })}
           className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
         >
           <Settings2 className="w-3.5 h-3.5" />
@@ -170,3 +174,4 @@ export default function InventoryCard({
     </div>
   )
 }
+

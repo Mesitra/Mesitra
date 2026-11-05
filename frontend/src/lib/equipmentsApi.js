@@ -136,6 +136,31 @@ export async function deleteEquipment(id) {
 }
 
 /**
+ * Ambil daftar inventaris alat milik pemilik yang sedang login beserta kalkulasi status real-time.
+ *
+ * @returns {Promise<object[]>}
+ */
+export async function getMyEquipments() {
+  const token = getUserToken()
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  }
+
+  const response = await fetch(`${API_BASE}/equipments/me`, {
+    method: 'GET',
+    headers
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(body?.error?.message || 'Gagal memuat inventaris alat saya')
+  }
+
+  return Array.isArray(body?.data) ? body.data : []
+}
+
+/**
  * Format angka Rupiah ke gaya tampilan lokal.
  * @param {number|string} value
  * @returns {string}
@@ -145,5 +170,6 @@ export function formatRupiah(value) {
   if (!Number.isFinite(number)) return 'Rp 0'
   return `Rp ${number.toLocaleString('id-ID')}`
 }
+
 
 

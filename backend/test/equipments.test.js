@@ -380,4 +380,36 @@ test('GET /api/equipments mendukung sorting sortRating=desc dan sortRating=asc d
   }
 })
 
+test('GET /api/equipments/me menolak request tanpa token atau dengan role bukan pemilik', async () => {
+  // Tanpa token -> 401
+  const resNoAuth = await api('/api/equipments/me')
+  assert.equal(resNoAuth.status, 401)
+
+  // Token penyewa -> 403
+  const renterToken = jwt.sign({ userId: 'renter-1', role: 'PENYEWA' }, config.jwtSecret, { expiresIn: '1h' })
+  const resForbidden = await fetch(`${baseUrl}/api/equipments/me`, {
+    headers: { Authorization: `Bearer ${renterToken}` }
+  })
+  assert.equal(resForbidden.status, 403)
+})
+
+test('GET /api/equipments/me mengembalikan alat milik pemilik login dengan status ketersediaan real-time', async () => {
+  const res = await fetch(`${baseUrl}/api/equipments/me`, {
+    headers: { Authorization: `Bearer ${ownerToken}` }
+  })
+  assert.equal(res.status, 200)
+
+  const body = await res.json()
+  assert.ok(Array.isArray(body.data))
+
+  // Harus memuat EQUIPMENT_ID dan HIDDEN_EQUIPMENT_ID yang dimiliki owner
+  const myEq1 = body.data.find((e) => e.id === EQUIPMENT_ID)
+  assert.ok(myEq1, 'Equipment milik owner harus ditemukan')
+  assert.equal(myEq1.status, 'Tersedia')
+
+  const myEq2 = body.data.find((e) => e.id === HIDDEN_EQUIPMENT_ID)
+  assert.ok(myEq2, 'Equipment status non-tersedia milik owner tetap muncul di inventaris pribadi')
+})
+
+
 
