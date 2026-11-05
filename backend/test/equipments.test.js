@@ -472,6 +472,50 @@ test('DELETE dan PUT menolak penghapusan atau penonaktifan alat jika memiliki pe
   await prisma.equipment.delete({ where: { id: activeEq.id } })
 })
 
+test('POST /api/equipments menyimpan dan mengembalikan aksesoris lengkap dengan foto bukti', async () => {
+  const payload = {
+    name: 'Espresso Barista Kit dengan Bukti Aksesoris',
+    category: 'Mesin Kopi',
+    description: 'Unit dengan aksesoris foto bukti lengkap.',
+    pricePerDay: 180000,
+    deposit: 600000,
+    powerWatt: 1400,
+    weightKg: 25,
+    dimensions: '45 x 35 x 40 cm',
+    minRentDays: 1,
+    maintenanceBufferDays: 1,
+    deliveryMethods: ['PICKUP'],
+    images: ['https://example.test/espresso-kit.jpg'],
+    accessories: [
+      { name: 'Portafilter 58mm', photo: 'data:image/jpeg;base64,mockPortafilterBase64' },
+      { name: 'Tamper Stainless', photo: 'data:image/jpeg;base64,mockTamperBase64' },
+      'Kabel Power'
+    ]
+  }
+
+  const res = await fetch(`${baseUrl}/api/equipments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${ownerToken}`
+    },
+    body: JSON.stringify(payload)
+  })
+
+  assert.equal(res.status, 201)
+  const body = await res.json()
+  assert.equal(body.data.name, payload.name)
+  assert.equal(body.data.accessories.length, 3)
+  assert.equal(body.data.accessories[0].name, 'Portafilter 58mm')
+  assert.equal(body.data.accessories[0].photo, 'data:image/jpeg;base64,mockPortafilterBase64')
+  assert.equal(body.data.accessories[1].name, 'Tamper Stainless')
+  assert.equal(body.data.accessories[2], 'Kabel Power')
+
+  // Bersihkan
+  await prisma.equipment.delete({ where: { id: body.data.id } })
+})
+
+
 
 
 

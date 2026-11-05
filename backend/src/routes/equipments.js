@@ -60,7 +60,18 @@ function presentEquipment(equipment, bookedRanges = []) {
     .filter((url) => typeof url === 'string' && url.length > 0)
 
   const rawAccessories = Array.isArray(equipment.accessories) ? equipment.accessories : []
-  const accessories = rawAccessories.map((item) => (typeof item === 'string' ? item : item?.name ?? String(item)))
+  const accessories = rawAccessories
+    .map((item) => {
+      if (typeof item === 'string') return item
+      if (item && typeof item === 'object') {
+        return {
+          name: String(item.name || '').trim(),
+          photo: typeof item.photo === 'string' && item.photo.trim() ? item.photo.trim() : null
+        }
+      }
+      return String(item)
+    })
+    .filter((item) => (typeof item === 'string' ? item.length > 0 : Boolean(item?.name)))
 
   const rawDelivery = Array.isArray(equipment.deliveryMethods) ? equipment.deliveryMethods : []
   const deliveryMethods = rawDelivery.length > 0 ? rawDelivery : ['PICKUP', 'COURIER']
@@ -492,7 +503,21 @@ equipmentsRouter.post('/', requireOwnerAuth, async (req, res, next) => {
     }
 
     const formattedAccessories = Array.isArray(accessories)
-      ? accessories.map((a) => (typeof a === 'string' ? a.trim() : a?.name?.trim())).filter(Boolean)
+      ? accessories
+          .map((a) => {
+            if (typeof a === 'string') {
+              const name = a.trim()
+              return name ? name : null
+            }
+            if (a && typeof a === 'object') {
+              const name = String(a.name || '').trim()
+              if (!name) return null
+              const photo = typeof a.photo === 'string' && a.photo.trim() ? a.photo.trim() : null
+              return { name, photo }
+            }
+            return null
+          })
+          .filter(Boolean)
       : []
 
     const formattedDelivery =
@@ -670,7 +695,19 @@ async function handleUpdateEquipment(req, res, next) {
 
     if (accessories !== undefined && Array.isArray(accessories)) {
       data.accessories = accessories
-        .map((a) => (typeof a === 'string' ? a.trim() : a?.name?.trim()))
+        .map((a) => {
+          if (typeof a === 'string') {
+            const name = a.trim()
+            return name ? name : null
+          }
+          if (a && typeof a === 'object') {
+            const name = String(a.name || '').trim()
+            if (!name) return null
+            const photo = typeof a.photo === 'string' && a.photo.trim() ? a.photo.trim() : null
+            return { name, photo }
+          }
+          return null
+        })
         .filter(Boolean)
     }
 

@@ -517,14 +517,20 @@ export default function AlatSayaTab({
                     {/* Accessories pills preview */}
                     {Array.isArray(eq.accessories) && eq.accessories.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        {eq.accessories.slice(0, 3).map((acc, i) => (
-                          <span
-                            key={i}
-                            className="text-[10px] bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded-md"
-                          >
-                            {acc}
-                          </span>
-                        ))}
+                        {eq.accessories.slice(0, 3).map((acc, i) => {
+                          const label = typeof acc === 'object' && acc !== null ? acc.name : acc
+                          return (
+                            <span
+                              key={i}
+                              className="text-[10px] bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded-md inline-flex items-center gap-1"
+                            >
+                              {typeof acc === 'object' && acc?.photo && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Ada foto bukti" />
+                              )}
+                              <span>{label}</span>
+                            </span>
+                          )
+                        })}
                         {eq.accessories.length > 3 && (
                           <span className="text-[10px] text-slate-400 font-medium">
                             +{eq.accessories.length - 3} lainnya

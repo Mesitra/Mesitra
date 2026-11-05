@@ -10,7 +10,9 @@ import {
   CheckCircle2,
   MessageSquare,
   Truck,
-  Wrench
+  Wrench,
+  Camera,
+  X
 } from 'lucide-react'
 import NavbarPenyewa from '../common/NavbarPenyewa'
 import ImageGallery from './ImageGallery'
@@ -95,6 +97,7 @@ export default function DetailAlat({
   const [selectionEnd, setSelectionEnd] = useState(() => getValidatedInitialRange(null).end)
   const [dateWarning, setDateWarning] = useState(false)
   const [showPowerModal, setShowPowerModal] = useState(false)
+  const [selectedAccessoryPhoto, setSelectedAccessoryPhoto] = useState(null)
 
   // Kapasitas daya listrik usaha penyewa (dari sesi login di localStorage).
   const user = getSessionUser()
@@ -416,15 +419,33 @@ export default function DetailAlat({
                 Unit diserahkan lengkap sesuai daftar aksesoris berikut dan diverifikasi melalui BAST digital:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-1">
-                {equipment.accessories.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 font-medium"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span className="truncate">{typeof item === 'string' ? item : item?.name || String(item)}</span>
-                  </div>
-                ))}
+                {equipment.accessories.map((item, idx) => {
+                  const accName = typeof item === 'string' ? item : item?.name || String(item)
+                  const accPhoto = typeof item === 'object' && item?.photo ? item.photo : null
+
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 font-medium"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span className="truncate">{accName}</span>
+                      </div>
+                      {accPhoto && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAccessoryPhoto({ name: accName, photo: accPhoto })}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 hover:border-blue-400 text-[10px] font-bold text-slate-700 hover:text-blue-600 shadow-2xs transition-colors shrink-0 cursor-pointer"
+                          title="Lihat foto bukti fisik aksesoris"
+                        >
+                          <Camera className="w-3 h-3 text-blue-600 shrink-0" />
+                          <span>Bukti Foto</span>
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ) : (
@@ -607,6 +628,52 @@ export default function DetailAlat({
           </div>
         </section>
       </main>
+
+      {/* Lightbox Pratinjau Foto Bukti Aksesoris */}
+      {selectedAccessoryPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setSelectedAccessoryPhoto(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-bold text-slate-800">
+                  Bukti Fisik Aksesoris: {selectedAccessoryPhoto.name}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAccessoryPhoto(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 bg-slate-900/5 flex items-center justify-center max-h-[60vh] overflow-hidden">
+              <img
+                src={selectedAccessoryPhoto.photo}
+                alt={selectedAccessoryPhoto.name}
+                className="max-h-[55vh] w-auto max-w-full rounded-xl object-contain shadow-md"
+              />
+            </div>
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Foto bukti autentik dari pemilik untuk BAST</span>
+              <button
+                type="button"
+                onClick={() => setSelectedAccessoryPhoto(null)}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Optional: Update Power Modal Demo */}
       {showPowerModal && (
