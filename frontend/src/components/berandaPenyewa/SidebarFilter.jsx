@@ -49,6 +49,7 @@ export default function SidebarFilter({
   className = ''
 }) {
   const [internalDelivery, setInternalDelivery] = useState(deliveryMethods)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   // Sinkronkan state internal jika props deliveryMethods dari parent berubah (mis. saat reset)
   useEffect(() => {
@@ -236,12 +237,22 @@ export default function SidebarFilter({
     dateRange.start && dateRange.end ? diffDays(dateRange.start, dateRange.end) + 1 : 0
 
   return (
-    <aside className={`box-border w-full shrink-0 sticky top-40 h-fit flex flex-col gap-4 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
+    <aside className={`box-border w-full shrink-0 lg:sticky lg:top-24 h-fit flex flex-col gap-4 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
       {/* Head */}
       <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
-        <h2 className="text-sm text-slate-900 font-bold text-left whitespace-nowrap m-0">
-          Filter
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm text-slate-900 font-bold text-left whitespace-nowrap m-0">
+            Filter
+          </h2>
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen((prev) => !prev)}
+            className="lg:hidden flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md transition-colors"
+          >
+            <span>{isMobileOpen ? 'Tutup Filter' : 'Buka Filter'}</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMobileOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
         <button
           type="button"
           onClick={handleReset}
@@ -251,7 +262,9 @@ export default function SidebarFilter({
         </button>
       </div>
 
-      <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
+      {/* Konten Filter (Bisa di-collapse di mobile agar hemat tempat dan produk langsung terlihat) */}
+      <div className={`w-full flex-col gap-4 ${isMobileOpen ? 'flex' : 'hidden lg:flex'}`}>
+        <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Rentang Tanggal Popover Kalender Mini */}
       <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
@@ -745,6 +758,7 @@ export default function SidebarFilter({
             )
           })}
         </div>
+      </div>
       </div>
     </aside>
   )

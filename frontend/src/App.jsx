@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
 import AuthPage from './components/AuthPage'
@@ -20,7 +20,7 @@ import PemilikProtectedRoute from './components/common/PemilikProtectedRoute'
 import CheckoutWizard from './components/checkout/CheckoutWizard'
 import CheckoutStep3 from './components/checkout/CheckoutStep3'
 import OwnerDashboard from './pages/OwnerDashboard'
-import { logoutUser } from './lib/userSession'
+import { logoutUser, clearUserSession, getUserToken } from './lib/userSession'
 import {
   Building2,
   KeyRound,
@@ -99,6 +99,24 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [toastMessage, setToastMessage] = useState('')
 
+  // Keamanan Navigasi Browser: Bila pengguna menekan tombol Back bawaan browser
+  // saat sedang dalam sesi login, otomatis bersihkan sesi login agar tidak dapat
+  // kembali masuk ke area akun tanpa melakukan autentikasi ulang.
+  useEffect(() => {
+    const handlePopState = () => {
+      const token = getUserToken()
+      if (token) {
+        clearUserSession()
+        setCurrentUser(null)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [])
+
   const categories = ['Semua', 'Mesin Kopi', 'Packaging', 'Konveksi', 'Bakery']
 
   const filteredRentals = initialRentals.filter((item) => {
@@ -119,14 +137,14 @@ export default function App() {
     const normalizedRole = String(user?.role || '').toUpperCase()
     if (normalizedRole === 'ADMIN') {
       showToast('Selamat datang Super Administrator HQ!')
-      navigate('/portal-internal-hq/dashboard')
+      navigate('/portal-internal-hq/dashboard', { replace: true })
       return
     }
     showToast(`Selamat datang! Anda masuk sebagai ${normalizedRole === 'PEMILIK' ? 'Pemilik Alat' : 'Penyewa UMKM'}`)
     if (normalizedRole === 'PEMILIK') {
-      navigate('/dashboard-pemilik')
+      navigate('/dashboard-pemilik', { replace: true })
     } else {
-      navigate('/beranda-sewa')
+      navigate('/beranda-sewa', { replace: true })
     }
   }
 
@@ -196,6 +214,7 @@ export default function App() {
             <RegisterPenyewaAlat
               onNavigateLogin={() => navigate('/login')}
               onBackToLogin={() => navigate('/login')}
+              onBackToHome={() => navigate('/')}
               onRegisterSuccess={handleRegisterPenyewaFinish}
               onFinish={handleRegisterPenyewaFinish}
             />
@@ -208,6 +227,7 @@ export default function App() {
           element={
             <RegisterPemilikAlat
               onBackToLogin={() => navigate('/login')}
+              onBackToHome={() => navigate('/')}
               onFinish={handleRegisterPemilikFinish}
             />
           }

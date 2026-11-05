@@ -413,6 +413,8 @@ export default function RegisterPemilikAlat({ onBackToLogin, onFinish }) {
         roleTitle="Daftar sebagai Pemilik Alat"
         onLoginClick={handleBack}
         onHomeClick={() => navigate('/')}
+        onBackToLogin={handleBack}
+        onBackToHome={() => navigate('/')}
       />
 
       {/* Body: panel stepper (kiri) + kartu form (kanan) */}

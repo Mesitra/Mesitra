@@ -54,15 +54,26 @@ export default function RegisterFormCard({
       {/* Konten field per langkah */}
       <div className="w-full flex flex-col gap-3.5">{children}</div>
 
-      {/* Footer navigasi */}
+      {/* Footer navigasi: Kembali ke Login & Beranda Bersamaan */}
       <div className="w-full flex flex-row justify-between items-center gap-3 pt-3.5 border-t border-slate-200">
-        <button
-          type="button"
-          onClick={onBack}
-          className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
-        >
-          {backLabel}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
+          >
+            {backLabel}
+          </button>
+          {step === 1 && (
+            <button
+              type="button"
+              onClick={() => { window.location.href = '/' }}
+              className="text-xs font-medium text-slate-500 hover:text-blue-600 cursor-pointer transition-colors hidden sm:inline"
+            >
+              atau ke Beranda
+            </button>
+          )}
+        </div>
 
         <div className="flex flex-row items-center gap-2">
           <button

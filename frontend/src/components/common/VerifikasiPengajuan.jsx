@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Bell,
   ArrowRight,
+  ArrowLeft,
   Edit3,
   RefreshCw,
   XCircle,
@@ -448,6 +449,16 @@ export default function VerifikasiPengajuan({
             >
               <span>{activeConfig.primaryLabel}</span>
               <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Opsi Kembali ke Beranda */}
+            <button
+              type="button"
+              onClick={onBackToHome || (() => { window.location.href = '/' })}
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-[10px] transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+              <span>Kembali ke Beranda</span>
             </button>
 
             {onRefreshStatus ? (

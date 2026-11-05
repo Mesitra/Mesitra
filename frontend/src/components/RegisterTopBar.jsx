@@ -1,12 +1,13 @@
-import { Sparkles } from 'lucide-react'
+import { Sparkles, ArrowLeft } from 'lucide-react'
 
 /**
  * Komponen Navbar atas terpadu untuk halaman registrasi (Penyewa UMKM & Pemilik Alat).
  *
  * Sesuai panduan:
+ * - Menyediakan akses navigasi kembali ke Halaman Login dan Beranda secara bersamaan.
  * - Menggunakan struktur isi dari navbar penyewa (Logo MyRent, divider, judul role pendaftaran,
- *   tombol cepat Isi Data Demo, serta teks 'Sudah punya akun? Masuk di sini').
- * - Menggunakan acuan layout dari pemilik alat (edge-to-edge w-full h-16 px-4 sm:px-8 tanpa batas max-width di navbar).
+ *   tombol cepat Isi Data Demo, tombol Kembali ke Beranda, dan Ke Halaman Login).
+ * - Layout responsif untuk mobile, tablet, dan desktop.
  */
 export default function RegisterTopBar({
   roleTitle = 'Daftar sebagai Penyewa UMKM',
@@ -18,8 +19,8 @@ export default function RegisterTopBar({
   loginText = 'Masuk di sini',
   rightContent
 }) {
-  const handleHome = onBackToHome || onHomeClick || onBackToLogin || onLoginClick
-  const handleLogin = onBackToLogin || onLoginClick
+  const handleHome = onBackToHome || onHomeClick || (() => { window.location.href = '/' })
+  const handleLogin = onBackToLogin || onLoginClick || (() => { window.location.href = '/login' })
 
   return (
     <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-30">
@@ -30,6 +31,7 @@ export default function RegisterTopBar({
           type="button"
           onClick={handleHome}
           className="text-lg text-blue-600 font-extrabold tracking-[-0.3px] select-none hover:opacity-90 cursor-pointer transition-opacity"
+          title="Ke Beranda MyRent"
         >
           MyRent
         </button>
@@ -43,13 +45,13 @@ export default function RegisterTopBar({
         )}
       </div>
 
-      {/* Sisi Kanan: Kustom rightContent ATAU Tombol Isi Data Demo & Tautan Masuk */}
+      {/* Sisi Kanan: Kustom rightContent ATAU Tombol Kembali ke Beranda & Ke Login Bersamaan */}
       {rightContent ? (
         <div className="flex items-center gap-2 sm:gap-4">
           {rightContent}
         </div>
       ) : (
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           {onFillDemoData && (
             <button
               type="button"
@@ -62,16 +64,28 @@ export default function RegisterTopBar({
             </button>
           )}
 
-          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs">
-            <span className="text-slate-600 hidden sm:inline">Sudah punya akun?</span>
-            <button
-              type="button"
-              onClick={handleLogin}
-              className="text-blue-600 font-bold hover:underline cursor-pointer transition-colors"
-            >
-              {loginText}
-            </button>
-          </div>
+          {/* Tombol Kembali ke Beranda */}
+          <button
+            type="button"
+            onClick={handleHome}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl border border-slate-200 hover:border-blue-200 hover:bg-blue-50/50 transition-all cursor-pointer shadow-2xs"
+            title="Kembali ke Beranda"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Kembali ke Beranda</span>
+            <span className="sm:hidden">Beranda</span>
+          </button>
+
+          {/* Tombol Ke Halaman Login */}
+          <button
+            type="button"
+            onClick={handleLogin}
+            className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50/70 border border-blue-200 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl transition-all cursor-pointer shadow-2xs"
+            title="Ke Halaman Login"
+          >
+            <span className="hidden sm:inline">Ke Halaman Login</span>
+            <span className="sm:hidden">Masuk</span>
+          </button>
         </div>
       )}
       </div>

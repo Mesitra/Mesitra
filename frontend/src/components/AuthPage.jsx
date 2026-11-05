@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   CheckCircle2,
@@ -11,10 +11,19 @@ import {
 } from 'lucide-react'
 import AuthNavbar from './AuthNavbar'
 import { clearPending, writePending } from '../lib/registration'
+import { clearUserSession } from '../lib/userSession'
 
 export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToLanding }) {
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Setiap kali halaman login dimuat (termasuk saat user menekan tombol Back browser ke halaman login),
+  // bersihkan seluruh sesi agar kredensial lama tidak bisa digunakan kembali tanpa login ulang.
+  useEffect(() => {
+    clearUserSession()
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }, [])
   const [prevLocationKey, setPrevLocationKey] = useState(location.key)
   const [role, setRole] = useState(location.state?.defaultRole || location.state?.role || 'penyewa')
 
@@ -91,6 +100,25 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
       }
 
       const userRole = String(data.user?.role || '').toUpperCase()
+
+      // ── Validasi Kesesuaian Tab Peran yang Dipilih ─────────────────────────
+      // Mencegah login akun penyewa pada tab pemilik atau sebaliknya.
+      if (role === 'pemilik' && userRole === 'PENYEWA') {
+        setError("Akun ini terdaftar sebagai Penyewa Alat. Silakan pilih tab 'Penyewa UMKM' untuk masuk.")
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setIsLoading(false)
+        return
+      }
+
+      if (role === 'penyewa' && userRole === 'PEMILIK') {
+        setError("Akun ini terdaftar sebagai Pemilik Alat. Silakan pilih tab 'Pemilik Alat' untuk masuk.")
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setIsLoading(false)
+        return
+      }
+
       const verificationStatus = String(data.user?.verificationStatus || 'DISETUJUI').toUpperCase()
       const isPenyewaOrPemilik = userRole === 'PENYEWA' || userRole === 'PEMILIK'
 
@@ -153,9 +181,9 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
       if (onLoginSuccess) {
         onLoginSuccess(data.user)
       } else if (userRole === 'PEMILIK') {
-        navigate('/dashboard-pemilik')
+        navigate('/dashboard-pemilik', { replace: true })
       } else {
-        navigate('/beranda-sewa')
+        navigate('/beranda-sewa', { replace: true })
       }
     } catch (err) {
       setError(err.message || 'Gagal terhubung ke server autentikasi.')
@@ -310,9 +338,9 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
               {/* Tab Switcher Pemilihan Role (tanpa ikon toko / kunci) */}
               <RoleTabSwitcher activeRole={role} onRoleChange={handleRoleChange} />
 
-              {/* Edukasi Single Login Flow */}
+              {/* Info Pemilihan Peran */}
               <p className="text-[11px] text-slate-500 leading-tight pt-0.5">
-                Sistem satu pintu otomatis mengarahkan ke hak akses akun terdaftar Anda setelah masuk.
+                Pastikan tab peran yang dipilih sesuai dengan jenis akun Anda saat mendaftar.
               </p>
             </div>
 
