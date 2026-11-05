@@ -123,8 +123,6 @@ export default function EquipmentFormModal({
   onDelete,
   onSuccess
 }) {
-  if (!isOpen) return null
-
   const isEditMode = mode === 'edit' || Boolean(equipment)
   const fileInputRef = useRef(null)
   const newAccFileInputRef = useRef(null)
@@ -160,8 +158,8 @@ export default function EquipmentFormModal({
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
 
-  // Kelengkapan & Foto Bukti per Aksesoris
-  const [accessories, setAccessories] = useState([{ name: 'Kabel Power', photo: null }])
+  // Kelengkapan & Foto Bukti per Aksesoris (Default kosong untuk alat baru)
+  const [accessories, setAccessories] = useState([])
   const [newAccessoryName, setNewAccessoryName] = useState('')
   const [newAccessoryPhoto, setNewAccessoryPhoto] = useState(null)
   const [isProcessingAccPhoto, setIsProcessingAccPhoto] = useState(false)
@@ -176,23 +174,29 @@ export default function EquipmentFormModal({
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // ── LOCK SCROLL DI BACKGROUND SAAT MODAL TERBUKA ─────────────────────────────
+  // ── LOCK SCROLL DI BACKGROUND SAAT MODAL TERBUKA & CLEANUP TUNTAS SAAT DITUTUP ──
   useEffect(() => {
-    if (!isOpen) return
-
-    const originalOverflow = document.body.style.overflow
-    const originalPaddingRight = document.body.style.paddingRight
+    if (!isOpen) {
+      // Pastikan ketika modal tidak terbuka, lock scroll selalu dilepas tuntas
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+      document.body.style.paddingRight = ''
+      return
+    }
 
     // Hitung lebar scrollbar agar layout tidak bergeser saat scroll dikunci
     const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
     if (scrollBarWidth > 0) {
       document.body.style.paddingRight = `${scrollBarWidth}px`
     }
 
     return () => {
-      document.body.style.overflow = originalOverflow
-      document.body.style.paddingRight = originalPaddingRight
+      // Selalu kembalikan overflow ke kondisi default saat modal ditutup atau unmount
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+      document.body.style.paddingRight = ''
     }
   }, [isOpen])
 
@@ -235,7 +239,7 @@ export default function EquipmentFormModal({
       if (Array.isArray(equipment.accessories) && equipment.accessories.length > 0) {
         setAccessories(normalizeAccessories(equipment.accessories))
       } else {
-        setAccessories([{ name: 'Kabel Power', photo: null }])
+        setAccessories([])
       }
 
       const activeFlag =
@@ -244,7 +248,7 @@ export default function EquipmentFormModal({
           : String(equipment.status || '').toUpperCase() !== 'NONAKTIF' && !equipment.isDeleted
       setIsActive(activeFlag)
     } else {
-      // Reset form ke default create mode: Foto utama kosong murni
+      // Reset form ke default create mode: Foto utama kosong & aksesoris kosong
       setName('')
       setCategory('Mesin Kopi')
       setCondition('Prima')
@@ -262,7 +266,7 @@ export default function EquipmentFormModal({
       setDeliveryCourier(true)
       setDeliveryFee(45000)
       setImages([]) // KOSONG SECARA DEFAULT
-      setAccessories([{ name: 'Kabel Power', photo: null }])
+      setAccessories([]) // KOSONG SECARA DEFAULT UNTUK ALAT BARU
       setIsActive(true)
     }
 
@@ -404,6 +408,17 @@ export default function EquipmentFormModal({
       return
     }
 
+    // Validasi Foto Fisik Aksesoris Wajib jika ada aksesoris yang didaftarkan
+    const missingAccPhotos = accessories.filter(
+      (a) => !a?.photo || (typeof a.photo === 'string' && !a.photo.trim())
+    )
+    if (missingAccPhotos.length > 0) {
+      setError(
+        `Semua aksesoris yang didaftarkan wajib memiliki foto bukti fisik (${missingAccPhotos.length} aksesoris belum memiliki foto).`
+      )
+      return
+    }
+
     if (!name.trim()) {
       setError('Nama alat wajib diisi')
       return
@@ -517,7 +532,21 @@ export default function EquipmentFormModal({
   }
 
   const hasPhotos = images.length > 0
-  const isSubmitDisabled = loading || deleteLoading || isUploadingPhoto || !hasPhotos
+  const missingAccPhotos = accessories.filter(
+    (a) => !a?.photo || (typeof a.photo === 'string' && !a.photo.trim())
+  )
+  const hasAllAccessoryPhotos = accessories.length === 0 || missingAccPhotos.length === 0
+
+  const isSubmitDisabled =
+    loading ||
+    deleteLoading ||
+    isUploadingPhoto ||
+    isProcessingAccPhoto ||
+    !hasPhotos ||
+    !hasAllAccessoryPhotos
+
+  // PENTING: Early return diletakkan SETELAH seluruh Hook terpanggil agar tidak melanggar aturan React
+  if (!isOpen) return null
 
   return (
     <div
@@ -1066,9 +1095,16 @@ export default function EquipmentFormModal({
                       Lampirkan foto bukti fisik per aksesoris sebagai arsip verifikasi serah terima BAST & perlindungan aju banding jika terjadi klaim hilang.
                     </p>
                   </div>
-                  <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-md border border-blue-200 shrink-0">
-                    {accessories.length} Aksesoris
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {accessories.length > 0 && !hasAllAccessoryPhotos && (
+                      <span className="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-md border border-amber-200">
+                        {missingAccPhotos.length} Belum Ada Foto
+                      </span>
+                    )}
+                    <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-md border border-blue-200">
+                      {accessories.length} Aksesoris
+                    </span>
+                  </div>
                 </div>
 
                 {/* Input Tambah Aksesoris Baru + Lampiran Foto */}
@@ -1208,8 +1244,9 @@ export default function EquipmentFormModal({
                                   <span>Foto Bukti Terlampir</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                  <span>Tanpa Foto Bukti</span>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                  <AlertTriangle className="w-2.5 h-2.5 text-amber-600" />
+                                  <span>Wajib Foto Bukti</span>
                                 </span>
                               )}
                             </div>
@@ -1239,7 +1276,8 @@ export default function EquipmentFormModal({
                             <button
                               type="button"
                               onClick={() => handleTriggerItemUpload(idx)}
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg cursor-pointer border border-blue-200"
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg cursor-pointer border border-amber-300 shadow-2xs"
+                              title="Unggah foto fisik untuk aksesoris ini"
                             >
                               <Camera className="w-3 h-3" />
                               <span>+ Upload Foto</span>
@@ -1364,12 +1402,19 @@ export default function EquipmentFormModal({
           <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 bg-white shrink-0 flex items-center justify-between gap-3">
             {/* Indikator Validasi Foto untuk Mengaktifkan Tombol */}
             <div>
-              {!hasPhotos && (
+              {!hasPhotos ? (
                 <div className="text-[11px] text-amber-600 font-bold flex items-center gap-1.5 animate-in fade-in">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>Unggah minimal 1 foto asli alat untuk mengaktifkan tombol</span>
                 </div>
-              )}
+              ) : !hasAllAccessoryPhotos ? (
+                <div className="text-[11px] text-amber-600 font-bold flex items-center gap-1.5 animate-in fade-in">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    Unggah foto bukti untuk semua aksesoris ({missingAccPhotos.length} belum ada foto)
+                  </span>
+                </div>
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2.5">
@@ -1384,7 +1429,13 @@ export default function EquipmentFormModal({
               <button
                 type="submit"
                 disabled={isSubmitDisabled}
-                title={!hasPhotos ? 'Unggah minimal 1 foto asli alat untuk mengaktifkan tombol ini' : ''}
+                title={
+                  !hasPhotos
+                    ? 'Unggah minimal 1 foto asli alat untuk mengaktifkan tombol ini'
+                    : !hasAllAccessoryPhotos
+                    ? `Unggah foto bukti untuk ${missingAccPhotos.length} aksesoris yang belum memiliki foto`
+                    : ''
+                }
                 className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 ${
                   isSubmitDisabled
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/60'
