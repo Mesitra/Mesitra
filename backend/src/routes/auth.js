@@ -59,9 +59,10 @@ function presentUser(user) {
       customPower: kycData.customPower ?? null,
       // Data tambahan untuk halaman Pesanan Saya & wizard Kembalikan Alat.
       businessName: kycData.businessName ?? null,
-      address: kycData.address ?? null,
-      city: kycData.city ?? null,
-      district: kycData.district ?? null,
+      namaLokasi: (kycData.namaLokasi || kycData.locationName) ?? null,
+      address: (kycData.address || kycData.alamat) ?? null,
+      city: (kycData.city || kycData.kota) ?? null,
+      district: (kycData.district || kycData.kecamatan) ?? null,
       landmark: kycData.landmark ?? null,
       bankName: kycData.bankName ?? null,
       bankAccountNumber: kycData.bankAccountNumber ?? null,

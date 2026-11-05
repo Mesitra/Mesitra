@@ -13,9 +13,11 @@ import {
   EyeOff,
   Star,
   Camera,
-  CheckCircle2
+  CheckCircle2,
+  MapPin
 } from 'lucide-react'
 import { createEquipment, updateEquipment, deleteEquipment, formatRupiah } from '../../lib/equipmentsApi'
+import { getSessionUser } from '../../lib/userSession'
 
 export const CATEGORY_OPTIONS = [
   'Mesin Kopi',
@@ -32,6 +34,45 @@ export const CONDITION_OPTIONS = [
   'Sangat Baik',
   'Normal'
 ]
+
+/**
+ * Dapatkan alamat lokasi toko/gudang pemilik dari profil akun / kycData
+ */
+export function getStoreLocation() {
+  const user = getSessionUser()
+  const kyc = user?.kycData || {}
+
+  if (kyc.namaLokasi && (kyc.city || kyc.kota)) {
+    return `${kyc.namaLokasi}, ${kyc.city || kyc.kota}`
+  }
+  if ((kyc.alamat || kyc.address) && (kyc.city || kyc.kota)) {
+    const shortAddr = (kyc.alamat || kyc.address).split(',')[0].trim()
+    return `${shortAddr}, ${kyc.city || kyc.kota}`
+  }
+  if (kyc.namaLokasi) return kyc.namaLokasi
+  if (kyc.alamat || kyc.address) return (kyc.alamat || kyc.address).split(',')[0].trim()
+  if (kyc.city || kyc.kota) return kyc.city || kyc.kota
+
+  try {
+    const raw = localStorage.getItem('myrent_register_pemilik_form')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      const data = parsed?.formData || parsed
+      if (data?.namaLokasi && data?.kota) {
+        return `${data.namaLokasi}, ${data.kota}`
+      }
+      if (data?.alamat && data?.kota) {
+        const shortAddr = data.alamat.split(',')[0].trim()
+        return `${shortAddr}, ${data.kota}`
+      }
+      if (data?.kota) return data.kota
+    }
+  } catch {
+    // abaikan jika parsing gagal
+  }
+
+  return 'Gudang Cilandak, Jakarta Selatan'
+}
 
 /**
  * Normalisasi data aksesoris dari backend / state menjadi struktur objek konsisten:
@@ -129,29 +170,29 @@ export default function EquipmentFormModal({
   const itemAccFileInputRef = useRef(null)
   const activeAccIndexRef = useRef(null)
 
-  // 1. Informasi Dasar & Kategori
+  // 1. Informasi Dasar & Kategori (Kosong secara default untuk tambah alat baru)
   const [name, setName] = useState('')
-  const [category, setCategory] = useState('Mesin Kopi')
-  const [condition, setCondition] = useState('Prima')
-  const [stock, setStock] = useState(1)
-  const [location, setLocation] = useState('Jakarta Selatan')
+  const [category, setCategory] = useState('')
+  const [condition, setCondition] = useState('')
+  const [stock, setStock] = useState('')
+  const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
 
   // 2. Harga & Aturan Sewa
   const [pricePerDay, setPricePerDay] = useState('')
   const [deposit, setDeposit] = useState('')
-  const [minRentDays, setMinRentDays] = useState(1)
-  const [maintenanceBufferDays, setMaintenanceBufferDays] = useState(1)
+  const [minRentDays, setMinRentDays] = useState('')
+  const [maintenanceBufferDays, setMaintenanceBufferDays] = useState('')
 
   // 3. Spesifikasi Teknis
-  const [powerWatt, setPowerWatt] = useState(0)
-  const [weightKg, setWeightKg] = useState(10)
-  const [dimensions, setDimensions] = useState('40 × 30 × 30 cm')
+  const [powerWatt, setPowerWatt] = useState('')
+  const [weightKg, setWeightKg] = useState('')
+  const [dimensions, setDimensions] = useState('')
 
   // 4. Logistik & Pengiriman
-  const [deliveryPickup, setDeliveryPickup] = useState(true)
-  const [deliveryCourier, setDeliveryCourier] = useState(true)
-  const [deliveryFee, setDeliveryFee] = useState(45000)
+  const [deliveryPickup, setDeliveryPickup] = useState(false)
+  const [deliveryCourier, setDeliveryCourier] = useState(false)
+  const [deliveryFee, setDeliveryFee] = useState('')
 
   // 5. Media & Kelengkapan (Hanya Foto Galeri Asli)
   const [images, setImages] = useState([])
@@ -248,23 +289,23 @@ export default function EquipmentFormModal({
           : String(equipment.status || '').toUpperCase() !== 'NONAKTIF' && !equipment.isDeleted
       setIsActive(activeFlag)
     } else {
-      // Reset form ke default create mode: Foto utama kosong & aksesoris kosong
+      // Reset form ke default create mode: SEMUA FIELD INPUT KOSONG
       setName('')
-      setCategory('Mesin Kopi')
-      setCondition('Prima')
-      setStock(1)
-      setLocation('Jakarta Selatan')
+      setCategory('')
+      setCondition('')
+      setStock('')
+      setLocation('')
       setDescription('')
       setPricePerDay('')
       setDeposit('')
-      setMinRentDays(1)
-      setMaintenanceBufferDays(1)
-      setPowerWatt(0)
-      setWeightKg(10)
-      setDimensions('40 × 30 × 30 cm')
-      setDeliveryPickup(true)
-      setDeliveryCourier(true)
-      setDeliveryFee(45000)
+      setMinRentDays('')
+      setMaintenanceBufferDays('')
+      setPowerWatt('')
+      setWeightKg('')
+      setDimensions('')
+      setDeliveryPickup(false)
+      setDeliveryCourier(false)
+      setDeliveryFee('')
       setImages([]) // KOSONG SECARA DEFAULT
       setAccessories([]) // KOSONG SECARA DEFAULT UNTUK ALAT BARU
       setIsActive(true)
@@ -419,24 +460,9 @@ export default function EquipmentFormModal({
       return
     }
 
-    if (!name.trim()) {
-      setError('Nama alat wajib diisi')
-      return
-    }
-    if (!category.trim()) {
-      setError('Pilih kategori alat')
-      return
-    }
-    if (!pricePerDay || Number(pricePerDay) <= 0) {
-      setError('Tarif sewa per hari wajib diisi angka lebih dari 0')
-      return
-    }
-    if (deposit === '' || Number(deposit) < 0) {
-      setError('Nominal deposit uang jaminan wajib diisi')
-      return
-    }
-    if (!deliveryPickup && !deliveryCourier) {
-      setError('Pilih minimal satu metode pengiriman (Ambil Sendiri atau Kurir Toko)')
+    // Validasi Seluruh Field Formulir Wajib Terisi
+    if (hasEmptyFields) {
+      setError('Mohon lengkapi seluruh field input formulir sebelum menyimpan.')
       return
     }
 
@@ -450,14 +476,14 @@ export default function EquipmentFormModal({
       description: description.trim(),
       condition: condition.trim(),
       stock: Math.max(1, parseInt(stock, 10) || 1),
-      location: location.trim() || 'Jakarta Selatan',
+      location: location.trim(),
       pricePerDay: Math.max(0, parseInt(pricePerDay, 10) || 0),
       deposit: Math.max(0, parseInt(deposit, 10) || 0),
       minRentDays: Math.max(1, parseInt(minRentDays, 10) || 1),
       maintenanceBufferDays: Math.max(0, parseInt(maintenanceBufferDays, 10) || 0),
       powerWatt: Math.max(0, parseInt(powerWatt, 10) || 0),
-      weightKg: Math.max(0, parseFloat(weightKg) || 10),
-      dimensions: dimensions.trim() || '40 × 30 × 30 cm',
+      weightKg: Math.max(0, parseFloat(weightKg) || 0),
+      dimensions: dimensions.trim(),
       deliveryMethods,
       deliveryFee: deliveryCourier ? Math.max(0, parseInt(deliveryFee, 10) || 0) : 0,
       images,
@@ -537,13 +563,48 @@ export default function EquipmentFormModal({
   )
   const hasAllAccessoryPhotos = accessories.length === 0 || missingAccPhotos.length === 0
 
+  // ── VALIDASI SEMUA FIELD INPUT WAJIB TERISI (TIDAK BOLEH ADA FIELD KOSONG) ───
+  const isNameEmpty = !name.trim()
+  const isCategoryEmpty = !category.trim()
+  const isConditionEmpty = !condition.trim()
+  const isStockEmpty = String(stock).trim() === '' || isNaN(Number(stock)) || Number(stock) <= 0
+  const isLocationEmpty = !location.trim()
+  const isDescriptionEmpty = !description.trim()
+  const isPriceEmpty = String(pricePerDay).trim() === '' || isNaN(Number(pricePerDay)) || Number(pricePerDay) <= 0
+  const isDepositEmpty = String(deposit).trim() === '' || isNaN(Number(deposit)) || Number(deposit) < 0
+  const isMinRentDaysEmpty = String(minRentDays).trim() === '' || isNaN(Number(minRentDays)) || Number(minRentDays) < 1
+  const isBufferDaysEmpty = String(maintenanceBufferDays).trim() === '' || isNaN(Number(maintenanceBufferDays)) || Number(maintenanceBufferDays) < 0
+  const isPowerWattEmpty = String(powerWatt).trim() === '' || isNaN(Number(powerWatt)) || Number(powerWatt) < 0
+  const isWeightEmpty = String(weightKg).trim() === '' || isNaN(Number(weightKg)) || Number(weightKg) <= 0
+  const isDimensionsEmpty = !dimensions.trim()
+  const isDeliveryEmpty = !deliveryPickup && !deliveryCourier
+  const isDeliveryFeeEmpty = deliveryCourier && (String(deliveryFee).trim() === '' || isNaN(Number(deliveryFee)) || Number(deliveryFee) < 0)
+
+  const hasEmptyFields =
+    isNameEmpty ||
+    isCategoryEmpty ||
+    isConditionEmpty ||
+    isStockEmpty ||
+    isLocationEmpty ||
+    isDescriptionEmpty ||
+    isPriceEmpty ||
+    isDepositEmpty ||
+    isMinRentDaysEmpty ||
+    isBufferDaysEmpty ||
+    isPowerWattEmpty ||
+    isWeightEmpty ||
+    isDimensionsEmpty ||
+    isDeliveryEmpty ||
+    isDeliveryFeeEmpty
+
   const isSubmitDisabled =
     loading ||
     deleteLoading ||
     isUploadingPhoto ||
     isProcessingAccPhoto ||
     !hasPhotos ||
-    !hasAllAccessoryPhotos
+    !hasAllAccessoryPhotos ||
+    hasEmptyFields
 
   // PENTING: Early return diletakkan SETELAH seluruh Hook terpanggil agar tidak melanggar aturan React
   if (!isOpen) return null
@@ -645,6 +706,7 @@ export default function EquipmentFormModal({
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium cursor-pointer"
                     >
+                      <option value="">-- Pilih Kategori --</option>
                       {CATEGORY_OPTIONS.map((cat) => (
                         <option key={cat} value={cat}>
                           {cat}
@@ -655,13 +717,14 @@ export default function EquipmentFormModal({
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Kondisi Fisik
+                      Kondisi Fisik <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={condition}
                       onChange={(e) => setCondition(e.target.value)}
                       className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium cursor-pointer"
                     >
+                      <option value="">-- Pilih Kondisi --</option>
                       {CONDITION_OPTIONS.map((cond) => (
                         <option key={cond} value={cond}>
                           {cond}
@@ -672,25 +735,37 @@ export default function EquipmentFormModal({
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Jumlah Stok Unit
+                      Jumlah Stok Unit <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
                       min="1"
+                      placeholder="Contoh: 1"
                       value={stock}
-                      onChange={(e) => setStock(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      onChange={(e) => setStock(e.target.value)}
                       className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Lokasi Gudang / Penyimpanan
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700">
+                      Lokasi Gudang / Penyimpanan <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setLocation(getStoreLocation())}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/70 border border-blue-200 px-2.5 py-1 rounded-lg cursor-pointer transition-colors shadow-2xs"
+                      title="Gunakan alamat/lokasi toko yang terdaftar saat registrasi akun pemilik"
+                    >
+                      <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
+                      <span>Gunakan lokasi toko</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
-                    placeholder="Contoh: Kec. Cilandak, Jakarta Selatan"
+                    placeholder="Contoh: Jl. Cilandak Tengah No. 24, Jakarta Selatan"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium"
@@ -699,7 +774,7 @@ export default function EquipmentFormModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Deskripsi Lengkap Alat
+                    Deskripsi Lengkap Alat <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows="3"
@@ -776,13 +851,14 @@ export default function EquipmentFormModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Minimal Durasi Sewa (Hari)
+                    Minimal Durasi Sewa (Hari) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     min="1"
+                    placeholder="Contoh: 1"
                     value={minRentDays}
-                    onChange={(e) => setMinRentDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    onChange={(e) => setMinRentDays(e.target.value)}
                     className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium"
                   />
                   <p className="text-[10.5px] text-slate-400 mt-1">
@@ -792,13 +868,14 @@ export default function EquipmentFormModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Jeda Rawat / Buffer Servis (Hari)
+                    Jeda Rawat / Buffer Servis (Hari) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     min="0"
+                    placeholder="Contoh: 1"
                     value={maintenanceBufferDays}
-                    onChange={(e) => setMaintenanceBufferDays(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    onChange={(e) => setMaintenanceBufferDays(e.target.value)}
                     className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium"
                   />
                   <p className="text-[10.5px] text-slate-500 mt-1 leading-snug">
@@ -822,40 +899,40 @@ export default function EquipmentFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Daya Listrik (Watt)
+                    Daya Listrik (Watt) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     min="0"
-                    placeholder="Contoh: 1300"
+                    placeholder="Contoh: 1300 (0 jika manual)"
                     value={powerWatt}
-                    onChange={(e) => setPowerWatt(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    onChange={(e) => setPowerWatt(e.target.value)}
                     className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Berat (Kg)
+                    Berat (Kg) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
-                    min="0.1"
-                    step="0.5"
-                    placeholder="Contoh: 10"
+                    min="0.01"
+                    step="any"
+                    placeholder="Contoh: 10 atau 0.8"
                     value={weightKg}
-                    onChange={(e) => setWeightKg(Math.max(0, parseFloat(e.target.value) || 0))}
+                    onChange={(e) => setWeightKg(e.target.value)}
                     className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Dimensi (P × L × T)
+                    Dimensi (P × L × T) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="40 × 30 × 30 cm"
+                    placeholder="Contoh: 40 × 30 × 30 cm"
                     value={dimensions}
                     onChange={(e) => setDimensions(e.target.value)}
                     className="w-full bg-white text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-medium"
@@ -901,7 +978,7 @@ export default function EquipmentFormModal({
                 {deliveryCourier && (
                   <div className="pt-2">
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Tarif Flat Kurir Toko (Rp)
+                      Tarif Flat Kurir Toko (Rp) <span className="text-red-500">*</span>
                     </label>
                     <div className="relative max-w-xs">
                       <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">
@@ -910,8 +987,9 @@ export default function EquipmentFormModal({
                       <input
                         type="number"
                         min="0"
+                        placeholder="Contoh: 45000"
                         value={deliveryFee}
-                        onChange={(e) => setDeliveryFee(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        onChange={(e) => setDeliveryFee(e.target.value)}
                         className="w-full bg-white text-xs sm:text-sm rounded-xl pl-10 pr-3.5 py-2.5 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs font-semibold"
                       />
                     </div>
@@ -1400,7 +1478,7 @@ export default function EquipmentFormModal({
 
           {/* ── STICKY FOOTER ACTIONS (PINNED DI BAWAH) ───────────────────────── */}
           <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 bg-white shrink-0 flex items-center justify-between gap-3">
-            {/* Indikator Validasi Foto untuk Mengaktifkan Tombol */}
+            {/* Indikator Validasi Form untuk Mengaktifkan Tombol */}
             <div>
               {!hasPhotos ? (
                 <div className="text-[11px] text-amber-600 font-bold flex items-center gap-1.5 animate-in fade-in">
@@ -1413,6 +1491,11 @@ export default function EquipmentFormModal({
                   <span>
                     Unggah foto bukti untuk semua aksesoris ({missingAccPhotos.length} belum ada foto)
                   </span>
+                </div>
+              ) : hasEmptyFields ? (
+                <div className="text-[11px] text-amber-600 font-bold flex items-center gap-1.5 animate-in fade-in">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Lengkapi seluruh field formulir yang masih kosong untuk mengaktifkan tombol</span>
                 </div>
               ) : null}
             </div>
@@ -1434,6 +1517,8 @@ export default function EquipmentFormModal({
                     ? 'Unggah minimal 1 foto asli alat untuk mengaktifkan tombol ini'
                     : !hasAllAccessoryPhotos
                     ? `Unggah foto bukti untuk ${missingAccPhotos.length} aksesoris yang belum memiliki foto`
+                    : hasEmptyFields
+                    ? 'Lengkapi semua field formulir di atas untuk mengaktifkan tombol ini'
                     : ''
                 }
                 className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 ${
