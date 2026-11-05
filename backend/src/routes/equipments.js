@@ -511,9 +511,7 @@ equipmentsRouter.post('/', requireOwnerAuth, async (req, res, next) => {
         ? images
             .map((url) => (typeof url === 'string' ? url.trim() : url?.url?.trim()))
             .filter((url) => typeof url === 'string' && url.length > 0)
-        : [
-            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
-          ]
+        : []
 
     const ownerUser = await prisma.user.findUnique({
       where: { id: ownerId },
