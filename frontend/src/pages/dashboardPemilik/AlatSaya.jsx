@@ -11,6 +11,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import InventoryCard from './InventoryCard'
+import EquipmentFormModal from '../../components/owner/EquipmentFormModal'
 import { getUserToken } from '../../lib/userSession'
 import { API_BASE } from '../../lib/equipmentsApi'
 
@@ -25,7 +26,8 @@ export { InventoryCard }
 export default function AlatSaya({
   initialEquipments,
   onOpenAddModal,
-  onOpenManageModal
+  onOpenManageModal,
+  refreshSignal = 0
 }) {
   const [equipments, setEquipments] = useState(
     Array.isArray(initialEquipments) ? initialEquipments : []
@@ -35,6 +37,10 @@ export default function AlatSaya({
   )
   const [error, setError] = useState(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // Internal modal states untuk mode standalone (fallback jika modal tidak dikontrol parent)
+  const [internalAddOpen, setInternalAddOpen] = useState(false)
+  const [internalManageItem, setInternalManageItem] = useState(null)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL') // 'ALL' | 'TERSEDIA' | 'DISEWA' | 'INSPEKSI' | 'NONAKTIF'
@@ -82,7 +88,14 @@ export default function AlatSaya({
     return () => {
       isCancelled = true
     }
-  }, [refreshTrigger])
+  }, [refreshTrigger, refreshSignal])
+
+  // Sinkronisasi saat initialEquipments berubah dari parent
+  useEffect(() => {
+    if (Array.isArray(initialEquipments) && initialEquipments.length > 0) {
+      setEquipments(initialEquipments)
+    }
+  }, [initialEquipments])
 
   // Tombol segarkan manual
   const handleRefresh = useCallback(() => {
@@ -211,7 +224,7 @@ export default function AlatSaya({
     if (onOpenAddModal) {
       onOpenAddModal()
     } else {
-      alert('Formulir Tambah Alat: fitur modal tambah alat dibuka.')
+      setInternalAddOpen(true)
     }
   }
 
@@ -220,7 +233,7 @@ export default function AlatSaya({
     if (onOpenManageModal) {
       onOpenManageModal(item)
     } else {
-      alert(`Kelola alat: ${item.nama || item.name}`)
+      setInternalManageItem(item)
     }
   }
 
@@ -538,6 +551,27 @@ export default function AlatSaya({
             />
           ))}
         </div>
+      )}
+
+      {/* Fallback Internal Modal Tambah Alat jika tidak ditangani parent */}
+      {!onOpenAddModal && (
+        <EquipmentFormModal
+          isOpen={internalAddOpen}
+          mode="create"
+          onClose={() => setInternalAddOpen(false)}
+          onSuccess={() => handleRefresh()}
+        />
+      )}
+
+      {/* Fallback Internal Modal Kelola Alat jika tidak ditangani parent */}
+      {!onOpenManageModal && (
+        <EquipmentFormModal
+          isOpen={Boolean(internalManageItem)}
+          mode="edit"
+          equipment={internalManageItem}
+          onClose={() => setInternalManageItem(null)}
+          onSuccess={() => handleRefresh()}
+        />
       )}
     </section>
   )

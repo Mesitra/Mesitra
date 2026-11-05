@@ -459,24 +459,9 @@ equipmentsRouter.get('/me', requireOwnerAuth, async (req, res, next) => {
  *
  * Tambah alat baru oleh pemilik (autentikasi JWT).
  */
-equipmentsRouter.post('/', async (req, res, next) => {
+equipmentsRouter.post('/', requireOwnerAuth, async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: { code: 'UNAUTHORIZED', message: 'Token otentikasi wajib disertakan' }
-      })
-    }
-
-    let ownerId
-    try {
-      const decoded = jwt.verify(authHeader.split(' ')[1], config.jwtSecret)
-      ownerId = decoded.userId
-    } catch {
-      return res.status(401).json({
-        error: { code: 'INVALID_TOKEN', message: 'Token tidak valid atau kedaluwarsa' }
-      })
-    }
+    const ownerId = req.user.id
 
     const {
       name,
@@ -500,7 +485,7 @@ equipmentsRouter.post('/', async (req, res, next) => {
       images = []
     } = req.body ?? {}
 
-    if (!name || !category || !pricePerDay || !deposit) {
+    if (!name || !category || pricePerDay === undefined || deposit === undefined) {
       return res.status(400).json({
         error: { code: 'VALIDATION_ERROR', message: 'Nama, kategori, tarif sewa, dan deposit wajib diisi' }
       })
@@ -512,7 +497,7 @@ equipmentsRouter.post('/', async (req, res, next) => {
 
     const formattedDelivery =
       Array.isArray(deliveryMethods) && deliveryMethods.length > 0
-        ? deliveryMethods
+        ? deliveryMethods.map((m) => String(m).trim().toUpperCase()).filter(Boolean)
         : ['PICKUP', 'COURIER']
 
     if (formattedDelivery.length === 0) {
@@ -523,7 +508,9 @@ equipmentsRouter.post('/', async (req, res, next) => {
 
     const formattedImages =
       Array.isArray(images) && images.length > 0
-        ? images.filter((url) => typeof url === 'string' && url.trim().length > 0)
+        ? images
+            .map((url) => (typeof url === 'string' ? url.trim() : url?.url?.trim()))
+            .filter((url) => typeof url === 'string' && url.length > 0)
         : [
             'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
           ]
@@ -545,21 +532,21 @@ equipmentsRouter.post('/', async (req, res, next) => {
         name: String(name).trim(),
         category: String(category).trim(),
         description: String(description).trim(),
-        pricePerDay: Number(pricePerDay),
-        deposit: Number(deposit),
-        powerWatt: Number(powerWatt) || 0,
-        weightKg: Number(weightKg) || 10,
-        dimensions: String(dimensions),
-        minRentDays: Math.max(1, Number(minRentDays) || 1),
-        maintenanceBufferDays: Math.max(0, Number(maintenanceBufferDays) || 1),
+        pricePerDay: Math.max(0, Math.round(Number(pricePerDay)) || 0),
+        deposit: Math.max(0, Math.round(Number(deposit)) || 0),
+        powerWatt: Math.max(0, Math.round(Number(powerWatt)) || 0),
+        weightKg: Math.max(0, parseFloat(weightKg) || 10),
+        dimensions: String(dimensions || '40 × 30 × 30 cm').trim(),
+        minRentDays: Math.max(1, Math.round(Number(minRentDays)) || 1),
+        maintenanceBufferDays: Math.max(0, Math.round(Number(maintenanceBufferDays)) || 0),
         location: resolvedLocation,
         distance: Number(distance) || 2.0,
         status: status || 'TERSEDIA',
-        condition: String(condition || 'Prima'),
+        condition: String(condition || 'Prima').trim(),
         accessories: formattedAccessories,
         deliveryMethods: formattedDelivery,
-        deliveryFee: Number(deliveryFee) >= 0 ? Number(deliveryFee) : 45000,
-        stock: Number(stock) || 1,
+        deliveryFee: Math.max(0, Math.round(Number(deliveryFee)) || 0),
+        stock: Math.max(1, Math.round(Number(stock)) || 1),
         isDeleted: false,
         images: formattedImages
       },
@@ -582,24 +569,8 @@ equipmentsRouter.post('/', async (req, res, next) => {
  */
 async function handleUpdateEquipment(req, res, next) {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: { code: 'UNAUTHORIZED', message: 'Token otentikasi wajib disertakan' }
-      })
-    }
-
-    let userId
-    let userRole
-    try {
-      const decoded = jwt.verify(authHeader.split(' ')[1], config.jwtSecret)
-      userId = decoded.userId
-      userRole = decoded.role
-    } catch {
-      return res.status(401).json({
-        error: { code: 'INVALID_TOKEN', message: 'Token tidak valid atau kedaluwarsa' }
-      })
-    }
+    const userId = req.user.id
+    const userRole = req.userRole
 
     const id = String(req.params.id ?? '').trim()
     if (!id) {
@@ -644,27 +615,53 @@ async function handleUpdateEquipment(req, res, next) {
       isDeleted
     } = req.body ?? {}
 
+    // Proteksi status pesanan aktif jika menonaktifkan alat
+    const willDeactivate =
+      (isActive !== undefined && !isActive) ||
+      (status !== undefined && String(status).toUpperCase() === 'NONAKTIF') ||
+      (isDeleted !== undefined && Boolean(isDeleted))
+
+    if (willDeactivate) {
+      const activeOrdersCount = await prisma.order.count({
+        where: {
+          equipmentId: id,
+          status: {
+            in: ['MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKIRIM', 'SEWA_AKTIF', 'INSPEKSI', 'DISPUTE']
+          }
+        }
+      })
+
+      if (activeOrdersCount > 0) {
+        return res.status(400).json({
+          error: {
+            code: 'ACTIVE_ORDERS_EXIST',
+            message: 'Alat tidak dapat dinonaktifkan karena sedang memiliki pesanan atau transaksi aktif.'
+          }
+        })
+      }
+    }
+
     const data = {}
     if (name !== undefined) data.name = String(name).trim()
     if (category !== undefined) data.category = String(category).trim()
     if (description !== undefined) data.description = String(description).trim()
-    if (pricePerDay !== undefined) data.pricePerDay = Number(pricePerDay)
-    if (deposit !== undefined) data.deposit = Number(deposit)
-    if (powerWatt !== undefined) data.powerWatt = Number(powerWatt) || 0
-    if (weightKg !== undefined) data.weightKg = Number(weightKg) || 10
-    if (dimensions !== undefined) data.dimensions = String(dimensions)
-    if (minRentDays !== undefined) data.minRentDays = Math.max(1, Number(minRentDays) || 1)
+    if (pricePerDay !== undefined) data.pricePerDay = Math.max(0, Math.round(Number(pricePerDay)) || 0)
+    if (deposit !== undefined) data.deposit = Math.max(0, Math.round(Number(deposit)) || 0)
+    if (powerWatt !== undefined) data.powerWatt = Math.max(0, Math.round(Number(powerWatt)) || 0)
+    if (weightKg !== undefined) data.weightKg = Math.max(0, parseFloat(weightKg) || 10)
+    if (dimensions !== undefined) data.dimensions = String(dimensions).trim()
+    if (minRentDays !== undefined) data.minRentDays = Math.max(1, Math.round(Number(minRentDays)) || 1)
     if (maintenanceBufferDays !== undefined) {
-      data.maintenanceBufferDays = Math.max(0, Number(maintenanceBufferDays) || 1)
+      data.maintenanceBufferDays = Math.max(0, Math.round(Number(maintenanceBufferDays)) || 0)
     }
-    if (location !== undefined) data.location = String(location)
+    if (location !== undefined) data.location = String(location).trim()
     if (distance !== undefined) data.distance = Number(distance) || 2.0
-    if (condition !== undefined) data.condition = String(condition)
-    if (stock !== undefined) data.stock = Math.max(0, Number(stock) || 1)
+    if (condition !== undefined) data.condition = String(condition).trim()
+    if (stock !== undefined) data.stock = Math.max(1, Math.round(Number(stock)) || 1)
     if (isDeleted !== undefined) data.isDeleted = Boolean(isDeleted)
 
     if (deliveryFee !== undefined && !isNaN(Number(deliveryFee))) {
-      data.deliveryFee = Math.max(0, Number(deliveryFee))
+      data.deliveryFee = Math.max(0, Math.round(Number(deliveryFee)) || 0)
     }
 
     if (status !== undefined) {
@@ -680,16 +677,19 @@ async function handleUpdateEquipment(req, res, next) {
     }
 
     if (deliveryMethods !== undefined && Array.isArray(deliveryMethods)) {
-      if (deliveryMethods.length === 0) {
+      const sanitizedDelivery = deliveryMethods.map((m) => String(m).trim().toUpperCase()).filter(Boolean)
+      if (sanitizedDelivery.length === 0) {
         return res.status(400).json({
           error: { code: 'VALIDATION_ERROR', message: 'Pilih minimal satu metode pengiriman' }
         })
       }
-      data.deliveryMethods = deliveryMethods
+      data.deliveryMethods = sanitizedDelivery
     }
 
     if (images !== undefined && Array.isArray(images)) {
-      data.images = images.filter((url) => typeof url === 'string' && url.trim().length > 0)
+      data.images = images
+        .map((url) => (typeof url === 'string' ? url.trim() : url?.url?.trim()))
+        .filter((url) => typeof url === 'string' && url.length > 0)
     }
 
     const updated = await prisma.equipment.update({
@@ -707,34 +707,19 @@ async function handleUpdateEquipment(req, res, next) {
   }
 }
 
-equipmentsRouter.put('/:id', handleUpdateEquipment)
-equipmentsRouter.patch('/:id', handleUpdateEquipment)
+equipmentsRouter.put('/:id', requireOwnerAuth, handleUpdateEquipment)
+equipmentsRouter.patch('/:id', requireOwnerAuth, handleUpdateEquipment)
 
 /**
  * DELETE /api/equipments/:id
  *
  * Hapus alat oleh pemilik dengan mekanisme Safe Soft-Delete jika alat sudah memiliki riwayat Order.
+ * Memblokir penghapusan jika alat sedang memiliki pesanan aktif.
  */
-equipmentsRouter.delete('/:id', async (req, res, next) => {
+equipmentsRouter.delete('/:id', requireOwnerAuth, async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: { code: 'UNAUTHORIZED', message: 'Token otentikasi wajib disertakan' }
-      })
-    }
-
-    let userId
-    let userRole
-    try {
-      const decoded = jwt.verify(authHeader.split(' ')[1], config.jwtSecret)
-      userId = decoded.userId
-      userRole = decoded.role
-    } catch {
-      return res.status(401).json({
-        error: { code: 'INVALID_TOKEN', message: 'Token tidak valid atau kedaluwarsa' }
-      })
-    }
+    const userId = req.user.id
+    const userRole = req.userRole
 
     const id = String(req.params.id ?? '').trim()
     if (!id) {
@@ -755,11 +740,30 @@ equipmentsRouter.delete('/:id', async (req, res, next) => {
       })
     }
 
-    const orderCount = await prisma.order.count({
+    // Proteksi: Cek pesanan yang sedang aktif/berjalan
+    const activeOrdersCount = await prisma.order.count({
+      where: {
+        equipmentId: id,
+        status: {
+          in: ['MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKIRIM', 'SEWA_AKTIF', 'INSPEKSI', 'DISPUTE']
+        }
+      }
+    })
+
+    if (activeOrdersCount > 0) {
+      return res.status(400).json({
+        error: {
+          code: 'ACTIVE_ORDERS_EXIST',
+          message: 'Alat tidak dapat dihapus karena masih memiliki pesanan yang sedang berjalan.'
+        }
+      })
+    }
+
+    const totalOrdersCount = await prisma.order.count({
       where: { equipmentId: id }
     })
 
-    if (orderCount > 0) {
+    if (totalOrdersCount > 0) {
       // Safe delete: soft delete agar integritas data Order masa lalu tetap utuh
       const updated = await prisma.equipment.update({
         where: { id },

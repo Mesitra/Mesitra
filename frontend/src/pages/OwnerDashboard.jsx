@@ -235,6 +235,7 @@ export default function OwnerDashboard() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [selectedEquipmentToManage, setSelectedEquipmentToManage] = useState(null)
   const [selectedInspectionOrder, setSelectedInspectionOrder] = useState(null)
+  const [inventoryRefreshTrigger, setInventoryRefreshTrigger] = useState(0)
   const [orderFilterTab, setOrderFilterTab] = useState('ALL')
   const [chatUnreadCount, setChatUnreadCount] = useState(0)
   const [selectedChatPartner, setSelectedChatPartner] = useState(null)
@@ -594,15 +595,13 @@ export default function OwnerDashboard() {
       const created = await createEquipment(payload)
       setEquipments((prev) => [created, ...prev])
       showToast(`Alat "${payload.name}" berhasil ditambahkan ke katalog!`)
+      setInventoryRefreshTrigger((prev) => prev + 1)
       fetchData()
-    } catch {
-      const mockCreated = {
-        id: `eq-new-${Date.now()}`,
-        ...payload,
-        status: 'TERSEDIA'
-      }
-      setEquipments((prev) => [mockCreated, ...prev])
-      showToast(`Alat "${payload.name}" berhasil ditambahkan!`)
+      return created
+    } catch (err) {
+      const msg = err?.message || 'Gagal menambahkan alat'
+      showToast(msg)
+      throw err
     }
   }
 
@@ -612,10 +611,13 @@ export default function OwnerDashboard() {
       const updated = await updateEquipment(id, updatedData)
       setEquipments((prev) => prev.map((e) => (e.id === id ? updated : e)))
       showToast(`Alat "${updatedData.name || 'Alat'}" berhasil diperbarui!`)
+      setInventoryRefreshTrigger((prev) => prev + 1)
       fetchData()
-    } catch {
-      setEquipments((prev) => prev.map((e) => (e.id === id ? { ...e, ...updatedData } : e)))
-      showToast('Alat berhasil diperbarui!')
+      return updated
+    } catch (err) {
+      const msg = err?.message || 'Gagal memperbarui alat'
+      showToast(msg)
+      throw err
     }
   }
 
@@ -632,10 +634,13 @@ export default function OwnerDashboard() {
         setEquipments((prev) => prev.filter((e) => e.id !== id))
         showToast('Alat berhasil dihapus permanen.')
       }
+      setInventoryRefreshTrigger((prev) => prev + 1)
       fetchData()
-    } catch {
-      setEquipments((prev) => prev.filter((e) => e.id !== id))
-      showToast('Alat berhasil dihapus.')
+      return res
+    } catch (err) {
+      const msg = err?.message || 'Gagal menghapus alat'
+      showToast(msg)
+      throw err
     }
   }
 
@@ -1596,6 +1601,7 @@ export default function OwnerDashboard() {
         {/* ── TAB CONTENT: ALAT SAYA ────────────────────────────────────────── */}
         {(activeTab === 'alat' || activeTab === 'alat-saya') && (
           <AlatSaya
+            refreshSignal={inventoryRefreshTrigger}
             onOpenAddModal={() => setIsAddModalOpen(true)}
             onOpenManageModal={(eq) => setSelectedEquipmentToManage(eq)}
           />

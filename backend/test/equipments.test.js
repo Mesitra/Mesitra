@@ -411,5 +411,67 @@ test('GET /api/equipments/me mengembalikan alat milik pemilik login dengan statu
   assert.ok(myEq2, 'Equipment status non-tersedia milik owner tetap muncul di inventaris pribadi')
 })
 
+test('DELETE dan PUT menolak penghapusan atau penonaktifan alat jika memiliki pesanan aktif', async () => {
+  const activeEq = await prisma.equipment.create({
+    data: {
+      ownerId,
+      name: 'Alat Dengan Pesanan Aktif',
+      category: 'Mesin Kopi',
+      description: 'Sedang disewa oleh pelanggan aktif.',
+      pricePerDay: 150000,
+      deposit: 500000,
+      powerWatt: 1200,
+      weightKg: 20,
+      dimensions: '40 x 30 x 30 cm',
+      status: 'DISEWA'
+    }
+  })
+
+  // Pasang pesanan aktif berstatus SEWA_AKTIF
+  const activeOrder = await prisma.order.create({
+    data: {
+      invoiceNumber: `INV-ACTIVE-${Date.now()}`,
+      userId: ownerId,
+      equipmentId: activeEq.id,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 86400000 * 3),
+      rentalDays: 3,
+      deliveryMethod: 'PICKUP',
+      rentalCost: 450000,
+      shippingCost: 0,
+      depositAmount: 500000,
+      totalPaid: 950000,
+      status: 'SEWA_AKTIF'
+    }
+  })
+
+  // 1. Coba hapus (DELETE) -> Harus ditolak 400 ACTIVE_ORDERS_EXIST
+  const delRes = await fetch(`${baseUrl}/api/equipments/${activeEq.id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${ownerToken}` }
+  })
+  assert.equal(delRes.status, 400)
+  const delBody = await delRes.json()
+  assert.equal(delBody.error?.code, 'ACTIVE_ORDERS_EXIST')
+
+  // 2. Coba nonaktifkan via PUT (isActive: false) -> Harus ditolak 400 ACTIVE_ORDERS_EXIST
+  const putRes = await fetch(`${baseUrl}/api/equipments/${activeEq.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${ownerToken}`
+    },
+    body: JSON.stringify({ isActive: false })
+  })
+  assert.equal(putRes.status, 400)
+  const putBody = await putRes.json()
+  assert.equal(putBody.error?.code, 'ACTIVE_ORDERS_EXIST')
+
+  // Bersihkan data uji
+  await prisma.order.delete({ where: { id: activeOrder.id } })
+  await prisma.equipment.delete({ where: { id: activeEq.id } })
+})
+
+
 
 
