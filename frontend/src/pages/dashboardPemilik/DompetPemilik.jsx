@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import {
   Wallet,
   TrendingUp,
@@ -17,11 +17,11 @@ import {
   X
 } from 'lucide-react'
 import {
-  getOwnerWallet,
   withdrawOwnerWallet,
   updateOwnerBankAccount
 } from '../../lib/walletApi'
 import { formatRupiah } from '../../lib/equipmentsApi'
+import { useWallet } from '../../context/WalletContext'
 
 /**
  * Modal Cairkan Dana (Withdrawal)
@@ -36,14 +36,6 @@ function WithdrawModal({
   const [amount, setAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (isOpen) {
-      setAmount('')
-      setError(null)
-      setSubmitting(false)
-    }
-  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -89,7 +81,7 @@ function WithdrawModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -234,16 +226,6 @@ function BankAccountModal({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    if (isOpen) {
-      setBankName(initialAccount?.bankName || 'BCA')
-      setAccountNumber(initialAccount?.accountNumber || '')
-      setAccountHolder(initialAccount?.accountHolder || '')
-      setError(null)
-      setSubmitting(false)
-    }
-  }, [isOpen, initialAccount])
-
   if (!isOpen) return null
 
   const BANK_OPTIONS = [
@@ -303,7 +285,7 @@ function BankAccountModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -405,21 +387,44 @@ function BankAccountModal({
   )
 }
 
+const MONTH_NAMES = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember'
+]
+
 /**
  * Komponen Utama: DompetPemilik
- * Mengonversi template eksport HTML Dompet Pemilik ke komponen React terpadu,
- * menggunakan tema modern MyRent (Slate & Blue), font sans-serif,
- * perbaikan visual tumpang tindih kolom status, serta kalkulasi real-time backend E2E.
+ * Terintegrasi penuh dengan WalletContext (Shared Layout Sidebar & Dompet),
+ * kalkulasi escrow mutlak dari array pesanan aktif (H-x),
+ * filter tanggal dinamis berdasarkan data aktual, dan ekspor CSV.
  */
-export default function DompetPemilik({ onEscrowSync }) {
-  const [walletData, setWalletData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+export default function DompetPemilik() {
+  const {
+    walletData,
+    loading,
+    error,
+    refreshWallet,
+    escrowBalance,
+    availableBalance,
+    escrowItems,
+    mutations,
+    bankAccount: contextBankAccount,
+    setWalletData
+  } = useWallet()
 
   // Filter & Pagination States
   const [statusFilter, setStatusFilter] = useState('Semua') // 'Semua' | 'Masuk' | 'Keluar' | 'Escrow'
-  const [periodFilter, setPeriodFilter] = useState('ALL') // 'ALL' | 'THIS_MONTH' | 'LAST_MONTH'
+  const [selectedMonthKey, setSelectedMonthKey] = useState('ALL')
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -430,72 +435,68 @@ export default function DompetPemilik({ onEscrowSync }) {
   // Ref untuk smooth scroll ke tabel mutasi
   const tableRef = useRef(null)
 
-  // Fetch data dompet pemilik dari backend
-  useEffect(() => {
-    let isCancelled = false
+  // Ekstrak daftar bulan unik dari data mutasi secara dinamis
+  const monthOptions = useMemo(() => {
+    const map = new Map()
 
-    const fetchWallet = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await getOwnerWallet()
-        if (!isCancelled) {
-          setWalletData(data)
-          if (onEscrowSync && typeof data.escrowBalance === 'number') {
-            onEscrowSync(data.escrowBalance)
-          }
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          setError(err.message || 'Gagal memuat dompet pemilik')
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoading(false)
+    mutations.forEach((m) => {
+      const d = new Date(m.rawDate)
+      if (!isNaN(d.getTime())) {
+        const year = d.getFullYear()
+        const month = d.getMonth()
+        const key = `${year}-${String(month + 1).padStart(2, '0')}`
+        if (!map.has(key)) {
+          const lastDay = new Date(year, month + 1, 0).getDate()
+          map.set(key, {
+            key,
+            year,
+            month,
+            name: `${MONTH_NAMES[month]} ${year}`,
+            label: `1 – ${lastDay} ${MONTH_NAMES[month]} ${year}`
+          })
         }
       }
-    }
+    })
 
-    fetchWallet()
+    const sorted = Array.from(map.values()).sort((a, b) => {
+      return b.year !== a.year ? b.year - a.year : b.month - a.month
+    })
 
-    return () => {
-      isCancelled = true
-    }
-  }, [refreshTrigger, onEscrowSync])
+    return [
+      { key: 'ALL', name: 'Semua Waktu', label: 'Semua Periode' },
+      ...sorted
+    ]
+  }, [mutations])
+
+  // Cari opsi bulan yang aktif
+  const selectedMonthOption = useMemo(() => {
+    return monthOptions.find((m) => m.key === selectedMonthKey) || monthOptions[0]
+  }, [monthOptions, selectedMonthKey])
+
+  const selectedMonthName = selectedMonthOption?.name || 'Semua Waktu'
+  const periodLabel = selectedMonthOption?.label || selectedMonthOption?.name || 'Semua Periode'
 
   // Filter mutations secara reaktif
-  const rawMutations = walletData?.mutations
   const filteredMutations = useMemo(() => {
-    if (!rawMutations) return []
-    let list = [...rawMutations]
+    let list = [...mutations]
 
-    // 1. Filter Kategori Pill: 'Semua' | 'Masuk' | 'Keluar' | 'Escrow'
+    // 1. Filter Kategori: 'Semua' | 'Masuk' | 'Keluar' | 'Escrow'
     if (statusFilter !== 'Semua') {
       const cat = statusFilter.toUpperCase()
       list = list.filter((m) => m.category === cat)
     }
 
-    // 2. Filter Rentang Bulan
-    if (periodFilter === 'THIS_MONTH') {
-      const currentYear = new Date().getFullYear()
-      const currentMonth = new Date().getMonth()
+    // 2. Filter Rentang Bulan berdasarkan Dropdown Kanan Atas
+    if (selectedMonthKey !== 'ALL') {
+      const [filterYear, filterMonth] = selectedMonthKey.split('-').map(Number)
       list = list.filter((m) => {
         const d = new Date(m.rawDate)
-        return d.getFullYear() === currentYear && d.getMonth() === currentMonth
-      })
-    } else if (periodFilter === 'LAST_MONTH') {
-      const currentYear = new Date().getFullYear()
-      const currentMonth = new Date().getMonth()
-      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1
-      const year = currentMonth === 0 ? currentYear - 1 : currentYear
-      list = list.filter((m) => {
-        const d = new Date(m.rawDate)
-        return d.getFullYear() === year && d.getMonth() === lastMonth
+        return d.getFullYear() === filterYear && d.getMonth() + 1 === filterMonth
       })
     }
 
     return list
-  }, [rawMutations, statusFilter, periodFilter])
+  }, [mutations, statusFilter, selectedMonthKey])
 
   // Mutasi yang tampil di tabel (default 6 baris, atau semua jika expanded)
   const visibleMutations = useMemo(() => {
@@ -538,24 +539,10 @@ export default function DompetPemilik({ onEscrowSync }) {
     URL.revokeObjectURL(url)
   }
 
-  // Label periode aktif
-  const periodLabel = useMemo(() => {
-    if (periodFilter === 'THIS_MONTH') return 'Bulan Ini'
-    if (periodFilter === 'LAST_MONTH') return 'Bulan Lalu'
-    return '1 – 30 Juni 2025'
-  }, [periodFilter])
-
-  // Data finansial terhitung (dengan fallback realistis jika data kosong)
-  const availableBalance = walletData?.availableBalance ?? 3450000
-  const escrowBalance = walletData?.escrowBalance ?? 6100000
+  // Metadata pendukung
   const monthlyGrowthText = walletData?.monthlyGrowthText || '+ Rp 2,15 jt bulan ini'
   const nextPayoutLabel = walletData?.nextPayout?.label || '14 Jun · Rp 1,2 jt'
-  const escrowItems = walletData?.escrowItems || [
-    { id: '1', equipmentName: 'Mesin Espresso', formattedDate: '18 Jun', payoutAmount: 2900000, daysRemaining: 'H-1' },
-    { id: '2', equipmentName: 'Oven Deck Bakery', formattedDate: '21 Jun', payoutAmount: 2100000, daysRemaining: 'H-4' },
-    { id: '3', equipmentName: 'Grinder Flat Burr', formattedDate: '24 Jun', payoutAmount: 1100000, daysRemaining: 'H-7' }
-  ]
-  const bankAccount = walletData?.bankAccount || {
+  const bankAccount = contextBankAccount || {
     bankName: 'BCA',
     accountNumber: '4471 8820 04',
     accountHolder: 'Budi Santoso',
@@ -579,7 +566,7 @@ export default function DompetPemilik({ onEscrowSync }) {
         <p className="text-xs text-slate-500">{error}</p>
         <button
           type="button"
-          onClick={() => setRefreshTrigger((prev) => prev + 1)}
+          onClick={() => refreshWallet()}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer"
         >
           Coba Lagi
@@ -602,7 +589,7 @@ export default function DompetPemilik({ onEscrowSync }) {
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Dropdown Rentang Periode */}
+          {/* Dropdown Rentang Periode Dinamis */}
           <div className="relative">
             <button
               type="button"
@@ -615,49 +602,24 @@ export default function DompetPemilik({ onEscrowSync }) {
             </button>
 
             {isPeriodDropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPeriodFilter('ALL')
-                    setIsPeriodDropdownOpen(false)
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                    periodFilter === 'ALL'
-                      ? 'bg-blue-50 text-blue-700 font-bold'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  Semua Periode (Juni 2025)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPeriodFilter('THIS_MONTH')
-                    setIsPeriodDropdownOpen(false)
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                    periodFilter === 'THIS_MONTH'
-                      ? 'bg-blue-50 text-blue-700 font-bold'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  Bulan Berjalan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPeriodFilter('LAST_MONTH')
-                    setIsPeriodDropdownOpen(false)
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                    periodFilter === 'LAST_MONTH'
-                      ? 'bg-blue-50 text-blue-700 font-bold'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  Bulan Lalu
-                </button>
+              <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+                {monthOptions.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMonthKey(opt.key)
+                      setIsPeriodDropdownOpen(false)
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                      selectedMonthKey === opt.key
+                        ? 'bg-blue-50 text-blue-700 font-bold'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {opt.name}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -730,7 +692,7 @@ export default function DompetPemilik({ onEscrowSync }) {
           </div>
         </div>
 
-        {/* Kartu Sekunder: Dana di Escrow */}
+        {/* Kartu Sekunder: Dana di Escrow (Kalkulasi Mutlak .reduce dari escrowItems) */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-3 min-h-[196px]">
           <div>
             <div className="flex items-center justify-between">
@@ -749,32 +711,40 @@ export default function DompetPemilik({ onEscrowSync }) {
             </p>
           </div>
 
-          <div className="border-t border-slate-100 pt-2 space-y-2">
-            {escrowItems.slice(0, 3).map((item, idx) => {
-              const amountStr =
-                item.payoutAmount >= 1000000
-                  ? `Rp ${(item.payoutAmount / 1000000).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} jt`
-                  : formatRupiah(item.payoutAmount)
+          <div className="border-t border-slate-100 pt-2 space-y-2 max-h-56 overflow-y-auto pr-1">
+            {escrowItems.length === 0 ? (
+              <p className="text-xs text-slate-400 py-3 text-center font-medium">Tidak ada pesanan escrow aktif</p>
+            ) : (
+              escrowItems.map((item, idx) => {
+                const itemAmt = Number(item.amount ?? item.payoutAmount) || 0
+                const amountStr =
+                  itemAmt >= 1000000
+                    ? `Rp ${(itemAmt / 1000000).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} jt`
+                    : formatRupiah(itemAmt)
 
-              return (
-                <div key={item.id || idx} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 truncate pr-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
-                    <span className="text-slate-700 font-semibold truncate text-[11px]">
-                      {item.equipmentName} · {item.formattedDate}
-                    </span>
+                return (
+                  <div key={item.id || idx} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 truncate pr-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
+                      <span className="text-slate-700 font-semibold truncate text-[11px]" title={item.equipmentName}>
+                        {item.equipmentName} · {item.formattedDate}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span
+                        className="font-extrabold text-slate-900 text-[11px] tabular-nums"
+                        title={formatRupiah(itemAmt)}
+                      >
+                        {amountStr}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                        {item.daysRemaining}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="font-extrabold text-slate-900 text-[11px] tabular-nums">
-                      {amountStr}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                      {item.daysRemaining}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </div>
         </div>
       </div>
@@ -894,10 +864,10 @@ export default function DompetPemilik({ onEscrowSync }) {
             </table>
           </div>
 
-          {/* Footer Tabel Mutasi: Info & Toggle Expand / Pagination */}
+          {/* Footer Tabel Mutasi: Teks Paginasi Dinamis */}
           <div className="p-3.5 px-4 sm:px-5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs">
             <span className="text-[11px] font-medium text-slate-500">
-              Menampilkan {visibleMutations.length} dari {filteredMutations.length} mutasi {periodLabel}
+              Menampilkan {filteredMutations.length} dari {mutations.length} mutasi pada {selectedMonthName}
             </span>
 
             {filteredMutations.length > 6 && (
@@ -985,7 +955,7 @@ export default function DompetPemilik({ onEscrowSync }) {
         availableBalance={availableBalance}
         bankAccount={bankAccount}
         onSuccess={() => {
-          setRefreshTrigger((prev) => prev + 1)
+          refreshWallet()
         }}
       />
 
@@ -995,7 +965,7 @@ export default function DompetPemilik({ onEscrowSync }) {
         initialAccount={bankAccount}
         onSuccess={(updated) => {
           setWalletData((prev) => (prev ? { ...prev, bankAccount: updated } : prev))
-          setRefreshTrigger((prev) => prev + 1)
+          refreshWallet()
         }}
       />
     </div>

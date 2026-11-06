@@ -45,7 +45,7 @@ import PesananMasuk from './dashboardPemilik/PesananMasuk'
 import DompetPemilik from './dashboardPemilik/DompetPemilik'
 import ChatPanel from '../components/chat/ChatPanel'
 import { getUnreadCount } from '../lib/chatsApi'
-import { getOwnerWallet } from '../lib/walletApi'
+import { WalletProvider, useWallet } from '../context/WalletContext'
 
 // Helper untuk mengelompokkan data pesanan (Orders) ke format mingguan dalam bulan berjalan
 function calculateWeeklyRevenue(orders) {
@@ -204,9 +204,10 @@ const FALLBACK_REVIEWS = [
   }
 ]
 
-export default function OwnerDashboard() {
+function OwnerDashboardContent() {
   const navigate = useNavigate()
   const currentUser = getSessionUser() || { fullName: 'Kopi Senja Roastery', role: 'PEMILIK' }
+  const { escrowBalance } = useWallet()
 
   // State
   const [orders, setOrders] = useState([])
@@ -226,36 +227,6 @@ export default function OwnerDashboard() {
     if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') return 'alat'
     return tabFromUrl || 'ringkasan'
   })
-
-  // Sinkronisasi data real-time Escrow dari API Dompet ke widget Sidebar
-  const [realtimeEscrow, setRealtimeEscrow] = useState(null)
-
-  useEffect(() => {
-    let isCancelled = false
-    getOwnerWallet()
-      .then((data) => {
-        if (!isCancelled && data && typeof data.escrowBalance === 'number') {
-          setRealtimeEscrow(data.escrowBalance)
-        }
-      })
-      .catch(() => {})
-
-    const handleWalletUpdated = () => {
-      getOwnerWallet()
-        .then((data) => {
-          if (!isCancelled && data && typeof data.escrowBalance === 'number') {
-            setRealtimeEscrow(data.escrowBalance)
-          }
-        })
-        .catch(() => {})
-    }
-
-    window.addEventListener('myrent:wallet-updated', handleWalletUpdated)
-    return () => {
-      isCancelled = true
-      window.removeEventListener('myrent:wallet-updated', handleWalletUpdated)
-    }
-  }, [])
 
   const isChatTab = activeTab === 'chat' || location.pathname === '/pesan' || location.pathname.startsWith('/pesan/')
 
@@ -399,14 +370,14 @@ export default function OwnerDashboard() {
       totalEquipment,
       activeEquipment,
       totalRevenue: totalRevenue || 4250000,
-      escrowTotal: escrowTotal || 6100000,
+      escrowTotal: typeof escrowBalance === 'number' && escrowBalance > 0 ? escrowBalance : (escrowTotal || 0),
       activeDeposit: activeDeposit || 1800000,
       activeUnitsRented,
       avgDays,
       utilization,
       txCount: revenueOrders.length || 12
     }
-  }, [orders, equipments])
+  }, [orders, equipments, escrowBalance])
 
   // Pesanan masuk berstatus MENUNGGU_KONFIRMASI
   const pendingOrders = useMemo(() => {
@@ -897,7 +868,7 @@ export default function OwnerDashboard() {
               Dana di Escrow
             </div>
             <div className="text-sm font-extrabold text-slate-900 tabular-nums">
-              {formatRupiah(realtimeEscrow ?? stats.escrowTotal)}
+              {formatRupiah(typeof escrowBalance === 'number' ? escrowBalance : stats.escrowTotal)}
             </div>
             <div className="text-[9.5px] text-slate-400 leading-tight">
               Cair otomatis setelah inspeksi unit selesai
@@ -1687,13 +1658,7 @@ export default function OwnerDashboard() {
         )}
 
         {/* ── TAB CONTENT: DOMPET & ESCROW ─────────────────────────────────── */}
-        {activeTab === 'dompet' && (
-          <DompetPemilik
-            onEscrowSync={(balance) => {
-              setRealtimeEscrow(balance)
-            }}
-          />
-        )}
+        {activeTab === 'dompet' && <DompetPemilik />}
 
         {/* ── TAB CONTENT: PROFIL TOKO ─────────────────────────────────────── */}
         {activeTab === 'profil' && (
@@ -1788,5 +1753,13 @@ export default function OwnerDashboard() {
         }}
       />
     </div>
+  )
+}
+
+export default function OwnerDashboard() {
+  return (
+    <WalletProvider>
+      <OwnerDashboardContent />
+    </WalletProvider>
   )
 }

@@ -37,7 +37,7 @@ walletRouter.use(authenticate)
  * rincian item escrow dengan status H-x, pertumbuhan bulan ini,
  * mutasi komprehensif (Masuk, Keluar, Escrow), dan rekening penarikan.
  */
-async function calculateOwnerWallet(ownerId) {
+export async function calculateOwnerWallet(ownerId) {
   const user = await prisma.user.findUnique({
     where: { id: ownerId },
     select: {
@@ -139,10 +139,6 @@ async function calculateOwnerWallet(ownerId) {
   }
 
   // 3. Dana di Escrow (escrowBalance & escrowItems)
-  const escrowBalance = activeOrders.reduce((sum, o) => {
-    return sum + (o.totalPaid || ((o.rentalCost || 0) + (o.shippingCost || 0) + (o.depositAmount || 0)))
-  }, 0)
-
   const monthShorts = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
   const escrowItems = activeOrders
@@ -172,6 +168,9 @@ async function calculateOwnerWallet(ownerId) {
       }
     })
     .sort((a, b) => a.diffDays - b.diffDays)
+
+  // Pastikan variabel escrowBalance dihitung mutlak dengan melakukan .reduce() dari array escrowItems yang HANYA berisi pesanan aktif
+  const escrowBalance = escrowItems.reduce((sum, item) => sum + (item.amount || 0), 0)
 
   let nextPayout = {
     date: '-',

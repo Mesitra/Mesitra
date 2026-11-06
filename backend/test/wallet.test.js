@@ -162,8 +162,10 @@ test('Owner Wallet API & Finansial Flow', async (t) => {
     assert.equal(body.availableBalance, 950000)
     initialBalance = body.availableBalance
 
-    // Dana di escrow: totalPaid active order (1.150.000)
-    assert.ok(body.escrowBalance >= 1150000)
+    // Dana di escrow: dihitung mutlak dari penjumlahan item escrow aktif
+    const expectedEscrow = body.escrowItems.reduce((sum, i) => sum + i.amount, 0)
+    assert.equal(body.escrowBalance, expectedEscrow)
+    assert.ok(body.escrowBalance >= 650000)
 
     // Escrow items mencakup pesanan aktif dengan daysRemaining (H-x)
     assert.ok(Array.isArray(body.escrowItems))
@@ -281,3 +283,4 @@ test('Owner Wallet API & Finansial Flow', async (t) => {
     assert.equal(getBody.bankAccount.bankName, 'Mandiri')
   })
 })
+
