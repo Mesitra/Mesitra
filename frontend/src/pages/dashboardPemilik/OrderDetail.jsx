@@ -301,11 +301,11 @@ export default function OrderDetail({
     user.initials ||
     (user.fullName ? user.fullName.split(' ').map((w) => w[0]).join('').substring(0, 2).toUpperCase() : 'UM')
 
-  const equipmentImg =
-    (Array.isArray(equipment.images) && equipment.images.length > 0 && equipment.images[0]) ||
-    (typeof equipment.images === 'string' && equipment.images) ||
-    equipment.imageUrl ||
-    equipment.image ||
+  const imageUrl =
+    (order?.equipment?.images?.length > 0 ? order.equipment.images[0] : null) ||
+    (typeof order?.equipment?.images === 'string' && order.equipment.images ? order.equipment.images : null) ||
+    order?.equipment?.imageUrl ||
+    order?.equipment?.image ||
     null
 
   const badgeConfig = getStatusBadgeConfig(order.status)
@@ -430,25 +430,17 @@ export default function OrderDetail({
         {/* 2. KARTU UNIT ALAT & BIAYA */}
         <div className="p-3.5 sm:p-4 bg-white border border-slate-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            {equipmentImg ? (
+            {imageUrl ? (
               <img
-                src={equipmentImg}
-                alt={equipment.name || 'Unit Alat Sewa'}
+                src={imageUrl}
+                alt={order?.equipment?.name || equipment.name || 'Unit Alat Sewa'}
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-200 shrink-0 shadow-2xs"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                  const fallback = e.currentTarget.parentElement?.querySelector('.equip-fallback')
-                  if (fallback) fallback.classList.remove('hidden')
-                }}
               />
-            ) : null}
-            <div
-              className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center shrink-0 equip-fallback ${
-                equipmentImg ? 'hidden' : 'flex'
-              }`}
-            >
-              <Package className="w-6 h-6" />
-            </div>
+            ) : (
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-400 flex items-center justify-center shrink-0">
+                <Package className="w-6 h-6" />
+              </div>
+            )}
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
                 {equipment.name || 'Unit Alat Sewa'}

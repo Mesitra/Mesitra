@@ -363,6 +363,7 @@ export default function PesananMasuk({
         {currentSelectedOrder && (
           <div className="flex-1 min-w-0 w-full transition-all duration-300 ease-in-out">
             <OrderDetail
+              key={currentSelectedOrder.id}
               order={currentSelectedOrder}
               onClose={handleCloseDetail}
               onAccept={handleAccept}
