@@ -41,6 +41,7 @@ import ModalKelolaAlat from '../components/owner/ModalKelolaAlat'
 import ModalVerifikasiInspeksi from '../components/owner/ModalVerifikasiInspeksi'
 import AlatSayaTab from '../components/owner/AlatSayaTab'
 import AlatSaya from './dashboardPemilik/AlatSaya'
+import PesananMasuk from './dashboardPemilik/PesananMasuk'
 import ChatPanel from '../components/chat/ChatPanel'
 import { getUnreadCount } from '../lib/chatsApi'
 
@@ -899,7 +900,7 @@ export default function OwnerDashboard() {
       {/* ── KONTEN UTAMA ─────────────────────────────────────────────────── */}
       <main className="flex-1 p-6 md:px-10 lg:px-12 py-5 overflow-y-auto max-w-[1920px] mx-auto w-full space-y-5">
         {/* TopBar & Notification Bell (Task 2: Popover Dropdown) */}
-        {activeTab !== 'alat' && activeTab !== 'alat-saya' && (
+        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && (
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -1609,192 +1610,27 @@ export default function OwnerDashboard() {
 
         {/* ── TAB CONTENT: PESANAN MASUK & RIWAYAT ─────────────────────────── */}
         {activeTab === 'pesanan' && (
-          <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                <div>
-                  <h2 className="text-base font-extrabold text-slate-900">
-                    Seluruh Transaksi Pesanan ({orders.length})
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    Riwayat lengkap pengajuan, sewa berjalan, verifikasi inspeksi BAST, dan mediasi sengketa
-                  </p>
-                </div>
-
-                {/* Filter Status Pills */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {[
-                    { key: 'ALL', label: 'Semua', count: orders.length },
-                    { key: 'INSPEKSI', label: 'Perlu Inspeksi', count: orders.filter((o) => o.status === 'INSPEKSI').length },
-                    { key: 'DISPUTE', label: 'Sengketa Mediasi', count: orders.filter((o) => o.status === 'DISPUTE').length },
-                    { key: 'SEWA_AKTIF', label: 'Sewa Berjalan', count: orders.filter((o) => ['SEWA_AKTIF', 'DIKIRIM'].includes(o.status)).length },
-                    { key: 'SELESAI', label: 'Selesai', count: orders.filter((o) => o.status === 'SELESAI').length }
-                  ].map((filter) => {
-                    const isActive = orderFilterTab === filter.key
-                    return (
-                      <button
-                        key={filter.key}
-                        type="button"
-                        onClick={() => setOrderFilterTab(filter.key)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                          isActive
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                      >
-                        <span>{filter.label}</span>
-                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                          isActive ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}>
-                          {filter.count}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Daftar Pesanan */}
-              {(() => {
-                const filteredOrders = orders.filter((o) => {
-                  if (orderFilterTab === 'ALL') return true
-                  if (orderFilterTab === 'INSPEKSI') return o.status === 'INSPEKSI'
-                  if (orderFilterTab === 'DISPUTE') return o.status === 'DISPUTE'
-                  if (orderFilterTab === 'SEWA_AKTIF') return ['SEWA_AKTIF', 'DIKIRIM'].includes(o.status)
-                  if (orderFilterTab === 'SELESAI') return o.status === 'SELESAI'
-                  return true
-                })
-
-                if (filteredOrders.length === 0) {
-                  return (
-                    <div className="py-12 text-center space-y-2">
-                      <Inbox className="w-8 h-8 text-slate-300 mx-auto" />
-                      <p className="text-xs font-bold text-slate-700">Tidak ada pesanan pada filter ini</p>
-                      <p className="text-[11px] text-slate-400">Pilih filter lain untuk melihat riwayat pesanan.</p>
-                    </div>
-                  )
+          <PesananMasuk
+            orders={orders}
+            onAcceptOrder={handleTerimaPesanan}
+            onRejectOrder={handleTolakPesanan}
+            onInspectOrder={(o) => setSelectedInspectionOrder(o)}
+            onOpenChat={(order) => {
+              setSelectedChatPartner({
+                id: order.userId || order.user?.id,
+                name: order.user?.fullName || 'Penyewa UMKM',
+                contextType: 'ORDER',
+                contextData: {
+                  id: order.id,
+                  invoiceNumber: order.invoiceNumber,
+                  status: order.status,
+                  equipmentName: order.equipment?.name
                 }
-
-                return (
-                  <div className="divide-y divide-slate-100">
-                    {filteredOrders.map((o) => (
-                      <div key={o.id} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-start gap-3.5">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 font-extrabold text-xs flex items-center justify-center shrink-0">
-                            {getUserInitials(o.user)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs sm:text-sm font-bold text-slate-900">
-                                {o.user?.kycData?.businessName || o.user?.fullName || 'Penyewa'}
-                              </span>
-                              <span className="text-[10px] font-semibold text-slate-400 font-mono">
-                                {o.invoiceNumber}
-                              </span>
-                            </div>
-                            <div className="text-xs text-slate-600 font-medium mt-0.5">
-                              {o.equipment?.name || 'Unit Alat'}
-                            </div>
-                            <div className="text-[11px] text-slate-400 mt-1">
-                              {formatShortDate(o.startDate)} – {formatShortDate(o.endDate)} · {o.rentalDays || 1} hari
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 justify-between md:justify-end flex-wrap">
-                          <div className="text-right">
-                            <div className="text-sm font-extrabold text-slate-900 tabular-nums">
-                              {formatRupiah(o.totalPaid || o.rentalCost)}
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              Deposit {formatRupiah(o.depositAmount)}
-                            </div>
-                          </div>
-
-                          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
-                            o.status === 'SELESAI'
-                              ? 'bg-slate-100 text-slate-700 border-slate-200'
-                              : o.status === 'SEWA_AKTIF'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : o.status === 'MENUNGGU_KONFIRMASI'
-                              ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : o.status === 'DISPUTE'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}>
-                            {o.status === 'INSPEKSI'
-                              ? 'Perlu Inspeksi'
-                              : o.status === 'DISPUTE'
-                              ? 'Sengketa Mediasi'
-                              : o.status}
-                          </span>
-
-                          {/* Action Button: Verifikasi BAST saat status INSPEKSI */}
-                          {o.status === 'INSPEKSI' && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedInspectionOrder(o)}
-                              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                            >
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              <span>Verifikasi BAST</span>
-                            </button>
-                          )}
-
-                          {/* Action Button: Detail Klaim saat status DISPUTE */}
-                          {o.status === 'DISPUTE' && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedInspectionOrder(o)}
-                              className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-                              <span>Detail Klaim Sengketa</span>
-                            </button>
-                          )}
-
-                          {/* Badge saat pesanan SELESAI via mediasi admin */}
-                          {o.status === 'SELESAI' && o.isResolvedByAdmin && (
-                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">
-                              Diputus Admin
-                            </span>
-                          )}
-
-                          {/* Action Button: Hubungi Penyewa */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedChatPartner({
-                                id: o.userId,
-                                name: o.user?.fullName || 'Penyewa UMKM',
-                                contextType: 'ORDER',
-                                contextData: {
-                                  id: o.id,
-                                  invoiceNumber: o.invoiceNumber,
-                                  status: o.status,
-                                  equipmentName: o.equipment?.name,
-                                  startDate: o.startDate,
-                                  endDate: o.endDate,
-                                  totalPaid: o.totalPaid,
-                                  depositAmount: o.depositAmount,
-                                  disputeReason: o.disputeReason || o.disputeNote
-                                }
-                              })
-                              setActiveTab('chat')
-                            }}
-                            className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Hubungi Penyewa</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })()}
-            </div>
-          </div>
+              })
+              setActiveTab('chat')
+            }}
+            actionLoadingId={actionLoadingId}
+          />
         )}
 
         {/* ── TAB CONTENT: PESAN MASUK (CHAT) ──────────────────────────────── */}
