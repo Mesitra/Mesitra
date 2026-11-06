@@ -18,8 +18,9 @@ function authHeaders() {
  * Mengambil daftar percakapan milik user yang sedang login.
  */
 export async function listChats() {
-  const res = await fetch(`${API_BASE}/chats`, {
-    headers: authHeaders()
+  const res = await fetch(`${API_BASE}/chats?_t=${Date.now()}`, {
+    headers: authHeaders(),
+    cache: 'no-store'
   })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(body?.error?.message || 'Gagal memuat daftar obrolan')
@@ -30,8 +31,9 @@ export async function listChats() {
  * Mengambil total pesan belum dibaca.
  */
 export async function getUnreadCount() {
-  const res = await fetch(`${API_BASE}/chats/unread-count`, {
-    headers: authHeaders()
+  const res = await fetch(`${API_BASE}/chats/unread-count?_t=${Date.now()}`, {
+    headers: authHeaders(),
+    cache: 'no-store'
   })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) return 0
@@ -43,8 +45,9 @@ export async function getUnreadCount() {
  * Jika belum ada, mengembalikan { data: null, isDraft: true } (Mendukung Lazy Session).
  */
 export async function checkPartnerChat(partnerId) {
-  const res = await fetch(`${API_BASE}/chats/by-partner/${encodeURIComponent(partnerId)}`, {
-    headers: authHeaders()
+  const res = await fetch(`${API_BASE}/chats/by-partner/${encodeURIComponent(partnerId)}?_t=${Date.now()}`, {
+    headers: authHeaders(),
+    cache: 'no-store'
   })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(body?.error?.message || 'Gagal memeriksa status obrolan')
@@ -55,8 +58,9 @@ export async function checkPartnerChat(partnerId) {
  * Mengambil seluruh riwayat pesan dalam satu ruang obrolan dan menandai pesan lawan bicara sudah dibaca.
  */
 export async function getChatMessages(conversationId) {
-  const res = await fetch(`${API_BASE}/chats/${encodeURIComponent(conversationId)}/messages`, {
-    headers: authHeaders()
+  const res = await fetch(`${API_BASE}/chats/${encodeURIComponent(conversationId)}/messages?_t=${Date.now()}`, {
+    headers: authHeaders(),
+    cache: 'no-store'
   })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(body?.error?.message || 'Gagal memuat riwayat pesan')

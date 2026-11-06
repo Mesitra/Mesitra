@@ -55,7 +55,7 @@ export default function ChatPanel({
   // Reset pelacakan panjang pesan saat obrolan aktif berganti
   useEffect(() => {
     prevMessagesLengthRef.current = 0
-  }, [selectedChat?.id])
+  }, [selectedChat?.id, selectedChat?.isDraft])
 
   // Task 3: Otomatis scroll ke bawah (scrollIntoView) setiap kali array messages bertambah panjang
   useEffect(() => {
@@ -78,12 +78,13 @@ export default function ChatPanel({
       const data = await listChats()
       setConversations(data)
 
-      // Pertahankan obrolan aktif jika sudah ada
-      if (keepSelection && selectedChat && !selectedChat.isDraft) {
-        const found = data.find((c) => c.id === selectedChat.id)
-        if (found) {
-          setSelectedChat((prev) => ({ ...prev, ...found }))
-        }
+      // Pertahankan obrolan aktif jika sudah ada tanpa terkena stale closure
+      if (keepSelection) {
+        setSelectedChat((prev) => {
+          if (!prev || prev.isDraft) return prev
+          const found = data.find((c) => c.id === prev.id)
+          return found ? { ...prev, ...found } : prev
+        })
       }
       return data
     } catch (err) {
@@ -189,14 +190,15 @@ export default function ChatPanel({
 
         const incomingMessages = res?.data || []
         setMessages((prev) => {
-          // Hanya update jika ada penambahan/perubahan pesan untuk mencegah render berlebih
-          if (
-            incomingMessages.length !== prev.length ||
-            (incomingMessages.length > 0 && incomingMessages[incomingMessages.length - 1]?.id !== prev[prev.length - 1]?.id)
-          ) {
+          // Hanya update jika ada penambahan atau pembaruan status pesan untuk mencegah re-render berlebih
+          if (incomingMessages.length !== prev.length) {
             return incomingMessages
           }
-          return prev
+          const isChanged = incomingMessages.some((msg, idx) => {
+            const p = prev[idx]
+            return !p || p.id !== msg.id || p.isRead !== msg.isRead
+          })
+          return isChanged ? incomingMessages : prev
         })
       } catch (err) {
         console.error('Gagal mengambil pesan:', err)
@@ -220,7 +222,7 @@ export default function ChatPanel({
       isActive = false
       clearInterval(pollInterval)
     }
-  }, [selectedChat?.id])
+  }, [selectedChat?.id, selectedChat?.isDraft])
 
   // ── 4. Kirim Pesan (Termasuk Transisi Lazy Session -> Permanent) ───────────────
   const handleSendMessage = async (e) => {
