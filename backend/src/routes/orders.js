@@ -107,7 +107,25 @@ ordersRouter.get('/', async (req, res, next) => {
           }
         }
       }
-      return { ...o, returnData, tenant: o.user }
+
+      // Pastikan field images pada equipment tidak ter-exclude dan terformat sebagai array
+      let equipment = o.equipment
+      if (equipment) {
+        let images = equipment.images
+        if (typeof images === 'string') {
+          try {
+            images = JSON.parse(images)
+          } catch {
+            images = [images]
+          }
+        }
+        equipment = {
+          ...equipment,
+          images: Array.isArray(images) ? images : (images ? [images] : [])
+        }
+      }
+
+      return { ...o, returnData, tenant: o.user, equipment }
     })
 
     return res.json({ data: sanitized })
@@ -175,10 +193,29 @@ ordersRouter.get('/owner/me', async (req, res, next) => {
           }
         }
       }
+
+      // Pastikan field images pada equipment tidak ter-exclude dan terformat sebagai array
+      let equipment = o.equipment
+      if (equipment) {
+        let images = equipment.images
+        if (typeof images === 'string') {
+          try {
+            images = JSON.parse(images)
+          } catch {
+            images = [images]
+          }
+        }
+        equipment = {
+          ...equipment,
+          images: Array.isArray(images) ? images : (images ? [images] : [])
+        }
+      }
+
       return {
         ...o,
         returnData,
-        tenant: o.user
+        tenant: o.user,
+        equipment
       }
     })
 
@@ -221,7 +258,24 @@ ordersRouter.get('/:id', async (req, res, next) => {
       })
     }
 
-    return res.json({ data: order })
+    // Pastikan field images pada equipment tidak ter-exclude dan terformat sebagai array
+    let equipment = order.equipment
+    if (equipment) {
+      let images = equipment.images
+      if (typeof images === 'string') {
+        try {
+          images = JSON.parse(images)
+        } catch {
+          images = [images]
+        }
+      }
+      equipment = {
+        ...equipment,
+        images: Array.isArray(images) ? images : (images ? [images] : [])
+      }
+    }
+
+    return res.json({ data: { ...order, equipment } })
   } catch (error) {
     next(error)
   }

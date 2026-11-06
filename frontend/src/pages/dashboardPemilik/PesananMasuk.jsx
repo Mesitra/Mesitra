@@ -56,7 +56,12 @@ function normalizeOrder(order) {
     equipment: {
       ...order.equipment,
       name: order.equipment?.name || 'Unit Alat',
-      category: order.equipment?.category || 'Komersial'
+      category: order.equipment?.category || 'Komersial',
+      images: Array.isArray(order.equipment?.images)
+        ? order.equipment.images
+        : (typeof order.equipment?.images === 'string'
+            ? (() => { try { return JSON.parse(order.equipment.images) } catch { return [order.equipment.images] } })()
+            : (order.equipment?.images ? [order.equipment.images] : []))
     }
   }
 }
@@ -141,10 +146,15 @@ export default function PesananMasuk({
     const sewa = activeOrders.filter((o) =>
       ['SEWA_AKTIF', 'DIKIRIM'].includes(o.status)
     ).length
-    const inspeksi = activeOrders.filter((o) => o.status === 'INSPEKSI').length
+    const inspeksi = activeOrders.filter((o) =>
+      ['INSPEKSI', 'DISPUTE', 'CLAIM', 'KLAIM'].includes(o.status)
+    ).length
     const selesai = activeOrders.filter((o) => o.status === 'SELESAI').length
+    const ditolak = activeOrders.filter((o) =>
+      ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(o.status)
+    ).length
 
-    return { all, menunggu, sewa, inspeksi, selesai }
+    return { all, menunggu, sewa, inspeksi, selesai, ditolak }
   }, [activeOrders])
 
   // ── Filter Berdasarkan Status Tab & Search Query ────────────────────────
@@ -156,9 +166,11 @@ export default function PesananMasuk({
       } else if (statusFilter === 'SEWA_AKTIF') {
         if (!['SEWA_AKTIF', 'DIKIRIM'].includes(order.status)) return false
       } else if (statusFilter === 'INSPEKSI') {
-        if (order.status !== 'INSPEKSI') return false
+        if (!['INSPEKSI', 'DISPUTE', 'CLAIM', 'KLAIM'].includes(order.status)) return false
       } else if (statusFilter === 'SELESAI') {
         if (order.status !== 'SELESAI') return false
+      } else if (statusFilter === 'DITOLAK') {
+        if (!['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(order.status)) return false
       }
 
       // 2. Filter search query
@@ -273,7 +285,8 @@ export default function PesananMasuk({
             { key: 'MENUNGGU_KONFIRMASI', label: 'Menunggu konfirmasi', count: counts.menunggu },
             { key: 'SEWA_AKTIF', label: 'Sedang disewa', count: counts.sewa },
             { key: 'INSPEKSI', label: 'Inspeksi', count: counts.inspeksi },
-            { key: 'SELESAI', label: 'Selesai', count: counts.selesai }
+            { key: 'SELESAI', label: 'Selesai', count: counts.selesai },
+            { key: 'DITOLAK', label: 'Ditolak / Batal', count: counts.ditolak }
           ].map((tab) => {
             const isActive = statusFilter === tab.key
             return (

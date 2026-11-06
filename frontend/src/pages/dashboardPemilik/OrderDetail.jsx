@@ -301,6 +301,13 @@ export default function OrderDetail({
     user.initials ||
     (user.fullName ? user.fullName.split(' ').map((w) => w[0]).join('').substring(0, 2).toUpperCase() : 'UM')
 
+  const equipmentImg =
+    (Array.isArray(equipment.images) && equipment.images.length > 0 && equipment.images[0]) ||
+    (typeof equipment.images === 'string' && equipment.images) ||
+    equipment.imageUrl ||
+    equipment.image ||
+    null
+
   const badgeConfig = getStatusBadgeConfig(order.status)
   const BadgeIcon = badgeConfig.icon
 
@@ -423,7 +430,23 @@ export default function OrderDetail({
         {/* 2. KARTU UNIT ALAT & BIAYA */}
         <div className="p-3.5 sm:p-4 bg-white border border-slate-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+            {equipmentImg ? (
+              <img
+                src={equipmentImg}
+                alt={equipment.name || 'Unit Alat Sewa'}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-200 shrink-0 shadow-2xs"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  const fallback = e.currentTarget.parentElement?.querySelector('.equip-fallback')
+                  if (fallback) fallback.classList.remove('hidden')
+                }}
+              />
+            ) : null}
+            <div
+              className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center shrink-0 equip-fallback ${
+                equipmentImg ? 'hidden' : 'flex'
+              }`}
+            >
               <Package className="w-6 h-6" />
             </div>
             <div>
