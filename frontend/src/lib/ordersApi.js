@@ -92,15 +92,16 @@ export async function cancelOrder(id) {
 }
 
 /**
- * Konfirmasi terima barang (DIKIRIM → SEWA_AKTIF).
+ * Konfirmasi terima barang / serah terima BAST Awal (DIKIRIM → SEWA_AKTIF).
  */
-export async function confirmDelivery(id) {
+export async function confirmDelivery(id, initialBast = null) {
   const res = await fetch(`${API_BASE}/orders/${id}/confirm-delivery`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() }
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(initialBast ? { initialBast } : {})
   })
   const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(body?.error?.message || 'Gagal mengonfirmasi penerimaan')
+  if (!res.ok) throw new Error(body?.error?.message || 'Gagal mengonfirmasi serah terima')
   return body?.data
 }
 

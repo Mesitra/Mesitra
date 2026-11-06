@@ -3,8 +3,35 @@ import axios from 'axios'
 import { Search, Download, Calendar, ChevronDown, RefreshCw } from 'lucide-react'
 import { API_BASE } from '../../lib/equipmentsApi'
 import { getUserToken } from '../../lib/userSession'
+import { confirmDelivery } from '../../lib/ordersApi'
 import OrderList from './OrderList'
 import OrderDetail from './OrderDetail'
+
+// Status classification helpers agar counter badge dan filter list 100% konsisten
+export const isSewaStatus = (status) => {
+  const s = String(status || '').trim().toUpperCase()
+  return ['SEWA_AKTIF', 'DIKIRIM', 'PENGIRIMAN', 'SIAP_DIAMBIL', 'BERJALAN', 'AKTIF'].includes(s)
+}
+
+export const isMenungguStatus = (status) => {
+  const s = String(status || '').trim().toUpperCase()
+  return ['MENUNGGU_KONFIRMASI', 'PENDING', 'MENUNGGU_PEMBAYARAN'].includes(s)
+}
+
+export const isInspeksiStatus = (status) => {
+  const s = String(status || '').trim().toUpperCase()
+  return ['INSPEKSI', 'DISPUTE', 'CLAIM', 'KLAIM'].includes(s)
+}
+
+export const isSelesaiStatus = (status) => {
+  const s = String(status || '').trim().toUpperCase()
+  return s === 'SELESAI'
+}
+
+export const isDitolakStatus = (status) => {
+  const s = String(status || '').trim().toUpperCase()
+  return ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(s)
+}
 
 // Normalisasi objek data pesanan dari backend API
 function normalizeOrder(order) {
@@ -140,19 +167,11 @@ export default function PesananMasuk({
   // ── Kalkulasi Badge / Counter Dinamis (100% Akurat dengan Database) ─────
   const counts = useMemo(() => {
     const all = activeOrders.length
-    const menunggu = activeOrders.filter((o) =>
-      ['MENUNGGU_KONFIRMASI', 'PENDING', 'MENUNGGU_PEMBAYARAN'].includes(o.status)
-    ).length
-    const sewa = activeOrders.filter((o) =>
-      ['SEWA_AKTIF', 'DIKIRIM'].includes(o.status)
-    ).length
-    const inspeksi = activeOrders.filter((o) =>
-      ['INSPEKSI', 'DISPUTE', 'CLAIM', 'KLAIM'].includes(o.status)
-    ).length
-    const selesai = activeOrders.filter((o) => o.status === 'SELESAI').length
-    const ditolak = activeOrders.filter((o) =>
-      ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(o.status)
-    ).length
+    const menunggu = activeOrders.filter((o) => isMenungguStatus(o.status)).length
+    const sewa = activeOrders.filter((o) => isSewaStatus(o.status)).length
+    const inspeksi = activeOrders.filter((o) => isInspeksiStatus(o.status)).length
+    const selesai = activeOrders.filter((o) => isSelesaiStatus(o.status)).length
+    const ditolak = activeOrders.filter((o) => isDitolakStatus(o.status)).length
 
     return { all, menunggu, sewa, inspeksi, selesai, ditolak }
   }, [activeOrders])
@@ -162,15 +181,15 @@ export default function PesananMasuk({
     return activeOrders.filter((order) => {
       // 1. Filter status
       if (statusFilter === 'MENUNGGU_KONFIRMASI') {
-        if (!['MENUNGGU_KONFIRMASI', 'PENDING', 'MENUNGGU_PEMBAYARAN'].includes(order.status)) return false
+        if (!isMenungguStatus(order.status)) return false
       } else if (statusFilter === 'SEWA_AKTIF') {
-        if (!['SEWA_AKTIF', 'DIKIRIM'].includes(order.status)) return false
+        if (!isSewaStatus(order.status)) return false
       } else if (statusFilter === 'INSPEKSI') {
-        if (!['INSPEKSI', 'DISPUTE', 'CLAIM', 'KLAIM'].includes(order.status)) return false
+        if (!isInspeksiStatus(order.status)) return false
       } else if (statusFilter === 'SELESAI') {
-        if (order.status !== 'SELESAI') return false
+        if (!isSelesaiStatus(order.status)) return false
       } else if (statusFilter === 'DITOLAK') {
-        if (!['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(order.status)) return false
+        if (!isDitolakStatus(order.status)) return false
       }
 
       // 2. Filter search query
@@ -212,6 +231,16 @@ export default function PesananMasuk({
     if (onRejectOrder) {
       await onRejectOrder(id)
       fetchOwnerOrders()
+    }
+  }
+
+  const handleConfirmHandover = async (id, bastData) => {
+    try {
+      await confirmDelivery(id, bastData)
+      await fetchOwnerOrders()
+    } catch (err) {
+      console.error('Gagal konfirmasi serah terima:', err)
+      throw err
     }
   }
 
@@ -370,6 +399,7 @@ export default function PesananMasuk({
               onReject={handleReject}
               onOpenChat={onOpenChat}
               onInspectOrder={onInspectOrder}
+              onConfirmHandover={handleConfirmHandover}
               isLoading={actionLoadingId === currentSelectedOrder.id}
             />
           </div>

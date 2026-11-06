@@ -599,15 +599,23 @@ ordersRouter.patch('/:id/cancel', async (req, res, next) => {
 
 // ─── PATCH /api/orders/:id/confirm-delivery ───────────────────────────────────
 // Konfirmasi Terima & BAST Awal: DIKIRIM → SEWA_AKTIF.
+// Dapat dipanggil oleh Penyewa, Pemilik Alat (saat serah terima), atau Admin.
 ordersRouter.patch('/:id/confirm-delivery', async (req, res, next) => {
   try {
-    const order = await prisma.order.findFirst({
-      where: { id: req.params.id, userId: req.userId }
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { equipment: true }
     })
 
     if (!order) {
       return res.status(404).json({
         error: { code: 'ORDER_NOT_FOUND', message: 'Pesanan tidak ditemukan' }
+      })
+    }
+
+    if (order.userId !== req.userId && order.equipment?.ownerId !== req.userId && req.userRole !== 'ADMIN') {
+      return res.status(403).json({
+        error: { code: 'FORBIDDEN', message: 'Tidak memiliki izin untuk mengonfirmasi penerimaan/serah terima' }
       })
     }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   X,
   ShieldCheck,
@@ -21,11 +21,18 @@ export default function ModalVerifikasiInspeksi({
   isOpen,
   onClose,
   order,
-  onInspectionCompleted
+  onInspectionCompleted,
+  initialMode = 'APPROVE'
 }) {
   if (!isOpen || !order) return null
 
-  const [decisionMode, setDecisionMode] = useState('APPROVE') // 'APPROVE' | 'DISPUTE'
+  const defaultDecision = order.initialMode || initialMode || 'APPROVE'
+  const [decisionMode, setDecisionMode] = useState(defaultDecision) // 'APPROVE' | 'DISPUTE'
+
+  useEffect(() => {
+    const activeDecision = order?.initialMode || initialMode || 'APPROVE'
+    setDecisionMode(activeDecision)
+  }, [order?.initialMode, initialMode, isOpen])
   const [ownerNotes, setOwnerNotes] = useState('')
   const [disputeReason, setDisputeReason] = useState('')
   const [damageFee, setDamageFee] = useState(

@@ -1622,7 +1622,7 @@ export default function OwnerDashboard() {
             orders={orders}
             onAcceptOrder={handleTerimaPesanan}
             onRejectOrder={handleTolakPesanan}
-            onInspectOrder={(o) => setSelectedInspectionOrder(o)}
+            onInspectOrder={(o, mode) => setSelectedInspectionOrder(o ? { ...o, initialMode: mode || o.initialMode || 'APPROVE' } : null)}
             onOpenChat={(order) => {
               setSelectedChatPartner({
                 id: order.userId || order.user?.id,

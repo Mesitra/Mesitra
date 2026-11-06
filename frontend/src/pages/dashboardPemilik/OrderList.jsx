@@ -4,6 +4,13 @@ import {
   AlertTriangle,
   ChevronDown
 } from 'lucide-react'
+import {
+  isSewaStatus,
+  isMenungguStatus,
+  isInspeksiStatus,
+  isSelesaiStatus,
+  isDitolakStatus
+} from './PesananMasuk'
 
 const formatRupiah = (val) => `Rp ${Number(val || 0).toLocaleString('id-ID')}`
 
@@ -28,9 +35,7 @@ export default function OrderList({
   onSelectOrder,
   isCompact = false
 }) {
-  const pendingOrders = orders.filter((o) =>
-    ['MENUNGGU_KONFIRMASI', 'PENDING', 'MENUNGGU_PEMBAYARAN'].includes(o.status)
-  )
+  const pendingOrders = orders.filter((o) => isMenungguStatus(o.status))
 
   // Mode Tablet Compact: hanya tampilkan avatar/inisial dan indikator status
   if (isCompact) {
@@ -77,13 +82,13 @@ export default function OrderList({
                 {/* Status Dot */}
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                    order.status === 'SELESAI'
+                    isSelesaiStatus(order.status)
                       ? 'bg-emerald-500'
-                      : ['SEWA_AKTIF', 'DIKIRIM'].includes(order.status)
+                      : isSewaStatus(order.status)
                       ? 'bg-blue-600'
-                      : ['INSPEKSI', 'DISPUTE', 'CLAIM', 'KLAIM'].includes(order.status)
+                      : isInspeksiStatus(order.status)
                       ? 'bg-amber-500'
-                      : ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(order.status)
+                      : isDitolakStatus(order.status)
                       ? 'bg-rose-500'
                       : 'bg-amber-500'
                   }`}
@@ -186,28 +191,28 @@ export default function OrderList({
                     </span>
                     <span
                       className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full shrink-0 ${
-                        order.status === 'SELESAI'
+                        isSelesaiStatus(order.status)
                           ? 'bg-emerald-50 text-emerald-700'
-                          : ['SEWA_AKTIF', 'DIKIRIM'].includes(order.status)
+                          : isSewaStatus(order.status)
                           ? 'bg-blue-50 text-blue-700'
-                          : ['INSPEKSI', 'DISPUTE', 'CLAIM', 'KLAIM'].includes(order.status)
+                          : isInspeksiStatus(order.status)
                           ? 'bg-amber-50 text-amber-700'
-                          : ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(order.status)
+                          : isDitolakStatus(order.status)
                           ? 'bg-rose-50 text-rose-700'
                           : 'bg-amber-50 text-amber-700'
                       }`}
                     >
-                      {order.status === 'SELESAI'
+                      {isSelesaiStatus(order.status)
                         ? 'Selesai'
                         : order.status === 'DIKIRIM'
                         ? 'Dikirim'
                         : order.status === 'SEWA_AKTIF'
-                        ? 'Sewa Aktif'
+                        ? 'Sedang Disewa'
                         : order.status === 'DISPUTE'
                         ? 'Dispute'
                         : order.status === 'INSPEKSI'
                         ? 'Inspeksi'
-                        : ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(order.status)
+                        : isDitolakStatus(order.status)
                         ? 'Ditolak'
                         : 'Menunggu'}
                     </span>

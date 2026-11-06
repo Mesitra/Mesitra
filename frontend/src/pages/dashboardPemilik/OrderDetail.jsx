@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   ArrowLeft,
   X,
@@ -15,8 +15,11 @@ import {
   Clock,
   ShieldCheck,
   Truck,
-  AlertCircle
+  AlertCircle,
+  PackageCheck
 } from 'lucide-react'
+import ModalKonfirmasiSerahTerima from '../../components/owner/ModalKonfirmasiSerahTerima'
+import ModalVerifikasiInspeksi from '../../components/owner/ModalVerifikasiInspeksi'
 
 const formatRupiah = (val) => `Rp ${Number(val || 0).toLocaleString('id-ID')}`
 
@@ -80,14 +83,15 @@ function getStatusBadgeConfig(status) {
 }
 
 /**
- * Komponen OrderTimeline Dinamis & Reaktif (Task 3)
- * Menggunakan progressive switch logic untuk status siklus hidup sewa:
- * - MENUNGGU_KONFIRMASI: aktifkan titik/warna "Menunggu konfirmasi Anda".
- * - SEWA_AKTIF: aktifkan titik sampai "Pembayaran & escrow" dan tandai "Sedang disewa".
- * - SELESAI: hijaukan seluruh timeline.
+ * Komponen OrderTimeline Dinamis & Reaktif
+ * Mengikuti 4 tahap hierarki chip UI:
+ * - Step 1: Pengajuan Dikirim (Aktif saat MENUNGGU_KONFIRMASI).
+ * - Step 2: Disetujui & Menunggu Pembayaran (Aktif saat MENUNGGU_PEMBAYARAN).
+ * - Step 3: Sedang Disewa / Serah Terima (Aktif saat status DIKIRIM atau SEWA_AKTIF).
+ * - Step 4: Inspeksi & Penyelesaian (Aktif saat INSPEKSI atau klaim sengketa).
  */
 export function OrderTimeline({ status: propStatus, history, order = {} }) {
-  const currentStatus = String(propStatus || order.status || 'MENUNGGU_KONFIRMASI').toUpperCase()
+  const currentStatus = String(propStatus || order.status || 'MENUNGGU_KONFIRMASI').trim().toUpperCase()
   const tenantName =
     order.user?.kycData?.businessName ||
     order.user?.fullName ||
@@ -106,80 +110,85 @@ export function OrderTimeline({ status: propStatus, history, order = {} }) {
 
   // Status flags
   const isSelesai = currentStatus === 'SELESAI'
-  const isSewaAktif = ['SEWA_AKTIF', 'DIKIRIM'].includes(currentStatus)
+  const isMenungguKonfirmasi = ['MENUNGGU_KONFIRMASI', 'PENDING'].includes(currentStatus)
+  const isMenungguPembayaran = currentStatus === 'MENUNGGU_PEMBAYARAN'
+  const isSedangDisewa = ['DIKIRIM', 'SEWA_AKTIF', 'PENGIRIMAN', 'SIAP_DIAMBIL', 'BERJALAN', 'AKTIF'].includes(currentStatus)
   const isInspeksi = currentStatus === 'INSPEKSI'
   const isDispute = ['DISPUTE', 'CLAIM', 'KLAIM'].includes(currentStatus)
   const isDitolak = ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(currentStatus)
-  const isMenunggu = ['MENUNGGU_KONFIRMASI', 'MENUNGGU_PEMBAYARAN', 'PENDING'].includes(currentStatus)
 
-  // Step 1: Pengajuan Dikirim
-  const step1 = {
-    title: 'Pengajuan dikirim',
-    subtitle: `${createdFormatted} · oleh ${tenantName}`,
-    state: isSelesai ? 'success' : 'completed'
+  // Step 1: Pengajuan Dikirim (Aktif saat MENUNGGU_KONFIRMASI)
+  let step1
+  if (isMenungguKonfirmasi) {
+    step1 = {
+      title: 'Pengajuan Dikirim',
+      subtitle: `${createdFormatted} · oleh ${tenantName} (Menunggu respons Anda)`,
+      state: 'current-amber'
+    }
+  } else {
+    step1 = {
+      title: 'Pengajuan Dikirim',
+      subtitle: `${createdFormatted} · oleh ${tenantName}`,
+      state: isSelesai ? 'success' : 'completed'
+    }
   }
 
-  // Step 2: Konfirmasi Pemilik
+  // Step 2: Disetujui & Menunggu Pembayaran (Aktif saat MENUNGGU_PEMBAYARAN)
   let step2
-  if (isMenunggu) {
+  if (isMenungguKonfirmasi) {
     step2 = {
-      title: 'Menunggu konfirmasi Anda',
-      subtitle: 'Batas respons 1×24 jam agar tingkat respons toko tetap tinggi',
+      title: 'Disetujui & Menunggu Pembayaran',
+      subtitle: 'Menunggu konfirmasi persetujuan dari pemilik alat',
+      state: 'pending'
+    }
+  } else if (isMenungguPembayaran) {
+    step2 = {
+      title: 'Disetujui & Menunggu Pembayaran',
+      subtitle: 'Penyewa sedang memproses pembayaran.',
       state: 'current-amber'
     }
   } else if (isDitolak) {
     step2 = {
-      title: 'Pengajuan Ditolak',
-      subtitle: 'Pesanan telah ditolak oleh pemilik alat',
+      title: currentStatus === 'DIBATALKAN' || currentStatus === 'BATAL' ? 'Pesanan Dibatalkan' : 'Pengajuan Ditolak',
+      subtitle: 'Pesanan tidak diproses ke tahap pembayaran',
       state: 'rejected'
     }
   } else {
     step2 = {
-      title: 'Pengajuan Disetujui',
-      subtitle: 'Ketersediaan alat telah dikonfirmasi pemilik',
+      title: 'Disetujui & Pembayaran Lunas',
+      subtitle: 'Pembayaran terverifikasi dan dana aman di escrow',
       state: isSelesai ? 'success' : 'completed'
     }
   }
 
-  // Step 3: Pembayaran & Escrow / Sedang Disewa
+  // Step 3: Sedang Disewa / Serah Terima (Aktif saat status DIKIRIM atau SEWA_AKTIF)
   let step3
-  if (isMenunggu || isDitolak) {
+  if (isMenungguKonfirmasi || isMenungguPembayaran || isDitolak) {
     step3 = {
-      title: 'Pembayaran & escrow',
-      subtitle: 'Aktif setelah Anda menyetujui pesanan',
+      title: 'Sedang Disewa / Serah Terima',
+      subtitle: 'Alat diserahkan dan masa sewa berjalan setelah pembayaran tuntas',
       state: 'pending'
     }
-  } else if (currentStatus === 'DIKIRIM') {
+  } else if (isSedangDisewa) {
     step3 = {
-      title: 'Unit Dikirim / Siap Diambil',
-      subtitle: order.deliveryMethod === 'COURIER' ? 'Kurir toko mengantarkan unit' : 'Menunggu serah terima di gudang',
-      state: isSelesai ? 'success' : 'current-blue'
-    }
-  } else if (isSewaAktif) {
-    step3 = {
-      title: 'Sedang disewa (Sewa Aktif)',
-      subtitle: `Masa sewa berjalan hingga ${
-        order.endDate
-          ? new Date(order.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-          : 'selesai'
-      }`,
-      state: isSelesai ? 'success' : 'current-emerald'
+      title: 'Sedang Disewa / Serah Terima',
+      subtitle: 'Alat diserahkan dan masa sewa sedang berjalan.',
+      state: currentStatus === 'DIKIRIM' ? 'current-blue' : 'current-emerald'
     }
   } else {
-    // Inspeksi / Dispute / Selesai
     step3 = {
-      title: 'Pembayaran & Masa Sewa Tuntas',
-      subtitle: 'Dana sewa aman di escrow, masa pakai alat telah selesai',
+      title: 'Sedang Disewa / Serah Terima Tuntas',
+      subtitle: 'Masa sewa telah selesai dan unit dikembalikan',
       state: isSelesai ? 'success' : 'completed'
     }
   }
 
-  // Step 4: Inspeksi & Pengembalian Deposit
+  // Step 4: Inspeksi & Penyelesaian (Aktif saat INSPEKSI atau masa sewa habis)
   let step4
   if (isInspeksi) {
     step4 = {
-      title: 'Pemeriksaan Fisik (Inspeksi BAST)',
-      subtitle: 'Penyewa telah submit BAST pengembalian. Menunggu verifikasi fisik pemilik.',
+      title: 'Inspeksi & Penyelesaian',
+      subtitle: 'Pemeriksaan fisik (Inspeksi BAST) untuk pelepasan deposit jaminan',
       state: 'current-amber'
     }
   } else if (isDispute) {
@@ -190,9 +199,9 @@ export function OrderTimeline({ status: propStatus, history, order = {} }) {
     }
   } else if (isSelesai) {
     step4 = {
-      title: 'Sewa Selesai & Deposit Dicairkan',
+      title: 'Inspeksi & Penyelesaian',
       subtitle: order.isResolvedByAdmin
-        ? 'Diputus via mediasi admin, dana telah didistribusikan'
+        ? 'Diputus via mediasi admin, deposit dan saldo sewa telah dicairkan'
         : 'Inspeksi BAST tuntas, deposit dan saldo sewa telah dicairkan ke dompet',
       state: 'success'
     }
@@ -262,7 +271,7 @@ export function OrderTimeline({ status: propStatus, history, order = {} }) {
                     isSelesai
                       ? 'bg-emerald-400'
                       : st.state.includes('completed') || st.state === 'success'
-                      ? 'bg-blue-200'
+                      ? 'bg-blue-400'
                       : 'bg-slate-200'
                   }`}
                 />
@@ -291,9 +300,28 @@ export default function OrderDetail({
   onReject,
   onOpenChat,
   onInspectOrder,
+  onConfirmHandover,
   isLoading = false
 }) {
   if (!order) return null
+
+  const [isHandoverModalOpen, setIsHandoverModalOpen] = useState(false)
+  const [isHandoverLoading, setIsHandoverLoading] = useState(false)
+  const [inspectionModalConfig, setInspectionModalConfig] = useState({ isOpen: false, mode: 'APPROVE' })
+
+  const handleOpenInspection = (mode = 'APPROVE') => {
+    if (onInspectOrder) {
+      onInspectOrder(order, mode)
+    } else {
+      setInspectionModalConfig({ isOpen: true, mode })
+    }
+  }
+
+  const handleHandoverSuccess = async (updatedData, message) => {
+    if (onConfirmHandover) {
+      await onConfirmHandover(order.id, updatedData?.initialBast || {})
+    }
+  }
 
   const user = order.user || order.tenant || {}
   const equipment = order.equipment || {}
@@ -329,6 +357,14 @@ export default function OrderDetail({
     order.deliveryMethod === 'COURIER'
       ? 'Diantar via kurir'
       : (order.deliveryType || 'Ambil di gudang')
+
+  const statusUpper = String(order.status || '').trim().toUpperCase()
+  const isStep3Active = ['DIKIRIM', 'SEWA_AKTIF', 'PENGIRIMAN', 'SIAP_DIAMBIL', 'BERJALAN', 'AKTIF'].includes(statusUpper)
+  const isBelumDiterima =
+    statusUpper === 'DIKIRIM' ||
+    statusUpper === 'PENGIRIMAN' ||
+    statusUpper === 'SIAP_DIAMBIL' ||
+    (statusUpper === 'SEWA_AKTIF' && !order.initialBast?.signedAt && !order.unitTaken && !order.unitReceivedAt)
 
   return (
     <div className="w-full bg-white border border-slate-200/90 rounded-2xl flex flex-col overflow-hidden shadow-xs transition-all duration-300">
@@ -579,20 +615,64 @@ export default function OrderDetail({
           <span>Ada pertanyaan untuk penyewa?</span>
         </button>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          {order.status === 'INSPEKSI' && onInspectOrder && (
+        <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap justify-end">
+          {/* Step 4 CTA: Inspeksi (Alat Aman & Ajukan Klaim Kerusakan) */}
+          {statusUpper === 'INSPEKSI' && (
+            <>
+              {/* Tombol Alat Aman (Setujui & Kembalikan Deposit) */}
+              <button
+                type="button"
+                onClick={() => handleOpenInspection('APPROVE')}
+                className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Alat Aman</span>
+              </button>
+
+              {/* Tombol Ajukan Klaim Kerusakan (Dispute) */}
+              <button
+                type="button"
+                onClick={() => handleOpenInspection('DISPUTE')}
+                className="flex-1 sm:flex-initial px-4 py-2 border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+              >
+                <AlertCircle className="w-4 h-4" />
+                <span>Ajukan Klaim Kerusakan</span>
+              </button>
+            </>
+          )}
+
+          {/* Step 3 CTA: Sedang Disewa / Serah Terima */}
+          {/* Tampilkan tombol solid biru "Konfirmasi Serah Terima" (HANYA JIKA alat belum ditandai sudah diambil/diterima oleh penyewa) */}
+          {isStep3Active && isBelumDiterima && (
             <button
               type="button"
-              onClick={() => onInspectOrder(order)}
-              className="flex-1 sm:flex-initial px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+              disabled={isLoading || isHandoverLoading}
+              onClick={() => setIsHandoverModalOpen(true)}
+              className="flex-1 sm:flex-initial px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Verifikasi BAST</span>
+              <PackageCheck className="w-4 h-4" />
+              <span>Konfirmasi Serah Terima</span>
             </button>
           )}
 
-          {/* Tombol Tolak & Terima untuk Status Menunggu Konfirmasi */}
-          {(!order.status || ['MENUNGGU_KONFIRMASI', 'PENDING'].includes(order.status)) && (
+          {/* Step 3: Keterangan jika unit sudah diserahterimakan */}
+          {isStep3Active && !isBelumDiterima && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Unit telah diserahterimakan (Masa sewa aktif)</span>
+            </span>
+          )}
+
+          {/* Step 2: Info Menunggu Pembayaran Penyewa */}
+          {statusUpper === 'MENUNGGU_PEMBAYARAN' && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Penyewa sedang memproses pembayaran</span>
+            </span>
+          )}
+
+          {/* Step 1 CTA: Tolak & Terima untuk Status Menunggu Konfirmasi */}
+          {(!order.status || ['MENUNGGU_KONFIRMASI', 'PENDING'].includes(statusUpper)) && (
             <>
               {/* Tombol Tolak */}
               <button
@@ -618,6 +698,27 @@ export default function OrderDetail({
           )}
         </div>
       </div>
+
+      {/* ── MODAL KONFIRMASI SERAH TERIMA (BAST AWAL) ──────────────────── */}
+      <ModalKonfirmasiSerahTerima
+        isOpen={isHandoverModalOpen}
+        order={order}
+        onClose={() => setIsHandoverModalOpen(false)}
+        onHandoverSuccess={handleHandoverSuccess}
+      />
+
+      {/* ── MODAL INSPEKSI INTERNAL (FALLBACK JIKA TANPA ONINSPECTORDER) ──── */}
+      {inspectionModalConfig.isOpen && (
+        <ModalVerifikasiInspeksi
+          isOpen={inspectionModalConfig.isOpen}
+          order={{ ...order, initialMode: inspectionModalConfig.mode }}
+          initialMode={inspectionModalConfig.mode}
+          onClose={() => setInspectionModalConfig({ isOpen: false, mode: 'APPROVE' })}
+          onInspectionCompleted={(updated, msg) => {
+            setInspectionModalConfig({ isOpen: false, mode: 'APPROVE' })
+          }}
+        />
+      )}
     </div>
   )
 }
