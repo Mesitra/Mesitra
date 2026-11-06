@@ -62,6 +62,7 @@ function formatPartner(conversation, currentUserId) {
  */
 chatsRouter.get('/unread-count', async (req, res, next) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate')
     const count = await prisma.message.count({
       where: {
         conversation: {
@@ -134,6 +135,7 @@ chatsRouter.get('/by-partner/:partnerId', async (req, res, next) => {
  */
 chatsRouter.get('/', async (req, res, next) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate')
     const conversations = await prisma.conversation.findMany({
       where: {
         OR: [{ renterId: req.userId }, { ownerId: req.userId }]
@@ -202,6 +204,7 @@ chatsRouter.get('/', async (req, res, next) => {
  */
 chatsRouter.get('/:conversationId/messages', async (req, res, next) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate')
     const conversationId = String(req.params.conversationId || '').trim()
 
     const conversation = await prisma.conversation.findUnique({

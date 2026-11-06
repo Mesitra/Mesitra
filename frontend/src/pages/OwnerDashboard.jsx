@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -217,12 +217,15 @@ export default function OwnerDashboard() {
   })
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(() => {
     if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') return 'alat'
     return tabFromUrl || 'ringkasan'
   })
+
+  const isChatTab = activeTab === 'chat' || location.pathname === '/pesan' || location.pathname.startsWith('/pesan/')
 
   useEffect(() => {
     if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') {
@@ -913,132 +916,137 @@ export default function OwnerDashboard() {
                 {activeTab === 'pengaturan' && 'Pengaturan'}
               </h1>
               <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">
-                Gudang Cilandak · {pendingOrders.length} pesanan baru menunggu konfirmasi
+                {activeTab === 'chat'
+                  ? 'Komunikasi langsung dan pesan masuk dari penyewa UMKM Anda'
+                  : `Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-60">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari pesanan atau alat..."
-                  className="w-full bg-white text-xs rounded-xl pl-9 pr-3 py-2 text-slate-800 placeholder-slate-400 border border-slate-200 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs"
-                />
-              </div>
+            {/* Task 1: Hapus komponen Input Search Pesanan, Lonceng Notifikasi, dan tombol + Tambah Alat SECARA SPESIFIK saat di halaman Chat */}
+            {!isChatTab && (
+              <div className="flex items-center gap-2.5">
+                {/* Search Bar */}
+                <div className="relative w-full sm:w-60">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari pesanan atau alat..."
+                    className="w-full bg-white text-xs rounded-xl pl-9 pr-3 py-2 text-slate-800 placeholder-slate-400 border border-slate-200 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs"
+                  />
+                </div>
 
-              {/* Notification Bell with Dropdown Popover (Task 2) */}
-              <div className="relative" ref={notificationRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsNotificationOpen((prev) => !prev)}
-                  className={`p-2 rounded-xl bg-white border transition-all shadow-2xs cursor-pointer relative ${
-                    isNotificationOpen
-                      ? 'border-blue-600 ring-2 ring-blue-100 text-blue-600'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                  title="Notifikasi & Perlu Tindakan"
-                >
-                  <Bell className="w-4 h-4" />
-                  {totalNotificationBadge > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-extrabold flex items-center justify-center shadow-xs">
-                      {totalNotificationBadge}
-                    </span>
-                  )}
-                </button>
+                {/* Notification Bell with Dropdown Popover (Task 2) */}
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsNotificationOpen((prev) => !prev)}
+                    className={`p-2 rounded-xl bg-white border transition-all shadow-2xs cursor-pointer relative ${
+                      isNotificationOpen
+                        ? 'border-blue-600 ring-2 ring-blue-100 text-blue-600'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                    title="Notifikasi & Perlu Tindakan"
+                  >
+                    <Bell className="w-4 h-4" />
+                    {totalNotificationBadge > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-extrabold flex items-center justify-center shadow-xs">
+                        {totalNotificationBadge}
+                      </span>
+                    )}
+                  </button>
 
-                {/* Popover Dropdown Notifikasi */}
-                {isNotificationOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                    {/* Header Popover */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900">Perlu Tindakan &amp; Notifikasi</span>
-                        {totalNotificationBadge > 0 && (
-                          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700">
-                            {totalNotificationBadge}
-                          </span>
+                  {/* Popover Dropdown Notifikasi */}
+                  {isNotificationOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                      {/* Header Popover */}
+                      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900">Perlu Tindakan &amp; Notifikasi</span>
+                          {totalNotificationBadge > 0 && (
+                            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700">
+                              {totalNotificationBadge}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsNotificationOpen(false)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* List Item Notifikasi */}
+                      <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
+                        {notificationItems.length === 0 ? (
+                          <div className="py-8 text-center space-y-2">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                            <div className="text-xs font-bold text-slate-800">
+                              Semua beres!
+                            </div>
+                            <div className="text-[11px] text-slate-500">
+                              Tidak ada tindakan mendesak yang butuh perhatian saat ini.
+                            </div>
+                          </div>
+                        ) : (
+                          notificationItems.map((item) => {
+                            const Icon = item.icon
+                            return (
+                              <div
+                                key={item.id}
+                                onClick={item.action}
+                                className="p-2.5 rounded-xl hover:bg-slate-50 flex items-start gap-3 transition-colors cursor-pointer group"
+                              >
+                                <div className={`w-8 h-8 rounded-lg ${item.colorBg} ${item.colorText} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                    {item.title}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                    {item.desc}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
+                              </div>
+                            )
+                          })
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsNotificationOpen(false)}
-                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
 
-                    {/* List Item Notifikasi */}
-                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
-                      {notificationItems.length === 0 ? (
-                        <div className="py-8 text-center space-y-2">
-                          <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-                          <div className="text-xs font-bold text-slate-800">
-                            Semua beres!
-                          </div>
-                          <div className="text-[11px] text-slate-500">
-                            Tidak ada tindakan mendesak yang butuh perhatian saat ini.
-                          </div>
-                        </div>
-                      ) : (
-                        notificationItems.map((item) => {
-                          const Icon = item.icon
-                          return (
-                            <div
-                              key={item.id}
-                              onClick={item.action}
-                              className="p-2.5 rounded-xl hover:bg-slate-50 flex items-start gap-3 transition-colors cursor-pointer group"
-                            >
-                              <div className={`w-8 h-8 rounded-lg ${item.colorBg} ${item.colorText} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
-                                <Icon className="w-4 h-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                                  {item.title}
-                                </div>
-                                <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                                  {item.desc}
-                                </div>
-                              </div>
-                              <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
-                            </div>
-                          )
-                        })
-                      )}
+                      {/* Footer Popover */}
+                      <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 font-medium">Auto-refresh aktif</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab('pesanan')
+                            setIsNotificationOpen(false)
+                          }}
+                          className="font-bold text-blue-600 hover:underline cursor-pointer"
+                        >
+                          Buka Pesanan Masuk
+                        </button>
+                      </div>
                     </div>
+                  )}
+                </div>
 
-                    {/* Footer Popover */}
-                    <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400 font-medium">Auto-refresh aktif</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('pesanan')
-                          setIsNotificationOpen(false)
-                        }}
-                        className="font-bold text-blue-600 hover:underline cursor-pointer"
-                      >
-                        Buka Pesanan Masuk
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Tombol Utama Tambah Alat */}
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs md:text-sm font-semibold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah Alat</span>
+                </button>
               </div>
-
-              {/* Tombol Utama Tambah Alat */}
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(true)}
-                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs md:text-sm font-semibold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Tambah Alat</span>
-              </button>
-            </div>
+            )}
           </header>
         )}
 

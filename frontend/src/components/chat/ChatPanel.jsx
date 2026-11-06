@@ -44,12 +44,26 @@ export default function ChatPanel({
   const [errorMsg, setErrorMsg] = useState('')
 
   const messagesEndRef = useRef(null)
+  const prevMessagesLengthRef = useRef(0)
   const inputRef = useRef(null)
 
   // Scroll otomatis ke gelembung pesan terbawah
   const scrollToBottom = (behavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior })
   }
+
+  // Reset pelacakan panjang pesan saat obrolan aktif berganti
+  useEffect(() => {
+    prevMessagesLengthRef.current = 0
+  }, [selectedChat?.id])
+
+  // Task 3: Otomatis scroll ke bawah (scrollIntoView) setiap kali array messages bertambah panjang
+  useEffect(() => {
+    if (messages.length > prevMessagesLengthRef.current) {
+      scrollToBottom(prevMessagesLengthRef.current === 0 ? 'auto' : 'smooth')
+    }
+    prevMessagesLengthRef.current = messages.length
+  }, [messages.length])
 
   // Notifikasi perubahan obrolan terpilih ke parent (Pesan.jsx)
   useEffect(() => {
@@ -142,10 +156,10 @@ export default function ChatPanel({
 
     init()
 
-    // Polling ringan setiap 6 detik untuk update pesan masuk baru
+    // Task 3: Polling interval setiap 3000ms (3 detik) untuk sinkronisasi daftar percakapan
     const interval = setInterval(() => {
       fetchConversations(true)
-    }, 6000)
+    }, 3000)
 
     return () => {
       isActive = false
@@ -153,7 +167,7 @@ export default function ChatPanel({
     }
   }, [initialPartnerId])
 
-  // ── 3. Ambil Pesan Setiap Kali Obrolan Dipilih ─────────────────────────────────
+  // ── 3. Ambil Pesan & Sinkronisasi Real-Time (Short Polling) Setiap 3 Detik ────
   useEffect(() => {
     if (!selectedChat || selectedChat.isDraft) {
       if (selectedChat?.isDraft) {
@@ -162,26 +176,49 @@ export default function ChatPanel({
       return
     }
 
+    const currentChatId = selectedChat.id
     let isActive = true
-    const loadMessages = async () => {
-      setLoadingMessages(true)
+
+    const fetchRoomMessages = async (isInitial = false) => {
+      if (isInitial) {
+        setLoadingMessages(true)
+      }
       try {
-        const res = await getChatMessages(selectedChat.id)
-        if (isActive) {
-          setMessages(res?.data || [])
-          setTimeout(() => scrollToBottom('auto'), 50)
-        }
+        const res = await getChatMessages(currentChatId)
+        if (!isActive) return
+
+        const incomingMessages = res?.data || []
+        setMessages((prev) => {
+          // Hanya update jika ada penambahan/perubahan pesan untuk mencegah render berlebih
+          if (
+            incomingMessages.length !== prev.length ||
+            (incomingMessages.length > 0 && incomingMessages[incomingMessages.length - 1]?.id !== prev[prev.length - 1]?.id)
+          ) {
+            return incomingMessages
+          }
+          return prev
+        })
       } catch (err) {
         console.error('Gagal mengambil pesan:', err)
       } finally {
-        if (isActive) setLoadingMessages(false)
+        if (isActive && isInitial) {
+          setLoadingMessages(false)
+        }
       }
     }
 
-    loadMessages()
+    // Ambil riwayat pesan awal
+    fetchRoomMessages(true)
 
+    // Task 3: Mekanisme Short Polling setiap 3000ms (3 detik) selama room chat terbuka
+    const pollInterval = setInterval(() => {
+      fetchRoomMessages(false)
+    }, 3000)
+
+    // Bersihkan interval saat komponen di-unmount atau chat berganti
     return () => {
       isActive = false
+      clearInterval(pollInterval)
     }
   }, [selectedChat?.id])
 
@@ -439,7 +476,7 @@ export default function ChatPanel({
             {/* Header Ruang Obrolan */}
             <div className="px-4 sm:px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                {/* Tombol Kembali (Mobile) */}
+                {/* Task 2: Tombol Kembali (Mobile) terhubung ke setSelectedChat(null) */}
                 <button
                   type="button"
                   onClick={() => {
@@ -451,12 +488,11 @@ export default function ChatPanel({
                       setSelectedChat(null)
                     }
                   }}
-                  className="inline-flex md:hidden items-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200 shrink-0"
-                  title="Kembali"
-                  aria-label="Kembali"
+                  className="inline-flex md:hidden items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer border border-slate-200 shrink-0"
+                  title="Kembali ke daftar obrolan"
+                  aria-label="Kembali ke daftar obrolan"
                 >
                   <ArrowLeft className="w-4 h-4 text-slate-600" />
-                  <span>Kembali</span>
                 </button>
 
                 {selectedChat.partner?.photo ? (
@@ -498,6 +534,17 @@ export default function ChatPanel({
                   </div>
                 </div>
               </div>
+
+              {/* Task 2: Tombol Close (X) di header room chat aktif agar panel chat bisa ditutup */}
+              <button
+                type="button"
+                onClick={() => setSelectedChat(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer border border-transparent hover:border-slate-200 shrink-0"
+                title="Tutup obrolan"
+                aria-label="Tutup obrolan"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Area Scroll Gelembung Pesan (Chat Bubbles) */}
