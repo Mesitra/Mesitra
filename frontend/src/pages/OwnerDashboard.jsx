@@ -30,7 +30,7 @@ import {
   Check,
   ShieldAlert
 } from 'lucide-react'
-import { listOrders, acceptOrder, rejectOrder } from '../lib/ordersApi'
+import { listOrders, listOwnerOrders, acceptOrder, rejectOrder } from '../lib/ordersApi'
 import { listEquipments, createEquipment, updateEquipment, deleteEquipment, formatRupiah } from '../lib/equipmentsApi'
 import { listReviews } from '../lib/reviewsApi'
 import { getSessionUser, logoutUser, getUserInitials } from '../lib/userSession'
@@ -277,7 +277,7 @@ export default function OwnerDashboard() {
       const equipParams = user?.id ? { ownerId: user.id, allStatus: 'true' } : { allStatus: 'true' }
 
       const [orderRes, equipRes, reviewRes] = await Promise.all([
-        listOrders({ as: 'owner' }).catch(() => null),
+        listOwnerOrders().catch(() => listOrders({ as: 'owner' }).catch(() => null)),
         listEquipments(equipParams).catch(() => null),
         listReviews({ as: 'owner' }).catch(() => null)
       ])

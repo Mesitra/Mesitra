@@ -453,3 +453,41 @@ test('Validasi sinkronisasi metode pengiriman & custom ongkir antara pemilik ala
     where: { id: { in: [pickupOnlyEq.id, courierOnlyEq.id] } }
   })
 })
+
+test('GET /api/orders/owner/me mengambil daftar pesanan milik peralatan pemilik (owner)', async () => {
+  // Buat order untuk alat milik owner
+  const testOrder = await prisma.order.create({
+    data: {
+      userId: renterId,
+      equipmentId,
+      invoiceNumber: `INV-OWNER-${Date.now()}`,
+      startDate: new Date('2026-12-01'),
+      endDate: new Date('2026-12-05'),
+      rentalDays: 4,
+      deliveryMethod: 'PICKUP',
+      rentalCost: 300000,
+      shippingCost: 0,
+      depositAmount: 300000,
+      totalPaid: 600000,
+      status: 'MENUNGGU_KONFIRMASI'
+    }
+  })
+
+  const res = await fetch(`${baseUrl}/api/orders/owner/me`, {
+    headers: {
+      Authorization: `Bearer ${ownerToken}`
+    }
+  })
+
+  assert.equal(res.status, 200)
+  const json = await res.json()
+  assert.ok(Array.isArray(json.data))
+  const found = json.data.find((o) => o.id === testOrder.id)
+  assert.ok(found, 'Pesanan baru harus ditemukan di daftar pesanan milik pemilik')
+  assert.equal(found.equipment.ownerId, ownerId)
+  assert.ok(found.tenant, 'Field tenant alias dari user harus tersedia')
+  assert.equal(found.tenant.id, renterId)
+
+  // Bersihkan order
+  await prisma.order.delete({ where: { id: testOrder.id } })
+})

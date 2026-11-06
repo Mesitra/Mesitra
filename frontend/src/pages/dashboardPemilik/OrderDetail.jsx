@@ -13,10 +13,276 @@ import {
   Check,
   Star,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Truck,
+  AlertCircle
 } from 'lucide-react'
 
 const formatRupiah = (val) => `Rp ${Number(val || 0).toLocaleString('id-ID')}`
+
+// Helper konfigurasi visual status badge
+function getStatusBadgeConfig(status) {
+  const s = String(status || '').toUpperCase()
+  switch (s) {
+    case 'SELESAI':
+      return {
+        label: 'Selesai',
+        icon: CheckCircle2,
+        className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        iconClass: 'text-emerald-600'
+      }
+    case 'SEWA_AKTIF':
+      return {
+        label: 'Sedang Disewa',
+        icon: Package,
+        className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        iconClass: 'text-emerald-600'
+      }
+    case 'DIKIRIM':
+      return {
+        label: 'Dikirim',
+        icon: Truck,
+        className: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+        iconClass: 'text-indigo-600'
+      }
+    case 'INSPEKSI':
+      return {
+        label: 'Perlu Inspeksi',
+        icon: AlertCircle,
+        className: 'bg-amber-50 text-amber-800 border-amber-300',
+        iconClass: 'text-amber-600'
+      }
+    case 'DISPUTE':
+    case 'CLAIM':
+    case 'KLAIM':
+      return {
+        label: 'Sengketa Mediasi',
+        icon: AlertCircle,
+        className: 'bg-rose-50 text-rose-800 border-rose-300',
+        iconClass: 'text-rose-600'
+      }
+    case 'DITOLAK':
+    case 'DIBATALKAN':
+      return {
+        label: 'Ditolak',
+        icon: X,
+        className: 'bg-red-50 text-red-800 border-red-200',
+        iconClass: 'text-red-600'
+      }
+    default:
+      return {
+        label: 'Menunggu konfirmasi',
+        icon: Clock,
+        className: 'bg-amber-50 text-amber-800 border-amber-200/80',
+        iconClass: 'text-amber-600'
+      }
+  }
+}
+
+/**
+ * Komponen OrderTimeline Dinamis & Reaktif (Task 3)
+ * Menggunakan progressive switch logic untuk status siklus hidup sewa:
+ * - MENUNGGU_KONFIRMASI: aktifkan titik/warna "Menunggu konfirmasi Anda".
+ * - SEWA_AKTIF: aktifkan titik sampai "Pembayaran & escrow" dan tandai "Sedang disewa".
+ * - SELESAI: hijaukan seluruh timeline.
+ */
+export function OrderTimeline({ status: propStatus, history, order = {} }) {
+  const currentStatus = String(propStatus || order.status || 'MENUNGGU_KONFIRMASI').toUpperCase()
+  const tenantName =
+    order.user?.kycData?.businessName ||
+    order.user?.fullName ||
+    order.tenant?.fullName ||
+    'Penyewa UMKM'
+
+  // Format tanggal pengajuan riil
+  const createdFormatted = order.createdAt
+    ? new Date(order.createdAt).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : '10 Jun · 08.12'
+
+  // Status flags
+  const isSelesai = currentStatus === 'SELESAI'
+  const isSewaAktif = ['SEWA_AKTIF', 'DIKIRIM'].includes(currentStatus)
+  const isInspeksi = currentStatus === 'INSPEKSI'
+  const isDispute = ['DISPUTE', 'CLAIM', 'KLAIM'].includes(currentStatus)
+  const isDitolak = ['DITOLAK', 'DIBATALKAN', 'BATAL'].includes(currentStatus)
+  const isMenunggu = ['MENUNGGU_KONFIRMASI', 'MENUNGGU_PEMBAYARAN', 'PENDING'].includes(currentStatus)
+
+  // Step 1: Pengajuan Dikirim
+  const step1 = {
+    title: 'Pengajuan dikirim',
+    subtitle: `${createdFormatted} · oleh ${tenantName}`,
+    state: isSelesai ? 'success' : 'completed'
+  }
+
+  // Step 2: Konfirmasi Pemilik
+  let step2
+  if (isMenunggu) {
+    step2 = {
+      title: 'Menunggu konfirmasi Anda',
+      subtitle: 'Batas respons 1×24 jam agar tingkat respons toko tetap tinggi',
+      state: 'current-amber'
+    }
+  } else if (isDitolak) {
+    step2 = {
+      title: 'Pengajuan Ditolak',
+      subtitle: 'Pesanan telah ditolak oleh pemilik alat',
+      state: 'rejected'
+    }
+  } else {
+    step2 = {
+      title: 'Pengajuan Disetujui',
+      subtitle: 'Ketersediaan alat telah dikonfirmasi pemilik',
+      state: isSelesai ? 'success' : 'completed'
+    }
+  }
+
+  // Step 3: Pembayaran & Escrow / Sedang Disewa
+  let step3
+  if (isMenunggu || isDitolak) {
+    step3 = {
+      title: 'Pembayaran & escrow',
+      subtitle: 'Aktif setelah Anda menyetujui pesanan',
+      state: 'pending'
+    }
+  } else if (currentStatus === 'DIKIRIM') {
+    step3 = {
+      title: 'Unit Dikirim / Siap Diambil',
+      subtitle: order.deliveryMethod === 'COURIER' ? 'Kurir toko mengantarkan unit' : 'Menunggu serah terima di gudang',
+      state: isSelesai ? 'success' : 'current-blue'
+    }
+  } else if (isSewaAktif) {
+    step3 = {
+      title: 'Sedang disewa (Sewa Aktif)',
+      subtitle: `Masa sewa berjalan hingga ${
+        order.endDate
+          ? new Date(order.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+          : 'selesai'
+      }`,
+      state: isSelesai ? 'success' : 'current-emerald'
+    }
+  } else {
+    // Inspeksi / Dispute / Selesai
+    step3 = {
+      title: 'Pembayaran & Masa Sewa Tuntas',
+      subtitle: 'Dana sewa aman di escrow, masa pakai alat telah selesai',
+      state: isSelesai ? 'success' : 'completed'
+    }
+  }
+
+  // Step 4: Inspeksi & Pengembalian Deposit
+  let step4
+  if (isInspeksi) {
+    step4 = {
+      title: 'Pemeriksaan Fisik (Inspeksi BAST)',
+      subtitle: 'Penyewa telah submit BAST pengembalian. Menunggu verifikasi fisik pemilik.',
+      state: 'current-amber'
+    }
+  } else if (isDispute) {
+    step4 = {
+      title: 'Sengketa Mediasi (Dispute)',
+      subtitle: order.disputeReason || 'Ada klaim kendala/kerusakan, dalam proses mediasi tim admin',
+      state: 'dispute'
+    }
+  } else if (isSelesai) {
+    step4 = {
+      title: 'Sewa Selesai & Deposit Dicairkan',
+      subtitle: order.isResolvedByAdmin
+        ? 'Diputus via mediasi admin, dana telah didistribusikan'
+        : 'Inspeksi BAST tuntas, deposit dan saldo sewa telah dicairkan ke dompet',
+      state: 'success'
+    }
+  } else {
+    step4 = {
+      title: 'Inspeksi & Penyelesaian',
+      subtitle: 'Dilakukan setelah masa sewa berakhir dan unit alat dikembalikan',
+      state: 'pending'
+    }
+  }
+
+  const steps = [step1, step2, step3, step4]
+
+  return (
+    <div className="p-4 bg-white border border-slate-200/80 rounded-xl space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
+          Riwayat Pesanan
+        </h4>
+        {isSelesai && (
+          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            Semua Tahap Selesai
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-4 pl-1 relative">
+        {steps.map((st, idx) => {
+          let dotClass = 'bg-slate-300'
+          let titleClass = 'text-slate-500 font-medium'
+          let subClass = 'text-slate-400 font-normal'
+
+          if (st.state === 'success') {
+            dotClass = 'bg-emerald-600 ring-4 ring-emerald-100'
+            titleClass = 'text-emerald-950 font-bold'
+            subClass = 'text-slate-500 font-medium'
+          } else if (st.state === 'completed') {
+            dotClass = 'bg-blue-600 ring-4 ring-blue-100'
+            titleClass = 'text-slate-900 font-bold'
+            subClass = 'text-slate-500 font-medium'
+          } else if (st.state === 'current-amber') {
+            dotClass = 'bg-amber-500 ring-4 ring-amber-100 animate-pulse'
+            titleClass = 'text-amber-950 font-bold'
+            subClass = 'text-slate-600 font-medium'
+          } else if (st.state === 'current-blue') {
+            dotClass = 'bg-blue-600 ring-4 ring-blue-100 animate-pulse'
+            titleClass = 'text-blue-950 font-bold'
+            subClass = 'text-slate-600 font-medium'
+          } else if (st.state === 'current-emerald') {
+            dotClass = 'bg-emerald-600 ring-4 ring-emerald-100 animate-pulse'
+            titleClass = 'text-emerald-950 font-bold'
+            subClass = 'text-slate-600 font-medium'
+          } else if (st.state === 'rejected' || st.state === 'dispute') {
+            dotClass = 'bg-rose-500 ring-4 ring-rose-100'
+            titleClass = 'text-rose-950 font-bold'
+            subClass = 'text-rose-700 font-medium'
+          }
+
+          const isLast = idx === steps.length - 1
+
+          return (
+            <div key={idx} className="flex items-start gap-3 relative">
+              {/* Garis Penghubung Vertikal */}
+              {!isLast && (
+                <div
+                  className={`absolute left-[5px] top-[14px] w-0.5 h-[calc(100%+8px)] ${
+                    isSelesai
+                      ? 'bg-emerald-400'
+                      : st.state.includes('completed') || st.state === 'success'
+                      ? 'bg-blue-200'
+                      : 'bg-slate-200'
+                  }`}
+                />
+              )}
+
+              {/* Titik Status */}
+              <div className={`w-3 h-3 rounded-full mt-1 shrink-0 z-10 transition-colors ${dotClass}`} />
+
+              {/* Deskripsi Step */}
+              <div className="min-w-0 flex-1">
+                <p className={`text-xs ${titleClass}`}>{st.title}</p>
+                <p className={`text-[11px] mt-0.5 leading-relaxed ${subClass}`}>{st.subtitle}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 export default function OrderDetail({
   order,
@@ -29,9 +295,33 @@ export default function OrderDetail({
 }) {
   if (!order) return null
 
-  const user = order.user || {}
+  const user = order.user || order.tenant || {}
   const equipment = order.equipment || {}
-  const initials = user.initials || user.fullName?.substring(0, 2).toUpperCase() || 'UM'
+  const initials =
+    user.initials ||
+    (user.fullName ? user.fullName.split(' ').map((w) => w[0]).join('').substring(0, 2).toUpperCase() : 'UM')
+
+  const badgeConfig = getStatusBadgeConfig(order.status)
+  const BadgeIcon = badgeConfig.icon
+
+  const rentalCost = order.rentalCost || 0
+  const depositAmount = order.depositAmount || 0
+  const shippingCost = order.shippingCost || 0
+  const serviceFee = order.serviceFee || Math.round(rentalCost * 0.05) || 25000
+  const totalPaid = order.totalPaid || (rentalCost + depositAmount + shippingCost)
+  const netEarnings = order.netEarnings || (rentalCost + shippingCost)
+
+  const startDateFormatted = order.startDate
+    ? new Date(order.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '-'
+  const endDateFormatted = order.endDate
+    ? new Date(order.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '-'
+
+  const deliveryText =
+    order.deliveryMethod === 'COURIER'
+      ? 'Diantar via kurir'
+      : (order.deliveryType || 'Ambil di gudang')
 
   return (
     <div className="w-full bg-white border border-slate-200/90 rounded-2xl flex flex-col overflow-hidden shadow-xs transition-all duration-300">
@@ -53,9 +343,10 @@ export default function OrderDetail({
             {order.invoiceNumber}
           </span>
 
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80">
-            <Clock className="w-3 h-3 text-amber-600" />
-            <span>Menunggu konfirmasi</span>
+          {/* Badge Status Reaktif */}
+          <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${badgeConfig.className}`}>
+            <BadgeIcon className={`w-3 h-3 ${badgeConfig.iconClass}`} />
+            <span>{badgeConfig.label}</span>
           </span>
         </div>
 
@@ -102,7 +393,7 @@ export default function OrderDetail({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-extrabold text-slate-900">
-                  {user.fullName || 'Dapur Roti Andini'}
+                  {user.kycData?.businessName || user.fullName || 'Penyewa UMKM'}
                 </span>
                 <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/90 text-[10px] font-bold px-2 py-0.5 rounded-full">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600" />
@@ -110,7 +401,7 @@ export default function OrderDetail({
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                NIB {user.nib || '9120 4471 8830'} · {user.power || 'Daya usaha 1300 W'} · {user.city || 'Bandung'}
+                NIB {user.kycData?.nib || user.nib || '9120 4471 8830'} · {user.power || 'Daya usaha 1300 W'} · {user.kycData?.city || user.city || 'Bandung'}
               </p>
             </div>
           </div>
@@ -137,20 +428,20 @@ export default function OrderDetail({
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
-                {equipment.name || 'Oven Deck Bakery 2 Pintu'}
+                {equipment.name || 'Unit Alat Sewa'}
               </h3>
               <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                {order.rentalDays || 4} hari sewa · {order.deliveryType || 'Ambil di gudang'}
+                {order.rentalDays || 1} hari sewa · {deliveryText}
               </p>
             </div>
           </div>
 
           <div className="sm:text-right shrink-0">
             <div className="text-base sm:text-lg font-extrabold text-slate-900 tabular-nums">
-              {formatRupiah(order.totalPaid || order.rentalCost)}
+              {formatRupiah(totalPaid)}
             </div>
             <div className="text-[11px] text-slate-400 font-medium">
-              {formatRupiah(order.dailyRate || 375000)} / hari
+              {formatRupiah(order.dailyRate || Math.round(rentalCost / (order.rentalDays || 1)))} / hari
             </div>
           </div>
         </div>
@@ -166,7 +457,7 @@ export default function OrderDetail({
                 Mulai Sewa
               </span>
               <span className="text-xs font-extrabold text-slate-900 truncate block">
-                {order.startDate ? new Date(order.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '18 Jun 2025'}
+                {startDateFormatted}
               </span>
             </div>
           </div>
@@ -180,7 +471,7 @@ export default function OrderDetail({
                 Selesai Sewa
               </span>
               <span className="text-xs font-extrabold text-slate-900 truncate block">
-                {order.endDate ? new Date(order.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '21 Jun 2025'}
+                {endDateFormatted}
               </span>
             </div>
           </div>
@@ -194,7 +485,7 @@ export default function OrderDetail({
                 Lokasi Ambil
               </span>
               <span className="text-xs font-extrabold text-slate-900 truncate block">
-                {order.location || 'Gudang Cilandak'}
+                {order.location || equipment.location || 'Gudang Cilandak'}
               </span>
             </div>
           </div>
@@ -213,23 +504,32 @@ export default function OrderDetail({
           </div>
 
           <div className="flex items-center justify-between text-xs text-slate-600">
-            <span>Biaya sewa ({order.rentalDays || 4} hari)</span>
+            <span>Biaya sewa ({order.rentalDays || 1} hari)</span>
             <span className="font-semibold text-slate-800 tabular-nums">
-              {formatRupiah(order.rentalCost || 1500000)}
+              {formatRupiah(rentalCost)}
             </span>
           </div>
 
           <div className="flex items-center justify-between text-xs text-slate-600">
             <span>Deposit jaminan</span>
             <span className="font-semibold text-slate-800 tabular-nums">
-              {formatRupiah(order.depositAmount || 500000)}
+              {formatRupiah(depositAmount)}
             </span>
           </div>
+
+          {shippingCost > 0 && (
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span>Ongkir pengiriman</span>
+              <span className="font-semibold text-slate-800 tabular-nums">
+                {formatRupiah(shippingCost)}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-xs text-slate-600">
             <span>Biaya layanan</span>
             <span className="font-semibold text-slate-800 tabular-nums">
-              {formatRupiah(order.serviceFee || 25000)}
+              {formatRupiah(serviceFee)}
             </span>
           </div>
 
@@ -240,45 +540,17 @@ export default function OrderDetail({
               Diterima setelah selesai
             </span>
             <span className="text-sm sm:text-base font-extrabold text-blue-600 tabular-nums">
-              {formatRupiah(order.netEarnings || order.rentalCost || 1550000)}
+              {formatRupiah(netEarnings)}
             </span>
           </div>
         </div>
 
-        {/* 5. RIWAYAT PESANAN / TIMELINE */}
-        <div className="p-4 bg-white border border-slate-200/80 rounded-xl space-y-3">
-          <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
-            Riwayat Pesanan
-          </h4>
-
-          <div className="space-y-3 pl-1">
-            <div className="flex items-start gap-3 relative">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-600 mt-1 shrink-0 ring-4 ring-blue-100" />
-              <div>
-                <p className="text-xs font-bold text-slate-900">Pengajuan dikirim</p>
-                <p className="text-[11px] text-slate-500 font-medium">
-                  10 Jun · 08.12 · oleh {user.fullName || 'Dapur Roti Andini'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 relative">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0 ring-4 ring-amber-100" />
-              <div>
-                <p className="text-xs font-bold text-slate-900">Menunggu konfirmasi Anda</p>
-                <p className="text-[11px] text-slate-500 font-medium">Batas respons 1×24 jam</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 relative">
-              <div className="w-2.5 h-2.5 rounded-full bg-slate-300 mt-1 shrink-0" />
-              <div>
-                <p className="text-xs font-bold text-slate-500">Pembayaran & escrow</p>
-                <p className="text-[11px] text-slate-400 font-medium">Aktif setelah Anda menyetujui</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* 5. RIWAYAT PESANAN / TIMELINE DINAMIS (TASK 3) */}
+        <OrderTimeline
+          order={order}
+          status={order.status}
+          history={order.history || order.returnData}
+        />
       </div>
 
       {/* ── FOOTER ACTIONS BAR ─────────────────────────────────────────── */}

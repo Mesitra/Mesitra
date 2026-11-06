@@ -7,6 +7,21 @@ import {
 
 const formatRupiah = (val) => `Rp ${Number(val || 0).toLocaleString('id-ID')}`
 
+function getTimeAgo(dateStr, fallback) {
+  if (fallback) return fallback
+  if (!dateStr) return 'Baru saja'
+  const diff = Date.now() - new Date(dateStr).getTime()
+  if (isNaN(diff) || diff < 0) return 'Baru saja'
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Baru saja'
+  if (mins < 60) return `${mins} mnt lalu`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} jam lalu`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days} hari lalu`
+  return `${Math.floor(days / 30)} bln lalu`
+}
+
 export default function OrderList({
   orders = [],
   selectedOrder = null,
@@ -14,7 +29,7 @@ export default function OrderList({
   isCompact = false
 }) {
   const pendingOrders = orders.filter((o) =>
-    ['MENUNGGU_KONFIRMASI', 'PENDING'].includes(o.status)
+    ['MENUNGGU_KONFIRMASI', 'PENDING', 'MENUNGGU_PEMBAYARAN'].includes(o.status)
   )
 
   // Mode Tablet Compact: hanya tampilkan avatar/inisial dan indikator status
@@ -24,9 +39,9 @@ export default function OrderList({
         {/* Compact Header */}
         <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 relative my-1">
           <Inbox className="w-5 h-5 text-slate-600" />
-          {pendingOrders.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
-              {pendingOrders.length}
+          {orders.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+              {orders.length}
             </span>
           )}
         </div>
@@ -37,14 +52,17 @@ export default function OrderList({
         <div className="w-full flex flex-col items-center gap-2 overflow-y-auto max-h-[640px] py-1">
           {orders.map((order) => {
             const isSelected = selectedOrder?.id === order.id
-            const initials = order.user?.initials || order.user?.fullName?.substring(0, 2).toUpperCase() || 'UM'
+            const tenant = order.user || order.tenant || {}
+            const initials =
+              tenant.initials ||
+              (tenant.fullName ? tenant.fullName.split(' ').map((w) => w[0]).join('').substring(0, 2).toUpperCase() : 'UM')
 
             return (
               <button
                 key={order.id}
                 type="button"
                 onClick={() => onSelectOrder(order)}
-                title={`${order.user?.fullName || 'Penyewa'} - ${order.invoiceNumber}`}
+                title={`${tenant.fullName || 'Penyewa'} - ${order.invoiceNumber}`}
                 aria-label={`Pilih pesanan ${order.invoiceNumber}`}
                 className={`w-12 h-12 rounded-xl flex items-center justify-center relative cursor-pointer transition-all ${
                   isSelected
@@ -59,11 +77,17 @@ export default function OrderList({
                 {/* Status Dot */}
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                    order.status === 'MENUNGGU_KONFIRMASI'
-                      ? 'bg-amber-500'
-                      : order.status === 'SEWA_AKTIF'
+                    order.status === 'SELESAI'
                       ? 'bg-emerald-500'
-                      : 'bg-blue-500'
+                      : order.status === 'SEWA_AKTIF'
+                      ? 'bg-blue-600'
+                      : order.status === 'INSPEKSI'
+                      ? 'bg-amber-500'
+                      : order.status === 'DISPUTE'
+                      ? 'bg-rose-500'
+                      : order.status === 'DITOLAK'
+                      ? 'bg-red-500'
+                      : 'bg-amber-500'
                   }`}
                 />
               </button>
@@ -81,11 +105,14 @@ export default function OrderList({
       <div className="p-3.5 sm:p-4 flex items-center justify-between border-b border-slate-100 bg-white">
         <div className="flex items-center gap-2">
           <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
-            Antrean konfirmasi
+            Daftar Pesanan
           </h2>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-extrabold shadow-2xs">
+            {orders.length}
+          </span>
           {pendingOrders.length > 0 && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-extrabold shadow-2xs">
-              {pendingOrders.length}
+              {pendingOrders.length} menunggu
             </span>
           )}
         </div>
@@ -109,7 +136,11 @@ export default function OrderList({
         ) : (
           orders.map((order) => {
             const isSelected = selectedOrder?.id === order.id
-            const initials = order.user?.initials || order.user?.fullName?.substring(0, 2).toUpperCase() || 'UM'
+            const tenant = order.user || order.tenant || {}
+            const initials =
+              tenant.initials ||
+              (tenant.fullName ? tenant.fullName.split(' ').map((w) => w[0]).join('').substring(0, 2).toUpperCase() : 'UM')
+            const timeAgoText = getTimeAgo(order.createdAt, order.timeAgo)
 
             return (
               <div
@@ -136,11 +167,11 @@ export default function OrderList({
                       {initials}
                     </div>
                     <span className="text-xs sm:text-[13px] font-bold text-slate-900 truncate">
-                      {order.user?.fullName || 'Penyewa UMKM'}
+                      {tenant.fullName || 'Penyewa UMKM'}
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-400 font-medium shrink-0">
-                    {order.timeAgo || 'baru saja'}
+                    {timeAgoText}
                   </span>
                 </div>
 
@@ -149,10 +180,39 @@ export default function OrderList({
                   {order.equipment?.name || 'Unit Alat Sewa'}
                 </div>
 
-                {/* Baris 3: Durasi, Invoice, Total Harga */}
+                {/* Baris 3: Durasi, Invoice, Total Harga & Badge Status */}
                 <div className="flex items-center justify-between gap-2 pt-0.5 pl-8 sm:pl-9">
-                  <div className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
-                    {order.rentalDays ? `${order.rentalDays} hari` : '4 hari'} · {order.invoiceNumber}
+                  <div className="flex items-center gap-1.5 min-w-0 truncate">
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+                      {order.rentalDays ? `${order.rentalDays} hari` : '1 hari'} · {order.invoiceNumber}
+                    </span>
+                    <span
+                      className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full shrink-0 ${
+                        order.status === 'SELESAI'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : order.status === 'SEWA_AKTIF'
+                          ? 'bg-blue-50 text-blue-700'
+                          : order.status === 'INSPEKSI'
+                          ? 'bg-amber-50 text-amber-700'
+                          : order.status === 'DISPUTE'
+                          ? 'bg-rose-50 text-rose-700'
+                          : order.status === 'DITOLAK'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-amber-50 text-amber-700'
+                      }`}
+                    >
+                      {order.status === 'SELESAI'
+                        ? 'Selesai'
+                        : order.status === 'SEWA_AKTIF'
+                        ? 'Sewa Aktif'
+                        : order.status === 'INSPEKSI'
+                        ? 'Inspeksi'
+                        : order.status === 'DISPUTE'
+                        ? 'Dispute'
+                        : order.status === 'DITOLAK'
+                        ? 'Ditolak'
+                        : 'Menunggu'}
+                    </span>
                   </div>
                   <div className="text-xs sm:text-[13px] font-extrabold text-slate-900 tabular-nums shrink-0">
                     {formatRupiah(order.totalPaid || order.rentalCost)}

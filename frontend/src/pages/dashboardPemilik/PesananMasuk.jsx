@@ -1,201 +1,60 @@
-import React, { useState, useMemo } from 'react'
-import { Search, Download, Calendar, ChevronDown } from 'lucide-react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import axios from 'axios'
+import { Search, Download, Calendar, ChevronDown, RefreshCw } from 'lucide-react'
+import { API_BASE } from '../../lib/equipmentsApi'
+import { getUserToken } from '../../lib/userSession'
 import OrderList from './OrderList'
 import OrderDetail from './OrderDetail'
 
-// Data default/mockup sesuai referensi HTML PesananMasuk.html
-export const MOCK_ORDERS = [
-  {
-    id: 'ord-1',
-    invoiceNumber: 'INV-2406-021',
-    status: 'MENUNGGU_KONFIRMASI',
-    timeAgo: 'baru 12 mnt lalu',
-    startDate: '2025-06-18',
-    endDate: '2025-06-21',
-    rentalDays: 4,
-    deliveryType: 'Ambil di gudang',
-    location: 'Gudang Cilandak',
-    dailyRate: 375000,
-    rentalCost: 1500000,
-    depositAmount: 500000,
-    serviceFee: 25000,
-    totalPaid: 1575000,
-    netEarnings: 1550000,
-    user: {
-      fullName: 'Dapur Roti Andini',
-      initials: 'DA',
-      isVerified: true,
-      nib: '9120 4471 8830',
-      power: 'Daya usaha 1300 W',
-      city: 'Bandung',
-      rating: 4.9,
-      completedRentals: 38
-    },
-    equipment: {
-      name: 'Oven Deck Bakery 2 Pintu',
-      category: 'Oven & Bakery'
-    }
-  },
-  {
-    id: 'ord-2',
-    invoiceNumber: 'INV-2406-024',
-    status: 'MENUNGGU_KONFIRMASI',
-    timeAgo: '1 jam lalu',
-    startDate: '2025-06-22',
-    endDate: '2025-06-25',
-    rentalDays: 4,
-    deliveryType: 'Ambil di gudang',
-    location: 'Gudang Cilandak',
-    dailyRate: 173750,
-    rentalCost: 695000,
-    depositAmount: 300000,
-    serviceFee: 20000,
-    totalPaid: 695000,
-    netEarnings: 675000,
-    user: {
-      fullName: 'Warung Sate Pak Hari',
-      initials: 'WA',
-      isVerified: true,
-      nib: '9120 3341 5521',
-      power: 'Daya usaha 900 W',
-      city: 'Jakarta Selatan',
-      rating: 4.8,
-      completedRentals: 19
-    },
-    equipment: {
-      name: 'Mesin Kemasan Vakum',
-      category: 'Mesin Kemasan'
-    }
-  },
-  {
-    id: 'ord-3',
-    invoiceNumber: 'INV-2406-027',
-    status: 'MENUNGGU_KONFIRMASI',
-    timeAgo: '3 jam lalu',
-    startDate: '2025-06-24',
-    endDate: '2025-06-27',
-    rentalDays: 3,
-    deliveryType: 'Ambil di gudang',
-    location: 'Gudang Cilandak',
-    dailyRate: 150000,
-    rentalCost: 450000,
-    depositAmount: 250000,
-    serviceFee: 15000,
-    totalPaid: 450000,
-    netEarnings: 435000,
-    user: {
-      fullName: 'Kedai Bumi',
-      initials: 'KB',
-      isVerified: true,
-      nib: '9120 8892 1104',
-      power: 'Daya usaha 2200 W',
-      city: 'Bandung',
-      rating: 5.0,
-      completedRentals: 42
-    },
-    equipment: {
-      name: 'Grinder Kopi Flat Burr',
-      category: 'Mesin Kopi'
-    }
-  },
-  {
-    id: 'ord-4',
-    invoiceNumber: 'INV-2406-019',
-    status: 'SEWA_AKTIF',
-    timeAgo: 'kemarin',
-    startDate: '2025-06-26',
-    endDate: '2025-06-29',
-    rentalDays: 4,
-    deliveryType: 'Kirim via kurir toko',
-    location: 'Gudang Cilandak',
-    dailyRate: 120000,
-    rentalCost: 480000,
-    depositAmount: 300000,
-    serviceFee: 15000,
-    totalPaid: 480000,
-    netEarnings: 465000,
-    user: {
-      fullName: 'Bakery Roti Manis',
-      initials: 'BR',
-      isVerified: true,
-      nib: '9120 1192 4432',
-      power: 'Daya usaha 1500 W',
-      city: 'Tangerang',
-      rating: 4.7,
-      completedRentals: 25
-    },
-    equipment: {
-      name: 'Mixer Planetary 10L',
-      category: 'Oven & Bakery'
-    }
-  },
-  {
-    id: 'ord-5',
-    invoiceNumber: 'INV-2406-016',
-    status: 'INSPEKSI',
-    timeAgo: 'kemarin',
-    startDate: '2025-06-28',
-    endDate: '2025-07-02',
-    rentalDays: 5,
-    deliveryType: 'Ambil di gudang',
-    location: 'Gudang Cilandak',
-    dailyRate: 290000,
-    rentalCost: 1450000,
-    depositAmount: 600000,
-    serviceFee: 30000,
-    totalPaid: 1450000,
-    netEarnings: 1420000,
-    user: {
-      fullName: 'Toko Buah Segar',
-      initials: 'TS',
-      isVerified: true,
-      nib: '9120 7712 8820',
-      power: 'Daya usaha 1800 W',
-      city: 'Jakarta Barat',
-      rating: 4.9,
-      completedRentals: 31
-    },
-    equipment: {
-      name: 'Chiller Display 2 Pintu',
-      category: 'Pendingin'
-    }
-  }
-]
-
-// Normalisasi data jika orders di-pass dari backend API
+// Normalisasi objek data pesanan dari backend API
 function normalizeOrder(order) {
   if (!order) return null
-  const initials = order.user?.fullName
-    ? order.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
-    : (order.user?.initials || 'UM')
+  const tenant = order.user || order.tenant || {}
+  const initials =
+    tenant.initials ||
+    (tenant.fullName ? tenant.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() : 'UM')
+
+  const rentalDays = Number(order.rentalDays) || 1
+  const rentalCost = Number(order.rentalCost) || 0
+  const depositAmount = Number(order.depositAmount) || 0
+  const shippingCost = Number(order.shippingCost) || 0
+  const serviceFee = Number(order.serviceFee) || Math.round(rentalCost * 0.05) || 25000
+  const totalPaid = Number(order.totalPaid) || (rentalCost + depositAmount + shippingCost)
+  const netEarnings = Number(order.netEarnings) || (rentalCost + shippingCost)
+  const dailyRate = Number(order.dailyRate) || Math.round(rentalCost / rentalDays) || 0
 
   return {
+    ...order,
     id: order.id,
     invoiceNumber: order.invoiceNumber || `INV-${order.id}`,
     status: order.status || 'MENUNGGU_KONFIRMASI',
-    timeAgo: order.timeAgo || 'Baru saja',
-    startDate: order.startDate || '2025-06-18',
-    endDate: order.endDate || '2025-06-21',
-    rentalDays: order.rentalDays || 4,
-    deliveryType: order.deliveryType || 'Ambil di gudang',
-    location: order.location || 'Gudang Cilandak',
-    dailyRate: order.dailyRate || Math.round((order.rentalCost || 1500000) / (order.rentalDays || 4)),
-    rentalCost: order.rentalCost || 1500000,
-    depositAmount: order.depositAmount || 500000,
-    serviceFee: order.serviceFee || 25000,
-    totalPaid: order.totalPaid || (order.rentalCost ? order.rentalCost + (order.depositAmount || 0) : 1575000),
-    netEarnings: order.netEarnings || order.rentalCost || 1550000,
+    createdAt: order.createdAt,
+    startDate: order.startDate,
+    endDate: order.endDate,
+    rentalDays,
+    deliveryMethod: order.deliveryMethod,
+    deliveryType: order.deliveryMethod === 'COURIER' ? 'Diantar kurir toko' : (order.deliveryType || 'Ambil di gudang'),
+    location: order.location || order.equipment?.location || 'Gudang Cilandak',
+    dailyRate,
+    rentalCost,
+    depositAmount,
+    shippingCost,
+    serviceFee,
+    totalPaid,
+    netEarnings,
     user: {
-      fullName: order.user?.kycData?.businessName || order.user?.fullName || 'Penyewa UMKM',
-      initials: order.user?.initials || initials,
-      isVerified: order.user?.isVerified ?? true,
-      nib: order.user?.nib || '9120 4471 8830',
-      power: order.user?.power || 'Daya usaha 1300 W',
-      city: order.user?.city || 'Bandung',
-      rating: order.user?.rating || 4.9,
-      completedRentals: order.user?.completedRentals || 38
+      ...tenant,
+      fullName: tenant.kycData?.businessName || tenant.fullName || 'Penyewa UMKM',
+      initials,
+      isVerified: tenant.verificationStatus === 'DISETUJUI' || tenant.isVerified !== false,
+      nib: tenant.kycData?.nib || tenant.nib || '9120 4471 8830',
+      power: tenant.power || 'Daya usaha 1300 W',
+      city: tenant.kycData?.city || tenant.city || 'Bandung',
+      rating: tenant.rating || 4.9,
+      completedRentals: tenant.completedRentals || 38
     },
     equipment: {
+      ...order.equipment,
       name: order.equipment?.name || 'Unit Alat',
       category: order.equipment?.category || 'Komersial'
     }
@@ -210,25 +69,90 @@ export default function PesananMasuk({
   onInspectOrder,
   actionLoadingId
 }) {
-  // State Utama: selectedOrder (Task 2)
+  // ── State Utama (Task 2) ──────────────────────────────────────────────────
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(!propOrders || propOrders.length === 0)
+  const [error, setError] = useState(null)
   const [selectedOrder, setSelectedOrder] = useState(null)
 
   // State Filter & Pencarian
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('MENUNGGU_KONFIRMASI')
+  const [statusFilter, setStatusFilter] = useState('ALL')
 
-  // Gabungkan dan normalisasi orders
-  const activeOrders = useMemo(() => {
-    const source = (propOrders && propOrders.length > 0) ? propOrders : MOCK_ORDERS
-    return source.map(normalizeOrder)
+  // ── Fetch Pesanan Real-Time dari Endpoint GET /api/orders/owner/me ────────
+  const fetchOwnerOrders = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const token = getUserToken()
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+
+      const endpoint = `${API_BASE || 'http://localhost:3000/api'}/orders/owner/me`
+      const response = await axios.get(endpoint, { headers })
+      const data = Array.isArray(response.data?.data)
+        ? response.data.data
+        : Array.isArray(response.data)
+        ? response.data
+        : []
+
+      setOrders(data)
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        'Gagal memuat pesanan masuk dari server'
+      setError(msg)
+
+      // Fallback ke propOrders jika fetch gagal
+      if (propOrders && propOrders.length > 0) {
+        setOrders(propOrders)
+      }
+    } finally {
+      setLoading(false)
+    }
   }, [propOrders])
 
-  // Filter berdasarkan tab status dan search query
+  useEffect(() => {
+    fetchOwnerOrders()
+  }, [fetchOwnerOrders])
+
+  // Sinkronisasi saat parent mengirim update propOrders
+  useEffect(() => {
+    if (propOrders && propOrders.length > 0 && orders.length === 0) {
+      setOrders(propOrders)
+    }
+  }, [propOrders, orders.length])
+
+  // Normalisasi data pesanan
+  const activeOrders = useMemo(() => {
+    return orders.map(normalizeOrder)
+  }, [orders])
+
+  // ── Kalkulasi Badge / Counter Dinamis (100% Akurat dengan Database) ─────
+  const counts = useMemo(() => {
+    const all = activeOrders.length
+    const menunggu = activeOrders.filter((o) =>
+      ['MENUNGGU_KONFIRMASI', 'PENDING', 'MENUNGGU_PEMBAYARAN'].includes(o.status)
+    ).length
+    const sewa = activeOrders.filter((o) =>
+      ['SEWA_AKTIF', 'DIKIRIM'].includes(o.status)
+    ).length
+    const inspeksi = activeOrders.filter((o) => o.status === 'INSPEKSI').length
+    const selesai = activeOrders.filter((o) => o.status === 'SELESAI').length
+
+    return { all, menunggu, sewa, inspeksi, selesai }
+  }, [activeOrders])
+
+  // ── Filter Berdasarkan Status Tab & Search Query ────────────────────────
   const filteredOrders = useMemo(() => {
     return activeOrders.filter((order) => {
-      // Filter status tab
+      // 1. Filter status
       if (statusFilter === 'MENUNGGU_KONFIRMASI') {
-        if (!['MENUNGGU_KONFIRMASI', 'PENDING'].includes(order.status)) return false
+        if (!['MENUNGGU_KONFIRMASI', 'PENDING', 'MENUNGGU_PEMBAYARAN'].includes(order.status)) return false
       } else if (statusFilter === 'SEWA_AKTIF') {
         if (!['SEWA_AKTIF', 'DIKIRIM'].includes(order.status)) return false
       } else if (statusFilter === 'INSPEKSI') {
@@ -237,12 +161,12 @@ export default function PesananMasuk({
         if (order.status !== 'SELESAI') return false
       }
 
-      // Filter search query
+      // 2. Filter search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase()
-        const matchInvoice = order.invoiceNumber?.toLowerCase().includes(q)
-        const matchName = order.user?.fullName?.toLowerCase().includes(q)
-        const matchEquip = order.equipment?.name?.toLowerCase().includes(q)
+        const matchInvoice = (order.invoiceNumber || '').toLowerCase().includes(q)
+        const matchName = (order.user?.fullName || '').toLowerCase().includes(q)
+        const matchEquip = (order.equipment?.name || '').toLowerCase().includes(q)
         return matchInvoice || matchName || matchEquip
       }
 
@@ -250,18 +174,7 @@ export default function PesananMasuk({
     })
   }, [activeOrders, statusFilter, searchQuery])
 
-  // Hitung jumlah pada setiap status
-  const counts = useMemo(() => {
-    return {
-      all: activeOrders.length,
-      menunggu: activeOrders.filter((o) => ['MENUNGGU_KONFIRMASI', 'PENDING'].includes(o.status)).length,
-      sewa: activeOrders.filter((o) => ['SEWA_AKTIF', 'DIKIRIM'].includes(o.status)).length,
-      inspeksi: activeOrders.filter((o) => o.status === 'INSPEKSI').length,
-      selesai: activeOrders.filter((o) => o.status === 'SELESAI').length
-    }
-  }, [activeOrders])
-
-  // Pastikan selectedOrder tetap sinkron jika statusnya berubah
+  // Pastikan detail yang dipilih tetap reaktif tersinkronisasi dengan perubahan order
   const currentSelectedOrder = useMemo(() => {
     if (!selectedOrder) return null
     return activeOrders.find((o) => o.id === selectedOrder.id) || selectedOrder
@@ -276,19 +189,17 @@ export default function PesananMasuk({
     setSelectedOrder(null)
   }
 
-  const handleAccept = (id) => {
+  const handleAccept = async (id) => {
     if (onAcceptOrder) {
-      onAcceptOrder(id)
-    } else {
-      alert(`Pesanan ${id} berhasil diterima!`)
+      await onAcceptOrder(id)
+      fetchOwnerOrders()
     }
   }
 
-  const handleReject = (id) => {
+  const handleReject = async (id) => {
     if (onRejectOrder) {
-      onRejectOrder(id)
-    } else {
-      alert(`Pesanan ${id} ditolak.`)
+      await onRejectOrder(id)
+      fetchOwnerOrders()
     }
   }
 
@@ -301,7 +212,7 @@ export default function PesananMasuk({
             Pesanan masuk
           </h1>
           <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">
-            {counts.all} pesanan bulan ini · {counts.menunggu} menunggu konfirmasi · {counts.inspeksi} inspeksi
+            {counts.all} pesanan terdata · {counts.menunggu} menunggu konfirmasi · {counts.inspeksi} perlu inspeksi
           </p>
         </div>
 
@@ -318,6 +229,17 @@ export default function PesananMasuk({
             />
           </div>
 
+          {/* Tombol Refresh */}
+          <button
+            type="button"
+            onClick={fetchOwnerOrders}
+            title="Muat ulang pesanan"
+            aria-label="Muat ulang pesanan"
+            className="p-2 bg-white border border-slate-200/90 hover:bg-slate-50 text-slate-700 rounded-xl transition-colors cursor-pointer shadow-2xs shrink-0"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : 'text-slate-500'}`} />
+          </button>
+
           {/* Tombol Ekspor */}
           <button
             type="button"
@@ -328,6 +250,20 @@ export default function PesananMasuk({
           </button>
         </div>
       </header>
+
+      {/* Error Banner jika ada */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={fetchOwnerOrders}
+            className="font-bold underline cursor-pointer ml-2"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
 
       {/* ── FILTER STATUS CHIPS & BULAN ────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
@@ -367,32 +303,13 @@ export default function PesananMasuk({
         {/* Dropdown Periode Bulan */}
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200/80 px-3 py-1.5 rounded-xl shrink-0 self-start sm:self-auto shadow-2xs">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <span>Juni 2025</span>
+          <span>Bulan Berjalan</span>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
         </div>
       </div>
 
       {/* ── SPLIT-PANE RESPONSIVE CONTAINER (TASK 2) ───────────────────────── */}
       <div className="w-full flex items-start gap-4 lg:gap-6 relative transition-all duration-300">
-        {/*
-          ========================================================================
-          RESPONSIVE SPLIT-PANE RULES (TASK 2):
-          ------------------------------------------------------------------------
-          1. Desktop (lg:):
-             - Jika selectedOrder === null: OrderList full width (w-full).
-             - Jika selectedOrder ada: Layar terbagi flex proporsional
-               (Kiri ~1/3 atau 30-35% [lg:w-[380px] / xl:w-[420px]], Kanan sisa [flex-1]).
-          2. Tablet (md: ke lg:):
-             - Jika detail terbuka: OrderList menyusut menjadi "Compact" (w-20 / md:w-24),
-               memberikan ruang sisa maksimum untuk OrderDetail.
-             - Jika detail tertutup: OrderList full width (w-full).
-          3. Mobile (< md:):
-             - Conditional Rendering:
-               - Jika selectedOrder === null: HANYA OrderList (full width).
-               - Jika selectedOrder ada: HANYA OrderDetail (full width).
-          ========================================================================
-        */}
-
         {/* DAFTAR PESANAN (<OrderList />) */}
         {(!currentSelectedOrder || (typeof window !== 'undefined' && true)) && (
           <div

@@ -34,6 +34,25 @@ export async function listOrders(params = {}) {
 }
 
 /**
+ * Ambil daftar pesanan masuk khusus untuk alat milik pemilik yang login.
+ */
+export async function listOwnerOrders(params = {}) {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      query.set(key, String(value))
+    }
+  }
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  const res = await fetch(`${API_BASE}/orders/owner/me${suffix}`, {
+    headers: { ...authHeaders() }
+  })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(body?.error?.message || 'Gagal memuat pesanan pemilik')
+  return body?.data ?? []
+}
+
+/**
  * Ambil detail pesanan berdasarkan id atau invoiceNumber.
  */
 export async function getOrder(id) {

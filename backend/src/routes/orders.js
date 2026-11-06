@@ -21,6 +21,7 @@ function authenticate(req, res, next) {
     const decoded = jwt.verify(authHeader.split(' ')[1], config.jwtSecret)
     req.userId = decoded.userId
     req.userRole = String(decoded.role || '').toUpperCase()
+    req.user = { id: decoded.userId, role: req.userRole }
     next()
   } catch {
     return res.status(401).json({
@@ -106,7 +107,79 @@ ordersRouter.get('/', async (req, res, next) => {
           }
         }
       }
-      return { ...o, returnData }
+      return { ...o, returnData, tenant: o.user }
+    })
+
+    return res.json({ data: sanitized })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ─── GET /api/orders/owner/me ──────────────────────────────────────────────────
+// Endpoint privat untuk mengambil daftar pesanan yang HANYA milik peralatan dari user yang login (pemilik).
+ordersRouter.get('/owner/me', async (req, res, next) => {
+  try {
+    const ownerId = req.user?.id || req.userId
+    if (!ownerId) {
+      return res.status(401).json({
+        error: { code: 'UNAUTHORIZED', message: 'User tidak teridentifikasi' }
+      })
+    }
+
+    const where = {
+      equipment: {
+        ownerId
+      }
+    }
+
+    if (req.query.status) {
+      where.status = String(req.query.status)
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
+      include: {
+        equipment: {
+          include: {
+            owner: {
+              select: { id: true, fullName: true, email: true, phone: true, kycData: true }
+            }
+          }
+        },
+        user: {
+          select: { id: true, fullName: true, email: true, phone: true, kycData: true }
+        },
+        review: true
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // Sort di level aplikasi (JavaScript) agar aman dari batas sort_buffer_size MySQL saat ada field JSON besar
+    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+    // Jangan kirim base64 photos raksasa di daftar ringkasan pesanan
+    const sanitized = orders.map((o) => {
+      let returnData = o.returnData
+      if (returnData && typeof returnData === 'object' && returnData.photos) {
+        const rawPhotos = returnData.photos
+        const hasLargeBase64 = Object.values(rawPhotos || {}).some(
+          (p) => typeof p === 'string' && p.startsWith('data:') && p.length > 500
+        )
+        if (hasLargeBase64) {
+          const { photos, ...restReturnData } = returnData
+          returnData = {
+            ...restReturnData,
+            hasPhotos: true,
+            photoCount: Object.values(photos || {}).filter(Boolean).length
+          }
+        }
+      }
+      return {
+        ...o,
+        returnData,
+        tenant: o.user
+      }
     })
 
     return res.json({ data: sanitized })
