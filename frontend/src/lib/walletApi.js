@@ -207,3 +207,105 @@ export async function deleteWithdrawalAccount(id) {
 
   return data
 }
+
+/**
+ * Mengambil ringkasan dompet lengkap khusus pemilik alat (Owner Dashboard):
+ * Saldo tersedia (availableBalance), escrow (escrowBalance), rincian pesanan escrow H-x,
+ * riwayat mutasi komprehensif (Masuk, Keluar, Escrow), dan rekening pencairan utama.
+ */
+export async function getOwnerWallet() {
+  const token = getUserToken()
+  if (!token) throw new Error('Harap masuk terlebih dahulu')
+
+  const response = await fetch(`${API_BASE}/wallet/owner/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'Gagal memuat dompet pemilik')
+  }
+
+  // Sinkronkan session storage jika saldo tersedia berubah
+  if (data.availableBalance !== undefined) {
+    const user = getSessionUser()
+    if (user && user.walletBalance !== data.availableBalance) {
+      user.walletBalance = data.availableBalance
+      setUserSession(null, user)
+    }
+  }
+
+  return data
+}
+
+/**
+ * Melakukan penarikan saldo pemilik ke rekening pencairan utama
+ */
+export async function withdrawOwnerWallet({ amount }) {
+  const token = getUserToken()
+  if (!token) throw new Error('Harap masuk terlebih dahulu')
+
+  const response = await fetch(`${API_BASE}/wallet/owner/withdraw`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ amount: Number(amount) })
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'Gagal memproses pencairan dana')
+  }
+
+  emitWalletUpdate(data.newBalance)
+  return data
+}
+
+/**
+ * Mengubah atau memperbarui rekening pencairan pemilik
+ */
+export async function updateOwnerBankAccount({ bankName, accountNumber, accountHolder }) {
+  const token = getUserToken()
+  if (!token) throw new Error('Harap masuk terlebih dahulu')
+
+  const response = await fetch(`${API_BASE}/wallet/owner/bank-account`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ bankName, accountNumber, accountHolder })
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'Gagal memperbarui rekening pencairan')
+  }
+
+  return data
+}
+
+/**
+ * Mengambil informasi rekening pencairan pemilik
+ */
+export async function getOwnerBankAccount() {
+  const token = getUserToken()
+  if (!token) throw new Error('Harap masuk terlebih dahulu')
+
+  const response = await fetch(`${API_BASE}/wallet/owner/bank-account`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'Gagal memuat rekening pencairan')
+  }
+
+  return data.bankAccount
+}

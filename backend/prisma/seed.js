@@ -472,6 +472,26 @@ async function main() {
     }
   })
 
+  // Rekening pencairan utama untuk pemilik katalog (Kopi Senja Roastery)
+  await prisma.withdrawalAccount.upsert({
+    where: { id: 'w1000000-0000-4000-8000-000000000001' },
+    update: {
+      userId: PEMILIK_ID,
+      bankName: 'BCA',
+      accountNumber: '4471 8820 04',
+      accountHolder: 'Budi Santoso',
+      isPrimary: true
+    },
+    create: {
+      id: 'w1000000-0000-4000-8000-000000000001',
+      userId: PEMILIK_ID,
+      bankName: 'BCA',
+      accountNumber: '4471 8820 04',
+      accountHolder: 'Budi Santoso',
+      isPrimary: true
+    }
+  })
+
   // 3b. Akun Pemilik dummy alternatif (owner@myrent.com)
   const ownerAlt = await prisma.user.upsert({
     where: { email: 'owner@myrent.com' },

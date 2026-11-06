@@ -42,8 +42,10 @@ import ModalVerifikasiInspeksi from '../components/owner/ModalVerifikasiInspeksi
 import AlatSayaTab from '../components/owner/AlatSayaTab'
 import AlatSaya from './dashboardPemilik/AlatSaya'
 import PesananMasuk from './dashboardPemilik/PesananMasuk'
+import DompetPemilik from './dashboardPemilik/DompetPemilik'
 import ChatPanel from '../components/chat/ChatPanel'
 import { getUnreadCount } from '../lib/chatsApi'
+import { getOwnerWallet } from '../lib/walletApi'
 
 // Helper untuk mengelompokkan data pesanan (Orders) ke format mingguan dalam bulan berjalan
 function calculateWeeklyRevenue(orders) {
@@ -224,6 +226,36 @@ export default function OwnerDashboard() {
     if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') return 'alat'
     return tabFromUrl || 'ringkasan'
   })
+
+  // Sinkronisasi data real-time Escrow dari API Dompet ke widget Sidebar
+  const [realtimeEscrow, setRealtimeEscrow] = useState(null)
+
+  useEffect(() => {
+    let isCancelled = false
+    getOwnerWallet()
+      .then((data) => {
+        if (!isCancelled && data && typeof data.escrowBalance === 'number') {
+          setRealtimeEscrow(data.escrowBalance)
+        }
+      })
+      .catch(() => {})
+
+    const handleWalletUpdated = () => {
+      getOwnerWallet()
+        .then((data) => {
+          if (!isCancelled && data && typeof data.escrowBalance === 'number') {
+            setRealtimeEscrow(data.escrowBalance)
+          }
+        })
+        .catch(() => {})
+    }
+
+    window.addEventListener('myrent:wallet-updated', handleWalletUpdated)
+    return () => {
+      isCancelled = true
+      window.removeEventListener('myrent:wallet-updated', handleWalletUpdated)
+    }
+  }, [])
 
   const isChatTab = activeTab === 'chat' || location.pathname === '/pesan' || location.pathname.startsWith('/pesan/')
 
@@ -865,7 +897,7 @@ export default function OwnerDashboard() {
               Dana di Escrow
             </div>
             <div className="text-sm font-extrabold text-slate-900 tabular-nums">
-              {formatRupiah(stats.escrowTotal)}
+              {formatRupiah(realtimeEscrow ?? stats.escrowTotal)}
             </div>
             <div className="text-[9.5px] text-slate-400 leading-tight">
               Cair otomatis setelah inspeksi unit selesai
@@ -903,7 +935,7 @@ export default function OwnerDashboard() {
       {/* ── KONTEN UTAMA ─────────────────────────────────────────────────── */}
       <main className="flex-1 p-6 md:px-10 lg:px-12 py-5 overflow-y-auto max-w-[1920px] mx-auto w-full space-y-5">
         {/* TopBar & Notification Bell (Task 2: Popover Dropdown) */}
-        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && (
+        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && (
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -1656,45 +1688,11 @@ export default function OwnerDashboard() {
 
         {/* ── TAB CONTENT: DOMPET & ESCROW ─────────────────────────────────── */}
         {activeTab === 'dompet' && (
-          <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  DANA DI ESCROW
-                </span>
-                <div className="text-2xl font-black text-slate-900 tabular-nums">
-                  {formatRupiah(stats.escrowTotal)}
-                </div>
-                <p className="text-xs text-slate-500">
-                  Aman ditahan di penampungan escrow dan dicairkan segera setelah inspeksi alat selesai.
-                </p>
-              </div>
-
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  TOTAL PENDAPATAN CAIR
-                </span>
-                <div className="text-2xl font-black text-emerald-600 tabular-nums">
-                  {formatRupiah(stats.totalRevenue)}
-                </div>
-                <p className="text-xs text-slate-500">
-                  Total akumulasi sewa yang telah selesai dan ditransfer ke rekening bank Anda.
-                </p>
-              </div>
-
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  SECURITY DEPOSIT AKTIF
-                </span>
-                <div className="text-2xl font-black text-blue-600 tabular-nums">
-                  {formatRupiah(stats.activeDeposit)}
-                </div>
-                <p className="text-xs text-slate-500">
-                  Jaminan proteksi unit dari penyewa yang sedang aktif menggunakan alat.
-                </p>
-              </div>
-            </div>
-          </div>
+          <DompetPemilik
+            onEscrowSync={(balance) => {
+              setRealtimeEscrow(balance)
+            }}
+          />
         )}
 
         {/* ── TAB CONTENT: PROFIL TOKO ─────────────────────────────────────── */}
