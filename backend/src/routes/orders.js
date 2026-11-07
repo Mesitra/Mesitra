@@ -2,6 +2,7 @@ import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
 import { config } from '../config.js'
+import { sendNewOrderNotif, sendInspectionNotif } from '../services/notificationService.js'
 
 export const ordersRouter = Router()
 
@@ -414,6 +415,13 @@ ordersRouter.post('/', async (req, res, next) => {
       }
     })
 
+    // Kirim notifikasi pesanan baru ke pemilik alat (non-blocking)
+    sendNewOrderNotif(equipment.ownerId, {
+      invoiceNumber: order.invoiceNumber,
+      equipmentName: equipment.name,
+      renterName: order.equipment?.owner?.fullName || 'Penyewa'
+    }).catch(() => {})
+
     return res.status(201).json({ data: order })
   } catch (error) {
     next(error)
@@ -811,6 +819,12 @@ ordersRouter.post('/:id/return-submit', async (req, res, next) => {
       }
     })
 
+    // Kirim notifikasi inspeksi/deposit ke pemilik alat (non-blocking)
+    sendInspectionNotif(order.equipment?.ownerId || updated.equipment?.ownerId, {
+      invoiceNumber: updated.invoiceNumber,
+      status: 'INSPEKSI'
+    }).catch(() => {})
+
     return res.json({ data: updated })
   } catch (error) {
     next(error)
@@ -1027,6 +1041,12 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
         }
       })
 
+      // Kirim notifikasi dispute ke pemilik (non-blocking)
+      sendInspectionNotif(order.equipment?.ownerId, {
+        invoiceNumber: updated.invoiceNumber,
+        status: 'DISPUTE'
+      }).catch(() => {})
+
       return res.json({
         data: updated,
         message: 'Klaim diajukan ke status dispute untuk mediasi admin. Dana deposit dan sewa dibekukan di escrow.'
@@ -1092,6 +1112,12 @@ ordersRouter.patch('/:id/dispute', async (req, res, next) => {
         returnData: updatedReturnData
       }
     })
+
+    // Kirim notifikasi dispute ke pemilik (non-blocking)
+    sendInspectionNotif(order.equipment?.ownerId, {
+      invoiceNumber: updated.invoiceNumber,
+      status: 'DISPUTE'
+    }).catch(() => {})
 
     return res.json({
       data: updated,

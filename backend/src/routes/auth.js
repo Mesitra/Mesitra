@@ -371,6 +371,17 @@ authRouter.post('/register', async (req, res, next) => {
       })
     }
 
+    // Auto-create TenantProfile kosong agar relasi siap saat user edit profil nanti.
+    // Hanya untuk PEMILIK; PENYEWA tidak butuh TenantProfile.
+    if (targetRole === 'PEMILIK') {
+      await prisma.tenantProfile.create({
+        data: {
+          userId: newUser.id,
+          storeName: resolvedName
+        }
+      }).catch(() => {}) // sudah ada = abaikan (idempoten)
+    }
+
     // Buat token JWT
     const token = jwt.sign(
       { userId: newUser.id, role: newUser.role, email: newUser.email },
