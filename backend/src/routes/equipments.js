@@ -51,9 +51,10 @@ function extractOwnerPhoto(owner) {
  *
  * @param {object} equipment - baris equipment dari Prisma (lengkap dengan owner)
  * @param {Array} [bookedRanges] - array rentang tanggal yang sudah dipesan
+ * @param {number|null} [ownerRating] - rating agregat toko pemilik (rata-rata semua alat milik owner)
  * @returns {object}
  */
-function presentEquipment(equipment, bookedRanges = []) {
+function presentEquipment(equipment, bookedRanges = [], ownerRating = null) {
   const rawImages = Array.isArray(equipment.images) ? equipment.images : []
   const images = rawImages
     .map((image) => (typeof image === 'string' ? image : image?.url ?? image?.src ?? null))
@@ -131,7 +132,9 @@ function presentEquipment(equipment, bookedRanges = []) {
           district: ownerKyc.district || null,
           landmark: ownerKyc.landmark || null,
           businessSector: ownerKyc.businessSector || null,
-          shopLocation: ownerShopLocation
+          shopLocation: ownerShopLocation,
+          // Rating agregat toko (rata-rata semua ulasan untuk seluruh alat milik owner)
+          storeRating: ownerRating
         }
       : null,
     // Rentang tanggal yang sudah terisi oleh pesanan aktif/bayar
@@ -870,6 +873,21 @@ equipmentsRouter.get('/:id', async (req, res, next) => {
       throw new ApiError(404, 'EQUIPMENT_NOT_FOUND', `Alat dengan id '${id}' tidak ditemukan`)
     }
 
+    // Hitung rating agregat toko pemilik: rata-rata semua ulasan untuk semua alat milik owner
+    let ownerStoreRating = null
+    if (equipment.owner?.id) {
+      const ownerAgg = await prisma.review.aggregate({
+        where: {
+          equipment: { ownerId: equipment.owner.id }
+        },
+        _avg: { rating: true },
+        _count: { rating: true }
+      })
+      if (ownerAgg._count.rating > 0) {
+        ownerStoreRating = Number((ownerAgg._avg.rating ?? 0).toFixed(1))
+      }
+    }
+
     const bookedRanges = equipment.orders.map((o) => ({
       id: o.id,
       startDate: o.startDate.toISOString().slice(0, 10),
@@ -905,7 +923,7 @@ equipmentsRouter.get('/:id', async (req, res, next) => {
         : 5.0
 
     const presented = {
-      ...presentEquipment(equipment, bookedRanges),
+      ...presentEquipment(equipment, bookedRanges, ownerStoreRating),
       dayStatus,
       reviews,
       averageRating,

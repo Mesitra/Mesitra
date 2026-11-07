@@ -225,6 +225,7 @@ function OwnerDashboardContent() {
   const tabFromUrl = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(() => {
     if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') return 'alat'
+    if (tabFromUrl === 'chat' || tabFromUrl === 'pesan') return 'chat'
     return tabFromUrl || 'ringkasan'
   })
 
@@ -233,6 +234,8 @@ function OwnerDashboardContent() {
   useEffect(() => {
     if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') {
       setActiveTab('alat')
+    } else if (tabFromUrl === 'chat' || tabFromUrl === 'pesan') {
+      setActiveTab('chat')
     } else if (tabFromUrl) {
       setActiveTab(tabFromUrl)
     }
@@ -759,6 +762,11 @@ function OwnerDashboardContent() {
               onClick={() => {
                 setActiveTab('chat')
                 setSelectedChatPartner(null)
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev)
+                  next.set('tab', 'chat')
+                  return next
+                })
               }}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'chat'
@@ -906,22 +914,19 @@ function OwnerDashboardContent() {
       {/* ── KONTEN UTAMA ─────────────────────────────────────────────────── */}
       <main className="flex-1 p-6 md:px-10 lg:px-12 py-5 overflow-y-auto max-w-[1920px] mx-auto w-full space-y-5">
         {/* TopBar & Notification Bell (Task 2: Popover Dropdown) */}
-        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && (
+        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && activeTab !== 'chat' && (
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {activeTab === 'ringkasan' && 'Ringkasan Toko'}
                 {activeTab === 'ulasan' && 'Ulasan & Rating'}
                 {activeTab === 'pesanan' && 'Daftar Semua Pesanan'}
-                {activeTab === 'chat' && 'Pesan Masuk & Obrolan Penyewa'}
                 {activeTab === 'dompet' && 'Dompet & Escrow'}
                 {activeTab === 'profil' && 'Profil Toko'}
                 {activeTab === 'pengaturan' && 'Pengaturan'}
               </h1>
               <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">
-                {activeTab === 'chat'
-                  ? 'Komunikasi langsung dan pesan masuk dari penyewa UMKM Anda'
-                  : `Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
+                {`Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
               </p>
             </div>
 
@@ -1639,6 +1644,11 @@ function OwnerDashboardContent() {
                 }
               })
               setActiveTab('chat')
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev)
+                next.set('tab', 'chat')
+                return next
+              })
             }}
             actionLoadingId={actionLoadingId}
           />

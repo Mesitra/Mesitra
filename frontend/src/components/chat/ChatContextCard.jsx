@@ -6,7 +6,6 @@ import {
   FileText,
   AlertTriangle,
   Zap,
-  ShieldCheck,
   Calendar
 } from 'lucide-react'
 import { formatRupiah } from '../../lib/equipmentsApi'
@@ -38,8 +37,7 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
       images,
       pricePerDay,
       deposit,
-      powerWatt,
-      location
+      powerWatt
     } = contextData
 
     const imageUrl =
@@ -53,49 +51,49 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
 
     return (
       <div
-        className={`w-full max-w-sm rounded-xl p-3 border mb-2 transition-all ${
+        className={`w-full sm:w-[440px] max-w-md rounded-2xl p-4 border mb-2.5 transition-all shadow-xs ${
           isOutgoing
-            ? 'bg-blue-700/60 border-blue-400/50 text-white'
-            : 'bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
+            ? 'bg-blue-700/80 border-blue-400/50 text-white backdrop-blur-xs'
+            : 'bg-white border-slate-200 text-slate-900 shadow-xs'
         }`}
       >
-        <div className="flex items-center gap-1.5 pb-2 border-b border-white/20 mb-2">
-          <Package className={`w-3.5 h-3.5 ${isOutgoing ? 'text-blue-200' : 'text-blue-600'}`} />
-          <span className={`text-[10px] font-bold uppercase tracking-wider ${isOutgoing ? 'text-blue-200' : 'text-blue-600'}`}>
+        <div className="flex items-center gap-1.5 pb-2.5 border-b border-white/20 mb-2.5">
+          <Package className={`w-4 h-4 ${isOutgoing ? 'text-blue-200' : 'text-blue-600'}`} />
+          <span className={`text-xs font-bold uppercase tracking-wider ${isOutgoing ? 'text-blue-200' : 'text-blue-600'}`}>
             Produk Terkait
           </span>
           {category && (
-            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded ${isOutgoing ? 'bg-blue-800 text-blue-100' : 'bg-slate-200 text-slate-700'}`}>
+            <span className={`ml-auto text-[11px] font-medium px-2 py-0.5 rounded-md ${isOutgoing ? 'bg-blue-800 text-blue-100' : 'bg-slate-100 text-slate-700'}`}>
               {category}
             </span>
           )}
         </div>
 
-        <div className="flex gap-2.5 items-start">
+        <div className="flex gap-3.5 items-start">
           <img
             src={imageUrl}
             alt={name || 'Alat'}
-            className="w-14 h-14 object-cover rounded-lg shrink-0 border border-black/10 bg-slate-100"
+            className="w-18 h-18 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 border border-black/10 bg-slate-100 shadow-2xs"
           />
 
           <div className="flex-1 min-w-0">
-            <h4 className="text-xs font-bold leading-snug line-clamp-2 m-0 mb-1">
+            <h4 className="text-xs sm:text-sm font-bold leading-snug line-clamp-2 m-0 mb-1.5">
               {name || 'Unit Alat Sewa'}
             </h4>
 
-            <div className="flex items-center gap-1 text-[11px] mb-1">
+            <div className="flex items-center gap-1 text-xs mb-1.5">
               <span className="font-extrabold tabular-nums">
                 {pricePerDay ? formatRupiah(pricePerDay) : 'Rp 0'}
               </span>
-              <span className={`text-[10px] ${isOutgoing ? 'text-blue-200' : 'text-slate-500'}`}>
+              <span className={`text-[11px] ${isOutgoing ? 'text-blue-200' : 'text-slate-500'}`}>
                 /hari
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-[10px]">
+            <div className="flex flex-wrap gap-2.5 text-[11px]">
               {powerWatt !== undefined && (
-                <span className={`flex items-center gap-0.5 ${isOutgoing ? 'text-blue-200' : 'text-slate-500'}`}>
-                  <Zap className="w-2.5 h-2.5" />
+                <span className={`flex items-center gap-1 ${isOutgoing ? 'text-blue-200' : 'text-slate-500'}`}>
+                  <Zap className="w-3 h-3" />
                   {powerWatt} W
                 </span>
               )}
@@ -115,14 +113,14 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
               e.stopPropagation()
               navigate(`/alat/${id}`)
             }}
-            className={`mt-2.5 w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border-0 ${
+            className={`mt-3 w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer border-0 shadow-2xs ${
               isOutgoing
-                ? 'bg-white text-blue-700 hover:bg-blue-50'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-white text-blue-700 hover:bg-blue-50 active:scale-[0.99]'
+                : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99]'
             }`}
           >
             <span>Lihat Detail Alat</span>
-            <ExternalLink className="w-3 h-3" />
+            <ExternalLink className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
@@ -132,7 +130,6 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
   // ── 2. Konteks Pesanan / Sengketa (ORDER) ─────────────────────────────────────
   if (contextType === 'ORDER') {
     const {
-      id,
       invoiceNumber,
       status,
       equipmentName,
@@ -155,56 +152,56 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
 
     return (
       <div
-        className={`w-full max-w-sm rounded-xl p-3 border mb-2 transition-all ${
+        className={`w-full sm:w-[440px] max-w-md rounded-2xl p-4 border mb-2.5 transition-all shadow-xs ${
           isOutgoing
-            ? 'bg-blue-700/60 border-blue-400/50 text-white'
-            : 'bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
+            ? 'bg-blue-700/80 border-blue-400/50 text-white backdrop-blur-xs'
+            : 'bg-white border-slate-200 text-slate-900 shadow-xs'
         }`}
       >
         {/* Header Invoice & Status */}
-        <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/20 mb-2">
-          <div className="flex items-center gap-1">
-            <FileText className={`w-3.5 h-3.5 ${isOutgoing ? 'text-blue-200' : 'text-blue-600'}`} />
-            <span className="text-[11px] font-mono font-bold">
+        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/20 mb-2.5">
+          <div className="flex items-center gap-1.5">
+            <FileText className={`w-4 h-4 ${isOutgoing ? 'text-blue-200' : 'text-blue-600'}`} />
+            <span className="text-xs font-mono font-bold tracking-tight">
               {invoiceNumber || 'INV-...'}
             </span>
           </div>
 
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badge.bg}`}>
+          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border shadow-2xs ${badge.bg}`}>
             {badge.label}
           </span>
         </div>
 
         {/* Content Preview */}
-        <div className="flex gap-2.5 items-start">
+        <div className="flex gap-3.5 items-start">
           <img
             src={imageUrl}
             alt={equipmentName || 'Pesanan'}
-            className="w-14 h-14 object-cover rounded-lg shrink-0 border border-black/10 bg-slate-100"
+            className="w-18 h-18 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 border border-black/10 bg-slate-100 shadow-2xs"
           />
 
           <div className="flex-1 min-w-0">
-            <h4 className="text-xs font-bold leading-snug line-clamp-1 m-0 mb-1">
+            <h4 className="text-xs sm:text-sm font-bold leading-snug line-clamp-2 m-0 mb-1.5">
               {equipmentName || 'Unit Alat Sewa'}
             </h4>
 
             {startDate && endDate && (
-              <div className={`flex items-center gap-1 text-[10px] mb-1 ${isOutgoing ? 'text-blue-200' : 'text-slate-500'}`}>
-                <Calendar className="w-2.5 h-2.5" />
+              <div className={`flex items-center gap-1.5 text-[11px] sm:text-xs mb-1.5 font-medium ${isOutgoing ? 'text-blue-200' : 'text-slate-500'}`}>
+                <Calendar className="w-3.5 h-3.5" />
                 <span>
                   {formatShortDate(startDate)} – {formatShortDate(endDate)}
                 </span>
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-[10px]">
+            <div className="flex flex-wrap items-center gap-3 text-xs">
               {totalPaid ? (
-                <span className="font-bold tabular-nums">
+                <span className="font-extrabold tabular-nums">
                   Total: {formatRupiah(totalPaid)}
                 </span>
               ) : null}
               {depositAmount ? (
-                <span className={isOutgoing ? 'text-blue-200' : 'text-slate-500'}>
+                <span className={isOutgoing ? 'text-blue-200' : 'text-slate-500 font-medium'}>
                   Dep: {formatRupiah(depositAmount)}
                 </span>
               ) : null}
@@ -214,12 +211,12 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
 
         {/* Dispute Callout if DISPUTE */}
         {status === 'DISPUTE' && disputeReason && (
-          <div className="mt-2.5 p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-[11px] leading-relaxed">
-            <div className="flex items-center gap-1 font-bold mb-0.5 text-rose-900">
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+          <div className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs leading-relaxed shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold mb-1 text-rose-900 text-xs">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>Detail Klaim Sengketa</span>
             </div>
-            <p className="m-0 text-[10px] text-rose-700 italic">
+            <p className="m-0 text-xs text-rose-700 italic font-medium leading-normal">
               &ldquo;{disputeReason}&rdquo;
             </p>
           </div>
@@ -232,14 +229,14 @@ export default function ChatContextCard({ contextType, contextData, isOutgoing =
             e.stopPropagation()
             navigate('/pesanan-saya')
           }}
-          className={`mt-2.5 w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border-0 ${
+          className={`mt-3.5 w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer border-0 shadow-2xs ${
             isOutgoing
-              ? 'bg-white text-blue-700 hover:bg-blue-50'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-white text-blue-700 hover:bg-blue-50 active:scale-[0.99]'
+              : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99]'
           }`}
         >
           <span>Lihat Status Pesanan</span>
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="w-3.5 h-3.5" />
         </button>
       </div>
     )

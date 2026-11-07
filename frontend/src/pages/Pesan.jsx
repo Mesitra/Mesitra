@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import NavbarPenyewa from '../components/common/NavbarPenyewa'
 import ChatPanel from '../components/chat/ChatPanel'
-import { getSessionUser } from '../lib/userSession'
 
 export default function Pesan() {
   const location = useLocation()
   const navigate = useNavigate()
-  const user = getSessionUser()
+  const [searchParams] = useSearchParams()
+  const chatIdFromUrl = searchParams.get('chatId')
 
   const partnerId = location.state?.partnerId || null
   const partnerName = location.state?.partnerName || null
@@ -18,7 +18,7 @@ export default function Pesan() {
   // State untuk menandai apakah di tampilan mobile sedang berada di ruang chat aktif
   const [isChatOpenOnMobile, setIsChatOpenOnMobile] = useState(() => {
     if (typeof window === 'undefined') return false
-    return Boolean(partnerId && window.innerWidth < 768)
+    return Boolean((partnerId || chatIdFromUrl) && window.innerWidth < 768)
   })
 
   const handleBack = () => {

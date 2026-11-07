@@ -18,7 +18,6 @@ enum Role {
 
 /**
  * Status verifikasi KYC yang dipakai Portal Verifikasi Admin.
- *
  * - MENUNGGU          : pengajuan baru dikirim, belum ditinjau admin
  * - PERLU_PERBAIKAN  : admin meminta pengaju memperbaiki step tertentu
  * - DISETUJUI        : akun aktif, penyewa boleh masuk ke /beranda-sewa
@@ -33,7 +32,6 @@ enum VerificationStatus {
 
 /**
  * Status siklus hidup alat yang disewakan.
- *
  * - TERSEDIA   : alat siap disewa dan tampil di katalog penyewa
  * - DISEWA     : sedang disewa penyewa lain (disembunyikan dari katalog)
  * - MAINTENANCE: sedang diservis / rawat (disembunyikan dari katalog)
@@ -47,23 +45,23 @@ enum EquipmentStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      Role
-  fullName  String
-  phone     String
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  role     Role
+  fullName String
+  phone    String
 
   // Kode pengajuan unik (mis. VR-2041) untuk tracking di portal admin.
-  submissionCode String? @unique
+  submissionCode     String?            @unique
   // Status alur verifikasi KYC yang ditangani admin.
   verificationStatus VerificationStatus @default(MENUNGGU)
   // Seluruh data form registrasi Step 1-5 (termasuk metadata file foto).
-  kycData Json?
+  kycData            Json?
   // Array nomor step yang diminta diperbaiki admin (mis. [1, 3]).
-  revisionSteps Json?
+  revisionSteps      Json?
   // Catatan admin: alasan perbaikan atau penolakan.
-  adminNote String? @db.Text
+  adminNote          String?            @db.Text
 
   // Saldo dompet digital / escrow payout
   walletBalance Int @default(0)
@@ -79,46 +77,48 @@ model User {
   ownerConversations  Conversation[] @relation("OwnerConversations")
   sentMessages        Message[]      @relation("SentMessages")
 
-  withdrawalAccounts  WithdrawalAccount[]
-  walletTransactions  WalletTransaction[]
+  withdrawalAccounts WithdrawalAccount[]
+  walletTransactions WalletTransaction[]
+
+  tenantProfile TenantProfile?
 }
 
 model Equipment {
-  id          String   @id @default(uuid())
-  ownerId     String
-  name        String
-  category    String
-  description String   @db.Text
-  pricePerDay Int
-  deposit     Int
-  powerWatt   Int
-  weightKg    Float    @default(10)
-  dimensions  String   @default("40 × 30 × 30 cm")
+  id                    String          @id @default(uuid())
+  ownerId               String
+  name                  String
+  category              String
+  description           String          @db.Text
+  pricePerDay           Int
+  deposit               Int
+  powerWatt             Int
+  weightKg              Float           @default(10)
+  dimensions            String          @default("40 × 30 × 30 cm")
   // Durasi minimal hari penyewaan
-  minRentDays Int      @default(1)
+  minRentDays           Int             @default(1)
   // Jeda rawat yang harus disisihkan setelah alat kembali dari penyewa.
-  maintenanceBufferDays Int    @default(1)
-  location    String   @default("Jakarta Selatan")
+  maintenanceBufferDays Int             @default(1)
+  location              String          @default("Jakarta Selatan")
   // Jarak (km) dari titik acuan penyewa — sementara dipakai untuk badge "Terdekat".
-  distance    Float    @default(2.5)
-  status      EquipmentStatus @default(TERSEDIA)
+  distance              Float           @default(2.5)
+  status                EquipmentStatus @default(TERSEDIA)
   // Array URL foto alat (JSON array of string).
-  images      Json?
+  images                Json?
   // Daftar kelengkapan / aksesoris (JSON array of string, mis. ["Kabel", "Nozzle"])
-  accessories Json?
+  accessories           Json?
   // Metode pengiriman yang didukung (JSON array of string, mis. ["PICKUP", "COURIER"])
-  deliveryMethods Json?
+  deliveryMethods       Json?
   // Ongkos kirim jika menggunakan kurir toko (default 45.000)
-  deliveryFee Int      @default(45000)
+  deliveryFee           Int             @default(45000)
   // Kondisi alat (mis. "Prima", "Terawat", "Sangat Baik")
-  condition   String   @default("Prima")
-  stock       Int      @default(1)
+  condition             String          @default("Prima")
+  stock                 Int             @default(1)
   // Soft delete flag untuk menjaga keutuhan riwayat Order
-  isDeleted   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isDeleted             Boolean         @default(false)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
-  owner   User      @relation(fields: [ownerId], references: [id])
+  owner   User     @relation(fields: [ownerId], references: [id])
   orders  Order[]
   reviews Review[]
 
@@ -129,7 +129,6 @@ model Equipment {
 
 /**
  * Status siklus hidup pesanan sewa.
- *
  * - MENUNGGU_PEMBAYARAN : pesanan dibuat di Step 2, menunggu pembayaran di Step 3
  * - MENUNGGU_KONFIRMASI : pembayaran escrow diterima, menunggu pemilik setuju
  * - DIKIRIM             : pemilik telah menyetujui dan alat sedang dikirim
@@ -151,66 +150,66 @@ enum OrderStatus {
 }
 
 model Order {
-  id             String      @id @default(uuid())
-  invoiceNumber  String      @unique
-  userId         String
-  equipmentId    String
+  id            String @id @default(uuid())
+  invoiceNumber String @unique
+  userId        String
+  equipmentId   String
 
   startDate      DateTime
   endDate        DateTime
   rentalDays     Int
-  deliveryMethod String      // 'PICKUP' | 'COURIER'
+  deliveryMethod String // 'PICKUP' | 'COURIER'
 
-  rentalCost     Int
-  shippingCost   Int
-  depositAmount  Int
-  lateFee        Int         @default(0)
-  damageFee      Int         @default(0)
-  totalPaid      Int
+  rentalCost    Int
+  shippingCost  Int
+  depositAmount Int
+  lateFee       Int @default(0)
+  damageFee     Int @default(0)
+  totalPaid     Int
 
-  status         OrderStatus @default(MENUNGGU_PEMBAYARAN)
+  status OrderStatus @default(MENUNGGU_PEMBAYARAN)
 
   // ── Checkout metadata ─────────────────────────────────────────────────────
   // Array layanan tambahan: [{id, label, price}]
-  addons         Json?
-  addonsCost     Int         @default(0)
+  addons           Json?
+  addonsCost       Int       @default(0)
   // Kode promo yang dipakai penyewa
-  promoCode      String?
-  discountAmount Int         @default(0)
+  promoCode        String?
+  discountAmount   Int       @default(0)
   // Catatan bebas untuk pemilik alat
-  renterNotes    String?     @db.Text
+  renterNotes      String?   @db.Text
   // Waktu penyewa menyetujui kontrak sewa digital di Step 2
   contractAgreedAt DateTime?
 
   // ── Payment metadata ─────────────────────────────────────────────────────
   // 'QRIS' | 'VA_BCA' | 'EWALLET' | 'CARD'
-  paymentMethod  String?
-  paidAt         DateTime?
+  paymentMethod   String?
+  paidAt          DateTime?
   // Batas waktu pembayaran (24 jam dari createdAt)
   paymentDeadline DateTime?
 
   // Data serah terima awal (BAST Awal: foto awal alat, checklist, catatan)
-  initialBast    Json?
+  initialBast Json?
 
   // Data pengembalian Step 1-4 (jadwal, checklist, foto, tanda tangan, BAST Akhir).
-  returnData     Json?
-  disputeNote    String?     @db.Text
-  disputeReason  String?     @db.Text
+  returnData            Json?
+  disputeNote           String? @db.Text
+  disputeReason         String? @db.Text
   // Foto bukti kerusakan dari pemilik saat mengajukan klaim / menolak BAST
   ownerInspectionPhotos Json?
 
   // Data putusan mediasi admin MyRent
   finalDamageFee      Int?
-  adminResolutionNote String?     @db.Text
+  adminResolutionNote String?   @db.Text
   resolvedAt          DateTime?
-  isResolvedByAdmin   Boolean     @default(false)
+  isResolvedByAdmin   Boolean   @default(false)
 
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user           User        @relation(fields: [userId], references: [id])
-  equipment      Equipment   @relation(fields: [equipmentId], references: [id])
-  review         Review?
+  user      User      @relation(fields: [userId], references: [id])
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+  review    Review?
 
   @@index([userId])
   @@index([equipmentId])
@@ -227,25 +226,25 @@ model Review {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([equipmentId])
   @@index([userId])
 }
 
 model Conversation {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   renterId      String
   ownerId       String
-  lastMessageAt DateTime  @default(now())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  renter        User      @relation("RenterConversations", fields: [renterId], references: [id], onDelete: Cascade)
-  owner         User      @relation("OwnerConversations", fields: [ownerId], references: [id], onDelete: Cascade)
-  messages      Message[]
+  renter   User      @relation("RenterConversations", fields: [renterId], references: [id], onDelete: Cascade)
+  owner    User      @relation("OwnerConversations", fields: [ownerId], references: [id], onDelete: Cascade)
+  messages Message[]
 
   @@unique([renterId, ownerId])
   @@index([renterId])
@@ -254,17 +253,17 @@ model Conversation {
 }
 
 model Message {
-  id             String        @id @default(uuid())
+  id             String   @id @default(uuid())
   conversationId String
   senderId       String
-  content        String        @db.Text
-  contextType    String?       // 'EQUIPMENT' | 'ORDER'
-  contextData    Json?         // snapshot data alat / invoice pesanan
-  isRead         Boolean       @default(false)
-  createdAt      DateTime      @default(now())
+  content        String   @db.Text
+  contextType    String? // 'EQUIPMENT' | 'ORDER'
+  contextData    Json? // snapshot data alat / invoice pesanan
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
-  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User          @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
   @@index([senderId])
@@ -274,14 +273,14 @@ model Message {
 model WithdrawalAccount {
   id            String   @id @default(uuid())
   userId        String
-  bankName      String   // 'BCA', 'Mandiri', 'BRI', 'BNI', 'GoPay', 'OVO', 'DANA', dll
+  bankName      String // 'BCA', 'Mandiri', 'BRI', 'BNI', 'GoPay', 'OVO', 'DANA', dll
   accountNumber String
   accountHolder String
   isPrimary     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -311,9 +310,49 @@ model WalletTransaction {
   paymentMethod String?
   createdAt     DateTime                @default(now())
 
-  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
 }
 
+/**
+ * Profil toko pemilik alat (1:1 dengan User).
+ * Menyimpan informasi toko, jam operasional, status KYC per-dokumen,
+ * dan preferensi notifikasi. Dibuat secara additive — kycData JSON
+ * pada User tetap dipertahankan untuk kompatibilitas mundur.
+ * joinYear: tidak disimpan di sini; gunakan User.createdAt year saat membaca.
+ */
+model TenantProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  // Informasi Toko
+  storeName        String?
+  storeDescription String? @db.Text
+  storeCategory    String?
+  whatsappNumber   String?
+  address          String?
+  city             String?
+  serviceRadius    Int? // radius layanan dalam km
+
+  // Jam Operasional (JSON): { weekdays: { open: "08:00", close: "17:00" }, saturday: { open: "09:00", close: "15:00" }, sunday: null }
+  operatingHours Json?
+
+  // Status KYC per dokumen (denormalisasi dari kycData untuk query efisien)
+  ktpVerified         Boolean @default(false)
+  nibVerified         Boolean @default(false)
+  bankAccountVerified Boolean @default(false)
+  npwpVerified        Boolean @default(false)
+
+  // Preferensi Notifikasi
+  notifPesananBaru       Boolean @default(true)
+  notifPengembalianAlat  Boolean @default(true)
+  notifInspeksiDeposit   Boolean @default(false)
+  notifRingkasanMingguan Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

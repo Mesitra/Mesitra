@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Search,
   Send,
@@ -31,6 +32,9 @@ export default function ChatPanel({
   const currentUser = getSessionUser()
   const currentUserId = currentUser?.id
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const chatIdFromUrl = searchParams.get('chatId')
+
   const [conversations, setConversations] = useState([])
   const [selectedChat, setSelectedChat] = useState(null)
   const [messages, setMessages] = useState([])
@@ -46,6 +50,40 @@ export default function ChatPanel({
   const messagesEndRef = useRef(null)
   const prevMessagesLengthRef = useRef(0)
   const inputRef = useRef(null)
+
+  // Sinkronkan ID obrolan ke URL Query Parameters (?chatId=...)
+  const syncChatIdToUrl = (chatId) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (chatId && !String(chatId).startsWith('draft')) {
+          next.set('chatId', chatId)
+        } else {
+          next.delete('chatId')
+        }
+        return next
+      },
+      { replace: true }
+    )
+  }
+
+  // Handler memilih obrolan
+  const handleSelectChat = (chat) => {
+    setSelectedChat(chat)
+    setPendingContext(null)
+    if (chat && !chat.isDraft) {
+      syncChatIdToUrl(chat.id)
+    } else {
+      syncChatIdToUrl(null)
+    }
+  }
+
+  // Handler menutup ruang obrolan aktif
+  const handleCloseChat = () => {
+    setSelectedChat(null)
+    setPendingContext(null)
+    syncChatIdToUrl(null)
+  }
 
   // Scroll otomatis ke gelembung pesan terbawah
   const scrollToBottom = (behavior = 'smooth') => {
@@ -95,7 +133,7 @@ export default function ChatPanel({
     }
   }
 
-  // ── 2. Inisialisasi Pertama: Cek Lazy Session / Obrolan Awal ────────────────────
+  // ── 2. Inisialisasi Pertama: Cek URL Params / Lazy Session / Obrolan Awal ────
   useEffect(() => {
     let isActive = true
 
@@ -104,6 +142,22 @@ export default function ChatPanel({
       const chatsList = await fetchConversations(false)
       if (!isActive) return
 
+      // Prioritas 1: Baca chatId dari URL Search Params (Persistent Routing saat refresh F5)
+      if (chatIdFromUrl) {
+        const found = chatsList.find((c) => String(c.id) === String(chatIdFromUrl))
+        if (found) {
+          setSelectedChat(found)
+          if (initialContextType && initialContextData) {
+            setPendingContext({
+              contextType: initialContextType,
+              contextData: initialContextData
+            })
+          }
+          return
+        }
+      }
+
+      // Prioritas 2: Inisialisasi dari partnerId navigasi
       if (initialPartnerId) {
         // Cek apakah percakapan dengan partner ini sudah ada di database
         const existing = chatsList.find(
@@ -111,8 +165,9 @@ export default function ChatPanel({
         )
 
         if (existing) {
-          // Percakapan SUDAH ADA di DB: Langsung buka ruang obrolan tersebut
+          // Percakapan SUDAH ADA di DB: Langsung buka ruang obrolan tersebut dan set URL
           setSelectedChat(existing)
+          syncChatIdToUrl(existing.id)
           if (initialContextType && initialContextData) {
             setPendingContext({
               contextType: initialContextType,
@@ -147,10 +202,11 @@ export default function ChatPanel({
           }
         }
       } else if (chatsList.length > 0 && !selectedChat) {
-        // Desktop: otomatis buka percakapan pertama
+        // Desktop: otomatis buka percakapan pertama jika tidak ada chatId di URL
         // Mobile: biarkan null agar menampilkan daftar percakapan terlebih dahulu
         if (typeof window !== 'undefined' && window.innerWidth >= 768) {
           setSelectedChat(chatsList[0])
+          syncChatIdToUrl(chatsList[0].id)
         }
       }
     }
@@ -167,6 +223,27 @@ export default function ChatPanel({
       clearInterval(interval)
     }
   }, [initialPartnerId])
+
+  // Sinkronisasi saat URL search params berganti secara eksternal (misal: tombol Back / Forward browser)
+  useEffect(() => {
+    if (!chatIdFromUrl) {
+      if (selectedChat && !selectedChat.isDraft) {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+          setSelectedChat(null)
+        }
+      }
+      return
+    }
+
+    if (selectedChat?.id === chatIdFromUrl) return
+
+    if (conversations.length > 0) {
+      const match = conversations.find((c) => String(c.id) === String(chatIdFromUrl))
+      if (match) {
+        setSelectedChat(match)
+      }
+    }
+  }, [chatIdFromUrl, conversations])
 
   // ── 3. Ambil Pesan & Sinkronisasi Real-Time (Short Polling) Setiap 3 Detik ────
   useEffect(() => {
@@ -269,6 +346,7 @@ export default function ChatPanel({
           lastMessage: newMessage
         }
         setSelectedChat(permanentChat)
+        syncChatIdToUrl(newConv.id)
         setMessages([newMessage])
         // Muat ulang daftar obrolan agar langsung muncul di sidebar kiri
         await fetchConversations(false)
@@ -339,7 +417,6 @@ export default function ChatPanel({
                 </button>
               )}
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-blue-600 shrink-0" />
                 <h2 className="text-base font-bold text-slate-900 m-0 whitespace-nowrap">Pesan Masuk</h2>
               </div>
             </div>
@@ -398,10 +475,7 @@ export default function ChatPanel({
                 <button
                   key={chat.id}
                   type="button"
-                  onClick={() => {
-                    setSelectedChat(chat)
-                    setPendingContext(null)
-                  }}
+                  onClick={() => handleSelectChat(chat)}
                   className={`w-full p-3.5 text-left flex items-start gap-3 transition-colors cursor-pointer border-0 ${
                     isSelected
                       ? 'bg-blue-50/80 border-l-4 border-blue-600'
@@ -478,16 +552,16 @@ export default function ChatPanel({
             {/* Header Ruang Obrolan */}
             <div className="px-4 sm:px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                {/* Task 2: Tombol Kembali (Mobile) terhubung ke setSelectedChat(null) */}
+                {/* Task 2: Tombol Kembali (Mobile) terhubung ke handleCloseChat */}
                 <button
                   type="button"
                   onClick={() => {
                     if (conversations.length > 0) {
-                      setSelectedChat(null)
+                      handleCloseChat()
                     } else if (onBack) {
                       onBack()
                     } else {
-                      setSelectedChat(null)
+                      handleCloseChat()
                     }
                   }}
                   className="inline-flex md:hidden items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer border border-slate-200 shrink-0"
@@ -540,7 +614,7 @@ export default function ChatPanel({
               {/* Task 2: Tombol Close (X) di header room chat aktif agar panel chat bisa ditutup */}
               <button
                 type="button"
-                onClick={() => setSelectedChat(null)}
+                onClick={handleCloseChat}
                 className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer border border-transparent hover:border-slate-200 shrink-0"
                 title="Tutup obrolan"
                 aria-label="Tutup obrolan"
