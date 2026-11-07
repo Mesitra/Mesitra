@@ -73,6 +73,78 @@ function presentUser(user) {
 }
 
 /**
+ * Nilai default / fallback untuk TenantProfile pemilik bila record belum ada di DB.
+ */
+function buildTenantProfileFallback(user) {
+  const kyc = user?.kycData && typeof user.kycData === 'object' ? user.kycData : {}
+  const rawKtp = Boolean(user?.verificationStatus === 'DISETUJUI' || kyc.ktpFile || kyc.nik || kyc.nikKtp)
+  const rawNib = Boolean(kyc.nib)
+  const hasBank = Boolean(
+    (user?.withdrawalAccounts && user.withdrawalAccounts.length > 0) ||
+    kyc.bankAccount ||
+    kyc.bankAccountNumber
+  )
+
+  return {
+    storeName: kyc.businessName || user?.fullName || 'Toko Alat MyRent',
+    storeDescription: kyc.businessDesc || 'Penyedia rental alat dan mesin produksi terpercaya.',
+    storeCategory: kyc.businessSector || 'Kuliner & Kopi',
+    whatsappNumber: user?.phone || '',
+    address: kyc.address || 'Jl. Cilandak Tengah No. 12',
+    city: kyc.city || 'Bandung, Jawa Barat',
+    serviceRadius: 15,
+    operatingHours: {
+      weekdays: { open: '08.00', close: '17.00', closed: false },
+      saturday: { open: '09.00', close: '15.00', closed: false },
+      sunday: { open: '', close: '', closed: true }
+    },
+    ktpVerified: rawKtp,
+    nibVerified: rawNib,
+    bankAccountVerified: hasBank,
+    npwpVerified: false,
+    notifPesananBaru: true,
+    notifPengembalianAlat: true,
+    notifInspeksiDeposit: false,
+    notifRingkasanMingguan: true
+  }
+}
+
+/**
+ * Format TenantProfile agar aman dan konsisten dikembalikan ke frontend.
+ */
+function presentTenantProfile(tenantProfile, user) {
+  const fallback = buildTenantProfileFallback(user)
+  if (!tenantProfile) return fallback
+
+  return {
+    id: tenantProfile.id,
+    userId: tenantProfile.userId,
+    storeName: tenantProfile.storeName || fallback.storeName,
+    storeDescription: tenantProfile.storeDescription !== null && tenantProfile.storeDescription !== undefined
+      ? tenantProfile.storeDescription
+      : fallback.storeDescription,
+    storeCategory: tenantProfile.storeCategory || fallback.storeCategory,
+    whatsappNumber: tenantProfile.whatsappNumber || fallback.whatsappNumber,
+    address: tenantProfile.address || fallback.address,
+    city: tenantProfile.city || fallback.city,
+    serviceRadius: tenantProfile.serviceRadius !== null && tenantProfile.serviceRadius !== undefined
+      ? tenantProfile.serviceRadius
+      : fallback.serviceRadius,
+    operatingHours: tenantProfile.operatingHours || fallback.operatingHours,
+    ktpVerified: typeof tenantProfile.ktpVerified === 'boolean' ? tenantProfile.ktpVerified : fallback.ktpVerified,
+    nibVerified: typeof tenantProfile.nibVerified === 'boolean' ? tenantProfile.nibVerified : fallback.nibVerified,
+    bankAccountVerified: typeof tenantProfile.bankAccountVerified === 'boolean' ? tenantProfile.bankAccountVerified : fallback.bankAccountVerified,
+    npwpVerified: typeof tenantProfile.npwpVerified === 'boolean' ? tenantProfile.npwpVerified : false,
+    notifPesananBaru: typeof tenantProfile.notifPesananBaru === 'boolean' ? tenantProfile.notifPesananBaru : true,
+    notifPengembalianAlat: typeof tenantProfile.notifPengembalianAlat === 'boolean' ? tenantProfile.notifPengembalianAlat : true,
+    notifInspeksiDeposit: typeof tenantProfile.notifInspeksiDeposit === 'boolean' ? tenantProfile.notifInspeksiDeposit : false,
+    notifRingkasanMingguan: typeof tenantProfile.notifRingkasanMingguan === 'boolean' ? tenantProfile.notifRingkasanMingguan : true,
+    createdAt: tenantProfile.createdAt,
+    updatedAt: tenantProfile.updatedAt
+  }
+}
+
+/**
  * Bentuk profil lengkap pengguna untuk halaman penyesuaian / edit profil.
  * Memuat seluruh data registrasi (Step 1-5):
  *  - Data penting/legal yang terkunci (NIK, Nama KTP, Dokumen KYC)
@@ -577,7 +649,11 @@ authRouter.get('/profile', async (req, res, next) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId }
+      where: { id: decoded.userId },
+      include: {
+        tenantProfile: true,
+        withdrawalAccounts: true
+      }
     })
 
     if (!user) {
@@ -586,8 +662,39 @@ authRouter.get('/profile', async (req, res, next) => {
       })
     }
 
+    let equipmentCount = 0
+    let storeRating = { average: 5.0, count: 0 }
+    if (user.role === 'PEMILIK') {
+      equipmentCount = await prisma.equipment.count({
+        where: { ownerId: user.id, isDeleted: false }
+      })
+      const reviewAgg = await prisma.review.aggregate({
+        where: { equipment: { ownerId: user.id } },
+        _avg: { rating: true },
+        _count: { rating: true }
+      })
+      storeRating = {
+        average: reviewAgg._count.rating > 0 ? Number((reviewAgg._avg.rating ?? 0).toFixed(1)) : 5.0,
+        count: reviewAgg._count.rating
+      }
+    }
+    const joinYear = new Date(user.createdAt).getFullYear()
+    const presentedTp = presentTenantProfile(user.tenantProfile, user)
+
     return res.json({
-      profile: presentUserProfile(user),
+      profile: {
+        ...presentUserProfile(user),
+        tenantProfile: presentedTp,
+        equipmentCount,
+        storeRating,
+        joinYear,
+        withdrawalAccounts: user.withdrawalAccounts || []
+      },
+      tenantProfile: presentedTp,
+      equipmentCount,
+      storeRating,
+      joinYear,
+      withdrawalAccounts: user.withdrawalAccounts || [],
       user: presentUser(user)
     })
   } catch (error) {
@@ -757,10 +864,91 @@ authRouter.put('/profile', async (req, res, next) => {
       }
     })
 
+    // Upsert TenantProfile bila ada perubahan profil toko atau untuk pemilik akun
+    const tpPayload = body.tenantProfile && typeof body.tenantProfile === 'object' ? body.tenantProfile : body
+    const fallbackTp = buildTenantProfileFallback(user)
+    const existingTp = await prisma.tenantProfile.findUnique({ where: { userId: user.id } })
+
+    const hasTpUpdate = [
+      'storeName', 'storeDescription', 'storeCategory', 'whatsappNumber',
+      'address', 'city', 'serviceRadius', 'operatingHours',
+      'ktpVerified', 'nibVerified', 'bankAccountVerified', 'npwpVerified',
+      'notifPesananBaru', 'notifPengembalianAlat', 'notifInspeksiDeposit', 'notifRingkasanMingguan'
+    ].some((k) => tpPayload[k] !== undefined)
+
+    if (hasTpUpdate || user.role === 'PEMILIK') {
+      const dataToSave = {
+        storeName: tpPayload.storeName !== undefined ? String(tpPayload.storeName).trim() : (existingTp?.storeName ?? fallbackTp.storeName),
+        storeDescription: tpPayload.storeDescription !== undefined ? String(tpPayload.storeDescription).trim() : (existingTp?.storeDescription ?? fallbackTp.storeDescription),
+        storeCategory: tpPayload.storeCategory !== undefined ? String(tpPayload.storeCategory).trim() : (existingTp?.storeCategory ?? fallbackTp.storeCategory),
+        whatsappNumber: tpPayload.whatsappNumber !== undefined ? String(tpPayload.whatsappNumber).trim() : (existingTp?.whatsappNumber ?? fallbackTp.whatsappNumber),
+        address: tpPayload.address !== undefined ? String(tpPayload.address).trim() : (existingTp?.address ?? fallbackTp.address),
+        city: tpPayload.city !== undefined ? String(tpPayload.city).trim() : (existingTp?.city ?? fallbackTp.city),
+        serviceRadius: tpPayload.serviceRadius !== undefined && tpPayload.serviceRadius !== null ? Number(tpPayload.serviceRadius) : (existingTp?.serviceRadius ?? fallbackTp.serviceRadius),
+        operatingHours: tpPayload.operatingHours !== undefined ? tpPayload.operatingHours : (existingTp?.operatingHours ?? fallbackTp.operatingHours),
+        ktpVerified: tpPayload.ktpVerified !== undefined ? Boolean(tpPayload.ktpVerified) : (existingTp?.ktpVerified ?? fallbackTp.ktpVerified),
+        nibVerified: tpPayload.nibVerified !== undefined ? Boolean(tpPayload.nibVerified) : (existingTp?.nibVerified ?? fallbackTp.nibVerified),
+        bankAccountVerified: tpPayload.bankAccountVerified !== undefined ? Boolean(tpPayload.bankAccountVerified) : (existingTp?.bankAccountVerified ?? fallbackTp.bankAccountVerified),
+        npwpVerified: tpPayload.npwpVerified !== undefined ? Boolean(tpPayload.npwpVerified) : (existingTp?.npwpVerified ?? false),
+        notifPesananBaru: tpPayload.notifPesananBaru !== undefined ? Boolean(tpPayload.notifPesananBaru) : (existingTp?.notifPesananBaru ?? true),
+        notifPengembalianAlat: tpPayload.notifPengembalianAlat !== undefined ? Boolean(tpPayload.notifPengembalianAlat) : (existingTp?.notifPengembalianAlat ?? true),
+        notifInspeksiDeposit: tpPayload.notifInspeksiDeposit !== undefined ? Boolean(tpPayload.notifInspeksiDeposit) : (existingTp?.notifInspeksiDeposit ?? false),
+        notifRingkasanMingguan: tpPayload.notifRingkasanMingguan !== undefined ? Boolean(tpPayload.notifRingkasanMingguan) : (existingTp?.notifRingkasanMingguan ?? true)
+      }
+
+      await prisma.tenantProfile.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          ...dataToSave
+        },
+        update: dataToSave
+      })
+    }
+
+    const freshUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        tenantProfile: true,
+        withdrawalAccounts: true
+      }
+    })
+
+    let equipmentCount = 0
+    let storeRating = { average: 5.0, count: 0 }
+    if (freshUser.role === 'PEMILIK') {
+      equipmentCount = await prisma.equipment.count({
+        where: { ownerId: freshUser.id, isDeleted: false }
+      })
+      const reviewAgg = await prisma.review.aggregate({
+        where: { equipment: { ownerId: freshUser.id } },
+        _avg: { rating: true },
+        _count: { rating: true }
+      })
+      storeRating = {
+        average: reviewAgg._count.rating > 0 ? Number((reviewAgg._avg.rating ?? 0).toFixed(1)) : 5.0,
+        count: reviewAgg._count.rating
+      }
+    }
+    const joinYear = new Date(freshUser.createdAt).getFullYear()
+    const presentedTp = presentTenantProfile(freshUser.tenantProfile, freshUser)
+
     return res.json({
       message: 'Profil berhasil diperbarui',
-      profile: presentUserProfile(updatedUser),
-      user: presentUser(updatedUser)
+      profile: {
+        ...presentUserProfile(freshUser),
+        tenantProfile: presentedTp,
+        equipmentCount,
+        storeRating,
+        joinYear,
+        withdrawalAccounts: freshUser.withdrawalAccounts || []
+      },
+      tenantProfile: presentedTp,
+      equipmentCount,
+      storeRating,
+      joinYear,
+      withdrawalAccounts: freshUser.withdrawalAccounts || [],
+      user: presentUser(freshUser)
     })
   } catch (error) {
     next(error)

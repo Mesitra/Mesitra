@@ -155,6 +155,9 @@ test('GET /api/equipments/:id mengembalikan detail satu alat', async () => {
   assert.equal(body.data.id, EQUIPMENT_ID)
   assert.equal(body.data.powerWatt, 1300)
   assert.equal(body.data.owner.id, ownerId)
+  assert.ok('storeRating' in body.data.owner)
+  assert.ok('average' in body.data.owner.storeRating)
+  assert.ok('count' in body.data.owner.storeRating)
 })
 
 test('GET /api/equipments/:id tetap bisa mengambil alat berstatus DISEWA', async () => {

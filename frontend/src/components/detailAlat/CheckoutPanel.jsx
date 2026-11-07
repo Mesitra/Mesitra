@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Lock, MessageSquare, MapPin } from 'lucide-react'
+import { Lock, MessageSquare, MapPin, Star } from 'lucide-react'
 
 export default function CheckoutPanel({
   dailyPrice = 320000,
@@ -262,7 +262,7 @@ export default function CheckoutPanel({
             {ownerPhoto && !avatarFailed ? (
               <img
                 src={ownerPhoto}
-                alt={ownerDisplayName}
+                alt={owner.tenantProfile?.storeName || ownerDisplayName}
                 onError={() => setAvatarFailed(true)}
                 className="box-border w-10 shrink-0 h-10 rounded-full object-cover ring-1 ring-slate-200 shadow-2xs"
               />
@@ -276,22 +276,22 @@ export default function CheckoutPanel({
 
             {/* Owner Meta */}
             <div className="box-border flex-1 h-fit flex flex-col gap-0.5 justify-start items-start min-w-0">
-              <div className="text-xs text-slate-900 font-bold text-left truncate w-full" title={ownerDisplayName}>
-                {ownerDisplayName}
+              <div className="text-xs text-slate-900 font-bold text-left truncate w-full" title={owner.tenantProfile?.storeName || ownerDisplayName}>
+                {owner.tenantProfile?.storeName || ownerDisplayName}
               </div>
               <div className="text-[10px] text-slate-400 font-normal text-left truncate w-full">
                 {owner.email || '-'}
               </div>
-              {(owner.shopLocation || owner.address || owner.city) && (
+              {(owner.tenantProfile?.city || owner.shopLocation || owner.address || owner.city) && (
                 <div className="text-[10px] text-slate-500 font-normal text-left truncate w-full flex items-center gap-1 pt-0.5">
                   <MapPin className="w-2.75 h-2.75 text-slate-400 shrink-0" />
-                  <span className="truncate">{owner.shopLocation || owner.address || owner.city}</span>
+                  <span className="truncate">{owner.tenantProfile?.city || owner.shopLocation || owner.address || owner.city}</span>
                 </div>
               )}
             </div>
 
             {/* Verified Badge */}
-            {owner.verificationStatus === 'DISETUJUI' && (
+            {(owner.verificationStatus === 'DISETUJUI' || owner.tenantProfile?.ktpVerified) && (
               <div className="box-border w-fit shrink-0 h-fit flex flex-row py-1 px-2.5 justify-start items-center bg-green-50 rounded-full">
                 <span className="text-[11px] text-green-700 font-semibold whitespace-nowrap">
                   Terverifikasi
@@ -299,6 +299,34 @@ export default function CheckoutPanel({
               </div>
             )}
           </div>
+
+          {/* Rating Bintang Toko */}
+          <div className="flex items-center gap-1.5">
+            {owner.storeRating && typeof owner.storeRating === 'object' && owner.storeRating.count > 0 ? (
+              <div className="flex items-center gap-1 text-[11px] text-amber-700 bg-amber-50/80 px-2 py-0.5 rounded-md border border-amber-200/60 w-fit">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                <span className="font-bold tabular-nums">{owner.storeRating.average}</span>
+                <span className="text-amber-800/70 font-normal">({owner.storeRating.count} ulasan)</span>
+              </div>
+            ) : typeof owner.storeRating === 'number' && owner.storeRating > 0 ? (
+              <div className="flex items-center gap-1 text-[11px] text-amber-700 bg-amber-50/80 px-2 py-0.5 rounded-md border border-amber-200/60 w-fit">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                <span className="font-bold tabular-nums">{owner.storeRating}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-[11px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/60 w-fit">
+                <Star className="w-3 h-3 text-slate-300 shrink-0" />
+                <span>Belum ada ulasan</span>
+              </div>
+            )}
+          </div>
+
+          {/* Deskripsi Toko jika tersedia */}
+          {owner.tenantProfile?.storeDescription && (
+            <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100">
+              {owner.tenantProfile.storeDescription}
+            </p>
+          )}
 
           {/* Tombol Hubungi Pemilik / Tanya Alat */}
           <button

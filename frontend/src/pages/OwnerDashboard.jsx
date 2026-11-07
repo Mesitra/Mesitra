@@ -43,6 +43,7 @@ import AlatSayaTab from '../components/owner/AlatSayaTab'
 import AlatSaya from './dashboardPemilik/AlatSaya'
 import PesananMasuk from './dashboardPemilik/PesananMasuk'
 import DompetPemilik from './dashboardPemilik/DompetPemilik'
+import ProfilToko from './dashboardPemilik/ProfilToko'
 import ChatPanel from '../components/chat/ChatPanel'
 import { getUnreadCount } from '../lib/chatsApi'
 import { WalletProvider, useWallet } from '../context/WalletContext'
@@ -914,7 +915,7 @@ function OwnerDashboardContent() {
       {/* ── KONTEN UTAMA ─────────────────────────────────────────────────── */}
       <main className="flex-1 p-6 md:px-10 lg:px-12 py-5 overflow-y-auto max-w-[1920px] mx-auto w-full space-y-5">
         {/* TopBar & Notification Bell (Task 2: Popover Dropdown) */}
-        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && activeTab !== 'chat' && (
+        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && activeTab !== 'chat' && activeTab !== 'profil' && (
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -1672,37 +1673,15 @@ function OwnerDashboardContent() {
 
         {/* ── TAB CONTENT: PROFIL TOKO ─────────────────────────────────────── */}
         {activeTab === 'profil' && (
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm space-y-4 animate-in fade-in duration-200">
-            <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-              <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-extrabold text-xl flex items-center justify-center shadow-xs">
-                {getUserInitials(currentUser)}
-              </div>
-              <div>
-                <h2 className="text-lg font-extrabold text-slate-900">
-                  {currentUser?.fullName || 'Kopi Senja Roastery'}
-                </h2>
-                <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                  <span>Gudang Cilandak, Jakarta Selatan</span>
-                  <span>·</span>
-                  <span className="text-emerald-600 font-bold flex items-center gap-1">
-                    <BadgeCheck className="w-3.5 h-3.5" />
-                    Toko Terverifikasi
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-                <span className="text-slate-400 font-semibold">Email Kontak</span>
-                <div className="font-bold text-slate-800">{currentUser?.email || 'pemilik@myrent.com'}</div>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-                <span className="text-slate-400 font-semibold">Nomor WhatsApp</span>
-                <div className="font-bold text-slate-800">0812-1122-3344</div>
-              </div>
-            </div>
-          </div>
+          <ProfilToko
+            currentUser={currentUser}
+            onSwitchTab={(tab) => {
+              setActiveTab(tab)
+              if (tab === 'alat') setSearchParams({ tab: 'alat-saya' })
+              else setSearchParams({ tab })
+            }}
+            setToastMessage={setToastMessage}
+          />
         )}
 
         {/* ── TAB CONTENT: PENGATURAN ───────────────────────────────────────── */}

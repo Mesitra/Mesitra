@@ -224,4 +224,63 @@ test('Auth API Flow', async (t) => {
     assert.equal(updateData.profile.city, 'Jakarta Selatan')
     assert.equal(updateData.profile.bankAccount, '1230009988776')
   })
+
+  await t.test('GET & PUT /api/auth/profile mendukung TenantProfile (upsert) & kalkulasi rating/alat', async () => {
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: testEmail, password: 'Password123!' })
+    })
+    const loginData = await loginRes.json()
+
+    // 1. GET profil awal
+    const getRes = await fetch(`${baseUrl}/api/auth/profile`, {
+      headers: { Authorization: `Bearer ${loginData.token}` }
+    })
+    assert.equal(getRes.status, 200)
+    const getData = await getRes.json()
+    assert.ok(getData.profile.tenantProfile)
+    assert.ok('storeName' in getData.profile.tenantProfile)
+    assert.ok('operatingHours' in getData.profile.tenantProfile)
+    assert.ok('joinYear' in getData.profile)
+
+    // 2. PUT pembaruan TenantProfile
+    const updateRes = await fetch(`${baseUrl}/api/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${loginData.token}`
+      },
+      body: JSON.stringify({
+        tenantProfile: {
+          storeName: 'Kopi Senja Modern',
+          storeDescription: 'Mesin kopi dan grinder espresso terbaik di Bandung',
+          storeCategory: 'Kuliner & Kopi',
+          whatsappNumber: '081233445566',
+          address: 'Jl. Riau No. 45',
+          city: 'Bandung',
+          serviceRadius: 25,
+          npwpVerified: true,
+          notifPesananBaru: true,
+          notifPengembalianAlat: false
+        }
+      })
+    })
+    assert.equal(updateRes.status, 200)
+    const updateData = await updateRes.json()
+    assert.equal(updateData.profile.tenantProfile.storeName, 'Kopi Senja Modern')
+    assert.equal(updateData.profile.tenantProfile.serviceRadius, 25)
+    assert.equal(updateData.profile.tenantProfile.npwpVerified, true)
+    assert.equal(updateData.profile.tenantProfile.notifPengembalianAlat, false)
+
+    // 3. Verifikasi persistensi via GET ulang
+    const verifyRes = await fetch(`${baseUrl}/api/auth/profile`, {
+      headers: { Authorization: `Bearer ${loginData.token}` }
+    })
+    assert.equal(verifyRes.status, 200)
+    const verifyData = await verifyRes.json()
+    assert.equal(verifyData.profile.tenantProfile.storeName, 'Kopi Senja Modern')
+    assert.equal(verifyData.profile.tenantProfile.city, 'Bandung')
+    assert.equal(verifyData.profile.tenantProfile.npwpVerified, true)
+  })
 })

@@ -178,6 +178,7 @@ export default function DetailAlat({
   }
 
   const ownerDisplayName =
+    equipment?.owner?.tenantProfile?.storeName ||
     equipment?.owner?.displayName ||
     equipment?.owner?.businessName ||
     equipment?.owner?.fullName ||
@@ -185,6 +186,7 @@ export default function DetailAlat({
     'Pemilik Alat'
 
   const ownerShopLocation =
+    equipment?.owner?.tenantProfile?.city ||
     equipment?.owner?.shopLocation ||
     equipment?.location ||
     'Jakarta Selatan'

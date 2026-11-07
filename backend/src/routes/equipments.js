@@ -83,10 +83,12 @@ function presentEquipment(equipment, bookedRanges = [], ownerRating = null) {
   const ownerKyc = equipment.owner?.kycData && typeof equipment.owner.kycData === 'object'
     ? equipment.owner.kycData
     : {}
-  const ownerBusinessName = ownerKyc.businessName || null
+  const tenantProfile = equipment.owner?.tenantProfile || null
+  const ownerBusinessName = tenantProfile?.storeName || ownerKyc.businessName || null
   const ownerPhoto = extractOwnerPhoto(equipment.owner)
   const ownerDisplayName = ownerBusinessName || equipment.owner?.fullName || 'Pemilik Alat'
   const ownerShopLocation =
+    tenantProfile?.city ||
     [ownerKyc.district, ownerKyc.city].filter(Boolean).join(', ') ||
     ownerKyc.address ||
     equipment.location
@@ -127,14 +129,27 @@ function presentEquipment(equipment, bookedRanges = [], ownerRating = null) {
           role: equipment.owner.role,
           verificationStatus: equipment.owner.verificationStatus,
           photo: ownerPhoto,
-          address: ownerKyc.address || null,
-          city: ownerKyc.city || null,
+          address: tenantProfile?.address || ownerKyc.address || null,
+          city: tenantProfile?.city || ownerKyc.city || null,
           district: ownerKyc.district || null,
           landmark: ownerKyc.landmark || null,
-          businessSector: ownerKyc.businessSector || null,
+          businessSector: tenantProfile?.storeCategory || ownerKyc.businessSector || null,
           shopLocation: ownerShopLocation,
-          // Rating agregat toko (rata-rata semua ulasan untuk seluruh alat milik owner)
-          storeRating: ownerRating
+          // Rating agregat toko (rata-rata dan total ulasan seluruh alat milik owner)
+          storeRating: ownerRating,
+          // Detail profil toko
+          tenantProfile: tenantProfile
+            ? {
+                storeName: tenantProfile.storeName,
+                storeDescription: tenantProfile.storeDescription,
+                storeCategory: tenantProfile.storeCategory,
+                whatsappNumber: tenantProfile.whatsappNumber,
+                address: tenantProfile.address,
+                city: tenantProfile.city,
+                serviceRadius: tenantProfile.serviceRadius,
+                operatingHours: tenantProfile.operatingHours
+              }
+            : null
         }
       : null,
     // Rentang tanggal yang sudah terisi oleh pesanan aktif/bayar
@@ -849,7 +864,11 @@ equipmentsRouter.get('/:id', async (req, res, next) => {
     const equipment = await prisma.equipment.findUnique({
       where: { id },
       include: {
-        owner: true,
+        owner: {
+          include: {
+            tenantProfile: true
+          }
+        },
         reviews: {
           include: {
             user: {
@@ -874,7 +893,7 @@ equipmentsRouter.get('/:id', async (req, res, next) => {
     }
 
     // Hitung rating agregat toko pemilik: rata-rata semua ulasan untuk semua alat milik owner
-    let ownerStoreRating = null
+    let ownerStoreRating = { average: null, count: 0 }
     if (equipment.owner?.id) {
       const ownerAgg = await prisma.review.aggregate({
         where: {
@@ -884,7 +903,10 @@ equipmentsRouter.get('/:id', async (req, res, next) => {
         _count: { rating: true }
       })
       if (ownerAgg._count.rating > 0) {
-        ownerStoreRating = Number((ownerAgg._avg.rating ?? 0).toFixed(1))
+        ownerStoreRating = {
+          average: Number((ownerAgg._avg.rating ?? 0).toFixed(1)),
+          count: ownerAgg._count.rating
+        }
       }
     }
 
