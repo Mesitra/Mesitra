@@ -105,7 +105,7 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
           (res.withdrawalAccounts && res.withdrawalAccounts[0]) ||
           (res.profile?.withdrawalAccounts && res.profile?.withdrawalAccounts[0])
         const bankDisplay = primaryAcc
-          ? `${primaryAcc.bankName} · ${primaryAcc.accountNumber.slice(-4)}`
+          ? `${primaryAcc.bankName} · ${primaryAcc.accountNumber.replace(/\s/g, '').slice(-4)}`
           : 'BCA · 4471'
 
         setMeta({
@@ -439,7 +439,15 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
             </div>
           </div>
 
-          {!formData.npwpVerified && (
+          {!formData.nibVerified ? (
+            <button
+              type="button"
+              onClick={() => alert('Fitur lengkapi NIB akan segera tersedia.')}
+              className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer text-center"
+            >
+              Lengkapi NIB
+            </button>
+          ) : !formData.npwpVerified ? (
             <button
               type="button"
               onClick={() => setShowNpwpModal(true)}
@@ -447,7 +455,7 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
             >
               Lengkapi NPWP
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -1036,3 +1044,4 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
     </div>
   )
 }
+

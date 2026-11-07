@@ -167,7 +167,7 @@ function WithdrawModal({
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1.5 px-0.5">
               <span>Minimal penarikan {formatRupiah(minAmount)}</span>
-              <span>Biaya transfer: Gratis</span>
+              <span>Biaya transfer: Sesuai kebijakan bank</span>
             </div>
           </div>
 
@@ -934,7 +934,7 @@ export default function DompetPemilik() {
                 <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
                 <span className="text-[11.5px] font-medium text-slate-500">Biaya transfer</span>
               </div>
-              <span className="font-extrabold text-slate-900 text-[11.5px]">Gratis · 3× / minggu</span>
+              <span className="font-extrabold text-slate-900 text-[11.5px]">Sesuai kebijakan bank</span>
             </div>
 
             <div className="flex items-center justify-between text-slate-600">
