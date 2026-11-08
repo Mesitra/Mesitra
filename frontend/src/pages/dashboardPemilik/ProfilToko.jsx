@@ -813,7 +813,7 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-800">Pesanan baru</div>
-                  <div className="text-[10px] text-slate-500">Langsung via WhatsApp</div>
+                  <div className="text-[10px] text-slate-500">Notifikasi via lonceng dashboard</div>
                 </div>
                 <button
                   type="button"
@@ -836,7 +836,7 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-800">Pengembalian alat</div>
-                  <div className="text-[10px] text-slate-500">Reminder H-1</div>
+                  <div className="text-[10px] text-slate-500">Peringatan di lonceng H-1</div>
                 </div>
                 <button
                   type="button"
@@ -862,7 +862,7 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-800">Inspeksi &amp; deposit</div>
-                  <div className="text-[10px] text-slate-500">Setiap ada perubahan</div>
+                  <div className="text-[10px] text-slate-500">Notifikasi update status inspeksi</div>
                 </div>
                 <button
                   type="button"
@@ -888,7 +888,7 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-800">Ringkasan mingguan</div>
-                  <div className="text-[10px] text-slate-500">Email tiap Senin</div>
+                  <div className="text-[10px] text-slate-500">Laporan mingguan di dashboard</div>
                 </div>
                 <button
                   type="button"

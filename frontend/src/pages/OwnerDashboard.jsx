@@ -1693,8 +1693,8 @@ function OwnerDashboardContent() {
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/80">
                 <div>
-                  <div className="font-bold text-slate-900">Notifikasi WhatsApp untuk Pesanan Baru</div>
-                  <div className="text-slate-500 text-[11px]">Terima pesan instan saat ada penyewa mengajukan sewa alat</div>
+                  <div className="font-bold text-slate-900">Notifikasi Lonceng untuk Pesanan Baru</div>
+                  <div className="text-slate-500 text-[11px]">Terima notifikasi di lonceng dashboard saat ada pesanan sewa baru</div>
                 </div>
                 <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center">
                   <Check className="w-3 h-3" />
