@@ -18,6 +18,7 @@ import AdminDetailPengajuan from './components/adminDashboard/AdminDetailPengaju
 import AdminRoute from './components/auth/AdminRoute'
 import AdminLayout from './layouts/AdminLayout'
 import KycDashboard from './pages/admin/KycDashboard'
+import FinanceDashboard from './pages/admin/FinanceDashboard'
 import UserProtectedRoute from './components/common/UserProtectedRoute'
 import PemilikProtectedRoute from './components/common/PemilikProtectedRoute'
 import CheckoutWizard from './components/checkout/CheckoutWizard'
@@ -433,6 +434,7 @@ export default function App() {
         <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="kyc" element={<KycDashboard />} />
+            <Route path="finansial" element={<FinanceDashboard />} />
           </Route>
         </Route>
 

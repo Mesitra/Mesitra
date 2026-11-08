@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, AlertTriangle, FileEdit, CheckCircle, Loader2 } from 'lucide-react'
-
-const API_BASE = 'http://localhost:5000/api/admin'
+import { apiRequest, API_ENDPOINTS } from '../../lib/apiClient'
 
 export default function KycDocumentModal({ submissionId, onClose }) {
   const [submission, setSubmission] = useState(null)
@@ -20,12 +19,7 @@ export default function KycDocumentModal({ submissionId, onClose }) {
   const fetchDetail = async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('admin_token')
-      const res = await fetch(`${API_BASE}/submissions/${submissionId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!res.ok) throw new Error('Gagal fetch detail')
-      const data = await res.json()
+      const data = await apiRequest(API_ENDPOINTS.adminSubmission(submissionId))
       setSubmission(data.submission)
     } catch (err) {
       console.error('Error:', err)
@@ -44,15 +38,9 @@ export default function KycDocumentModal({ submissionId, onClose }) {
     if (!confirm('Setujui pengajuan ini?')) return
     setActionLoading(true)
     try {
-      const token = localStorage.getItem('admin_token')
-      const res = await fetch(`${API_BASE}/submissions/${submissionId}/approve`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+      await apiRequest(API_ENDPOINTS.adminSubmissionApprove(submissionId), {
+        method: 'PATCH'
       })
-      if (!res.ok) throw new Error('Gagal approve')
       showToast('Pengajuan berhasil disetujui!')
       setTimeout(() => onClose(), 1500)
     } catch (err) {
@@ -70,16 +58,10 @@ export default function KycDocumentModal({ submissionId, onClose }) {
     }
     setActionLoading(true)
     try {
-      const token = localStorage.getItem('admin_token')
-      const res = await fetch(`${API_BASE}/submissions/${submissionId}/reject`, {
+      await apiRequest(API_ENDPOINTS.adminSubmissionReject(submissionId), {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify({ reason: rejectReason, note: rejectReason })
       })
-      if (!res.ok) throw new Error('Gagal reject')
       showToast('Pengajuan berhasil ditolak')
       setTimeout(() => onClose(), 1500)
     } catch (err) {
@@ -97,16 +79,10 @@ export default function KycDocumentModal({ submissionId, onClose }) {
     }
     setActionLoading(true)
     try {
-      const token = localStorage.getItem('admin_token')
-      const res = await fetch(`${API_BASE}/submissions/${submissionId}/revision`, {
+      await apiRequest(API_ENDPOINTS.adminSubmissionRevision(submissionId), {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify({ note: revisionNote, selectedSteps: [] })
       })
-      if (!res.ok) throw new Error('Gagal revision')
       showToast('Permintaan revisi berhasil dikirim')
       setTimeout(() => onClose(), 1500)
     } catch (err) {

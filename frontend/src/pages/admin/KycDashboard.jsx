@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Eye, RefreshCw } from 'lucide-react'
 import KycDocumentModal from '../../components/admin/KycDocumentModal'
-
-const API_BASE = 'http://localhost:5000/api/admin'
+import { apiRequest, API_ENDPOINTS } from '../../lib/apiClient'
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'Semua' },
@@ -28,18 +27,11 @@ export default function KycDashboard() {
   const fetchSubmissions = async (status = null) => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('admin_token')
-      const url = status && status !== 'ALL' 
-        ? `${API_BASE}/submissions?status=${status}`
-        : `${API_BASE}/submissions`
+      const endpoint = status && status !== 'ALL' 
+        ? `${API_ENDPOINTS.adminSubmissions}?status=${status}`
+        : API_ENDPOINTS.adminSubmissions
       
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      
-      if (!res.ok) throw new Error('Gagal fetch data')
-      
-      const data = await res.json()
+      const data = await apiRequest(endpoint)
       setSubmissions(data.submissions || [])
     } catch (err) {
       console.error('Error fetch submissions:', err)
