@@ -16,6 +16,7 @@ import AdminAuthWrapper from './components/adminAuth/AdminAuthWrapper'
 import AdminDashboardPlaceholder from './components/adminAuth/AdminDashboardPlaceholder'
 import AdminProtectedRoute from './components/adminAuth/AdminProtectedRoute'
 import AdminDetailPengajuan from './components/adminDashboard/AdminDetailPengajuan'
+import AdminPencairanDana from './components/adminDashboard/AdminPencairanDana'
 import AdminRoute from './components/auth/AdminRoute'
 import AdminLayout from './layouts/AdminLayout'
 import KycDashboard from './pages/admin/KycDashboard'
@@ -442,6 +443,14 @@ export default function App() {
           element={
             <AdminProtectedRoute>
               <AdminDetailPengajuan />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal-internal-hq/pencairan-dana"
+          element={
+            <AdminProtectedRoute>
+              <AdminPencairanDana />
             </AdminProtectedRoute>
           }
         />

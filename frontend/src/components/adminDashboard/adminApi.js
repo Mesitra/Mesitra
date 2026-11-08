@@ -80,3 +80,39 @@ export async function rejectSubmission(identifier, reason, note) {
   })
   return data.submission ?? null
 }
+
+// ── Withdrawals (Pencairan Dana) ────────────────────────────────────────────
+
+/** Daftar pengajuan penarikan dana. */
+export async function fetchWithdrawals(status = 'MENUNGGU', search = '') {
+  const params = new URLSearchParams()
+  if (status && status !== 'ALL') params.set('status', status)
+  if (search) params.set('search', search)
+  const query = params.toString()
+  const data = await adminRequest(`/withdrawals${query ? `?${query}` : ''}`)
+  return data.withdrawals ?? []
+}
+
+/** Detail satu pengajuan penarikan dana. */
+export async function fetchWithdrawal(id) {
+  const data = await adminRequest(`/withdrawals/${encodeURIComponent(id)}`)
+  return data.withdrawal ?? null
+}
+
+/** Setujui pencairan dana. */
+export async function approveWithdrawal(id, payload) {
+  const data = await adminRequest(`/withdrawals/${encodeURIComponent(id)}/approve`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload)
+  })
+  return data.withdrawal ?? null
+}
+
+/** Tolak pencairan dana (rollback saldo ke user). */
+export async function rejectWithdrawal(id, rejectionReason) {
+  const data = await adminRequest(`/withdrawals/${encodeURIComponent(id)}/reject`, {
+    method: 'PATCH',
+    body: JSON.stringify({ rejectionReason })
+  })
+  return data.withdrawal ?? null
+}

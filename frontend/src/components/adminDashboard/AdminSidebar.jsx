@@ -2,7 +2,8 @@ import React from 'react'
 import {
   ShieldCheck,
   LogOut,
-  Layers
+  Layers,
+  DollarSign
 } from 'lucide-react'
 import { getAdminUser } from '../adminAuth/adminSession'
 
@@ -12,7 +13,8 @@ import { getAdminUser } from '../adminAuth/adminSession'
  */
 
 const MENU = [
-  { key: 'verifikasi', label: 'Verifikasi Akun', icon: ShieldCheck, badgeKey: 'verifikasi' }
+  { key: 'verifikasi', label: 'Verifikasi Akun', icon: ShieldCheck, badgeKey: 'verifikasi' },
+  { key: 'pencairan', label: 'Pencairan Dana', icon: DollarSign, badgeKey: 'pencairan' }
 ]
 
 /**
