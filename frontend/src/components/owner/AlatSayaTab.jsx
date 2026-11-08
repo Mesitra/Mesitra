@@ -15,6 +15,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { formatRupiah } from '../../lib/equipmentsApi'
+import { extractEquipmentPhotos } from '../../pages/dashboardPemilik/InventoryCard'
 
 // Helper icon berdasarkan kategori
 function getCategoryIcon(category = '') {
@@ -24,6 +25,33 @@ function getCategoryIcon(category = '') {
   if (cat.includes('konveksi') || cat.includes('jahit')) return Scissors
   if (cat.includes('kemas') || cat.includes('vakum') || cat.includes('dapur')) return Package
   return Layers
+}
+
+function EquipmentCardThumbnail({ mainPhoto, name, CategoryIcon, photoCount }) {
+  const [imageError, setImageError] = useState(false)
+
+  return (
+    <div className="relative w-32 h-24 sm:w-36 sm:h-24 rounded-xl bg-slate-100 border border-slate-200/90 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
+      {mainPhoto && !imageError ? (
+        <img
+          src={mainPhoto}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <div className="flex flex-col items-center justify-center p-2 text-slate-400">
+          <CategoryIcon className="w-8 h-8 opacity-60 text-slate-600" />
+        </div>
+      )}
+
+      {/* Photo count indicator Bottom */}
+      <div className="absolute bottom-1.5 left-1.5 bg-slate-900/60 backdrop-blur-xs text-white px-1.5 py-0.5 rounded text-[9px] font-semibold flex items-center gap-1 shadow-xs z-10">
+        <span>▧</span>
+        <span>{photoCount} foto</span>
+      </div>
+    </div>
+  )
 }
 
 export default function AlatSayaTab({
@@ -435,19 +463,9 @@ export default function AlatSayaTab({
               }
             }
 
-            const rawPhotos = eq.photos || eq.images || []
-            const photosList = Array.isArray(rawPhotos)
-              ? rawPhotos
-              : typeof rawPhotos === 'string' && rawPhotos.trim()
-                ? [rawPhotos.trim()]
-                : []
-
-            const photoCount = photosList.length > 0 ? photosList.length : 1
-            const mainPhoto =
-              photosList.length > 0
-                ? (typeof photosList[0] === 'string' ? photosList[0] : (photosList[0]?.url || photosList[0]?.src || null))
-                : (typeof eq.imageUrl === 'string' ? eq.imageUrl : null)
-
+            const photoList = extractEquipmentPhotos(eq)
+            const photoCount = photoList.length > 0 ? photoList.length : 1
+            const mainPhoto = photoList.length > 0 ? photoList[0] : null
             const CategoryIcon = getCategoryIcon(eq.category)
 
             return (
@@ -457,29 +475,12 @@ export default function AlatSayaTab({
               >
                 {/* Sisi Kiri: Foto */}
                 <div className="flex items-center gap-3.5">
-                  <div className="relative w-32 h-24 sm:w-36 sm:h-24 rounded-xl bg-slate-100 border border-slate-200/90 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
-                    {mainPhoto ? (
-                      <img
-                        src={mainPhoto}
-                        alt={eq.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    ) : null}
-
-                    {/* Fallback Icon jika gambar gagal atau tidak ada */}
-                    <div className={`absolute inset-0 flex flex-col items-center justify-center p-2 text-slate-400 pointer-events-none ${mainPhoto ? '-z-0' : 'z-0'}`}>
-                      <CategoryIcon className="w-8 h-8 opacity-40 text-slate-600" />
-                    </div>
-
-                    {/* Photo count indicator Bottom */}
-                    <div className="absolute bottom-1.5 left-1.5 bg-slate-900/60 backdrop-blur-xs text-white px-1.5 py-0.5 rounded text-[9px] font-semibold flex items-center gap-1 shadow-xs z-10">
-                      <span>▧</span>
-                      <span>{photoCount} foto</span>
-                    </div>
-                  </div>
+                  <EquipmentCardThumbnail
+                    mainPhoto={mainPhoto}
+                    name={eq.name}
+                    CategoryIcon={CategoryIcon}
+                    photoCount={photoCount}
+                  />
 
                   {/* Sisi Tengah: Detail Spesifikasi */}
                   <div className="space-y-1.5 flex-1 min-w-0">

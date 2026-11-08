@@ -545,12 +545,7 @@ export default function AlatSaya({
               deskripsi={item.deskripsi || item.description}
               images={item.images}
               photos={item.photos}
-              fotoCount={
-                item.fotoCount ||
-                (Array.isArray(item.images) && item.images.length > 0
-                  ? item.images.length
-                  : (Array.isArray(item.photos) && item.photos.length > 0 ? item.photos.length : 1))
-              }
+              fotoCount={item.fotoCount}
               onKelola={() => handleManageClick(item)}
             />
           ))}

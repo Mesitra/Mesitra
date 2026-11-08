@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Package,
   Coffee,
@@ -59,6 +59,108 @@ function getStatusBadgeConfig(status = '') {
 }
 
 /**
+ * Fungsi ekstraksi URL foto yang robust untuk berbagai format payload backend:
+ * - JSON string array (misal: '["url1", "url2"]') -> di-parse dengan JSON.parse & try-catch
+ * - Array of strings (misal: ['url1', 'url2'])
+ * - Array of objects (misal: [{ url: 'url1' }, { src: 'url2' }])
+ * - Single string URL (misal: 'https://...')
+ * - Menangani kandidat: photos, images, photo, image, foto, imageUrl
+ */
+export function extractEquipmentPhotos(itemData = {}, photosProp = null, imagesProp = null) {
+  const candidates = [
+    photosProp,
+    imagesProp,
+    itemData.photos,
+    itemData.images,
+    itemData.foto,
+    itemData.photo,
+    itemData.image,
+    itemData.imageUrl
+  ]
+
+  const rawList = []
+
+  for (const candidate of candidates) {
+    if (!candidate) continue
+
+    // Jika kandidat bertipe string
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim()
+      if (!trimmed) continue
+
+      // Cek apakah string merupakan JSON array / object yang di-stringify
+      if (
+        (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+        (trimmed.startsWith('{') && trimmed.endsWith('}'))
+      ) {
+        try {
+          const parsed = JSON.parse(trimmed)
+          if (Array.isArray(parsed)) {
+            rawList.push(...parsed)
+            continue
+          } else if (parsed && typeof parsed === 'object') {
+            rawList.push(parsed)
+            continue
+          }
+        } catch {
+          // Gagal parse JSON, perlakukan sebagai string URL biasa
+        }
+      }
+
+      rawList.push(trimmed)
+      continue
+    }
+
+    // Jika kandidat bertipe array
+    if (Array.isArray(candidate)) {
+      rawList.push(...candidate)
+      continue
+    }
+
+    // Jika kandidat bertipe object tunggal
+    if (typeof candidate === 'object' && candidate !== null) {
+      rawList.push(candidate)
+      continue
+    }
+  }
+
+  // Normalisasi seluruh item menjadi array string URL yang bersih
+  const validUrls = []
+  for (const item of rawList) {
+    if (!item) continue
+
+    if (typeof item === 'string') {
+      const s = item.trim()
+      // Tangani kasus stringified array bersarang (nested stringified JSON)
+      if (s.startsWith('[') && s.endsWith(']')) {
+        try {
+          const inner = JSON.parse(s)
+          if (Array.isArray(inner)) {
+            for (const sub of inner) {
+              const subUrl = typeof sub === 'string' ? sub.trim() : (sub?.url || sub?.src || null)
+              if (subUrl && typeof subUrl === 'string' && subUrl.trim()) {
+                validUrls.push(subUrl.trim())
+              }
+            }
+            continue
+          }
+        } catch {}
+      }
+      if (s && !s.startsWith('[') && !s.startsWith('{')) {
+        validUrls.push(s)
+      }
+    } else if (typeof item === 'object') {
+      const url = item.url || item.src || item.preview || item.dataUrl || item.path
+      if (url && typeof url === 'string' && url.trim()) {
+        validUrls.push(url.trim())
+      }
+    }
+  }
+
+  return validUrls
+}
+
+/**
  * Komponen InventoryCard untuk menampilkan satu baris kartu alat sewaan.
  * Mendukung props dalam bahasa Indonesia sesuai spesifikasi mandat:
  * (nama, daya, status, harga, deposit, kategori/icon)
@@ -72,7 +174,7 @@ export default function InventoryCard({
   kategori,
   icon,
   deskripsi,
-  fotoCount = 4,
+  fotoCount,
   onKelola,
   // Alias bahasa Inggris untuk kompatibilitas ekstra
   name,
@@ -89,6 +191,8 @@ export default function InventoryCard({
   photo,
   image
 }) {
+  const [imageError, setImageError] = useState(false)
+
   const itemData = rawItem || item || {}
   const itemNama = nama || name || itemData.nama || itemData.name || 'Alat Tanpa Nama'
   const itemDaya = daya || power || (itemData.powerWatt ? `${itemData.powerWatt} W` : (itemData.daya || '0 W'))
@@ -98,20 +202,16 @@ export default function InventoryCard({
   const itemKategori = kategori || category || itemData.kategori || itemData.category || 'Peralatan'
   const itemDeskripsi = deskripsi || description || itemData.deskripsi || itemData.description || 'Kondisi prima · Siap disewa'
 
-  // Periksa array/properti foto (photos / images) untuk foto utama
-  const rawPhotos = photos || images || itemData.photos || itemData.images || foto || photo || image || itemData.foto || itemData.photo || itemData.image
-  const photoList = Array.isArray(rawPhotos)
-    ? rawPhotos
-    : typeof rawPhotos === 'string' && rawPhotos.trim()
-      ? [rawPhotos.trim()]
-      : []
-
-  const mainPhoto = photoList.length > 0
-    ? (typeof photoList[0] === 'string' ? photoList[0] : (photoList[0]?.url || photoList[0]?.src || null))
-    : (typeof itemData.imageUrl === 'string' ? itemData.imageUrl : null)
-
+  // Ekstraksi foto secara robust dari array / object / stringified JSON
+  const photoList = extractEquipmentPhotos(itemData, photos, images)
+  const mainPhoto = photoList.length > 0 ? photoList[0] : null
   const itemFotoCount = fotoCount ?? (photoList.length > 0 ? photoList.length : 1)
   const handleKelola = onKelola || onManage
+
+  // Reset status error ketika URL foto utama berubah
+  useEffect(() => {
+    setImageError(false)
+  }, [mainPhoto])
 
   const statusConfig = getStatusBadgeConfig(itemStatus)
   const renderedIcon = getEquipmentIcon(icon || itemData.icon, itemKategori)
@@ -121,25 +221,16 @@ export default function InventoryCard({
       {/* Kolom Kiri: Foto / Pictogram Preview */}
       <div className="flex items-center gap-3.5">
         <div className="relative w-32 h-24 sm:w-36 sm:h-24 rounded-xl bg-slate-50 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center shadow-2xs">
-          {/* Conditional rendering: Foto utama jika tersedia, atau fallback icon jika tidak ada */}
-          {mainPhoto ? (
+          {/* Mutually exclusive: jika mainPhoto valid & tidak error, render <img> SAJA. Fallback ke icon jika !mainPhoto atau imageError */}
+          {mainPhoto && !imageError ? (
             <img
               src={mainPhoto}
               alt={itemNama}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none'
-              }}
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="flex items-center justify-center">
-              {renderedIcon}
-            </div>
-          )}
-
-          {/* Fallback Icon jika gambar gagal dimuat */}
-          {mainPhoto && (
-            <div className="absolute inset-0 flex items-center justify-center -z-0 pointer-events-none">
               {renderedIcon}
             </div>
           )}
