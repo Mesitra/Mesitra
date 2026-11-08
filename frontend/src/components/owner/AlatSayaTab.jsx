@@ -435,11 +435,18 @@ export default function AlatSayaTab({
               }
             }
 
-            const photoCount = Array.isArray(eq.images) && eq.images.length > 0 ? eq.images.length : 1
+            const rawPhotos = eq.photos || eq.images || []
+            const photosList = Array.isArray(rawPhotos)
+              ? rawPhotos
+              : typeof rawPhotos === 'string' && rawPhotos.trim()
+                ? [rawPhotos.trim()]
+                : []
+
+            const photoCount = photosList.length > 0 ? photosList.length : 1
             const mainPhoto =
-              Array.isArray(eq.images) && eq.images.length > 0
-                ? eq.images[0]
-                : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80'
+              photosList.length > 0
+                ? (typeof photosList[0] === 'string' ? photosList[0] : (photosList[0]?.url || photosList[0]?.src || null))
+                : (typeof eq.imageUrl === 'string' ? eq.imageUrl : null)
 
             const CategoryIcon = getCategoryIcon(eq.category)
 
@@ -448,32 +455,27 @@ export default function AlatSayaTab({
                 key={eq.id}
                 className="bg-white border border-slate-200/90 hover:border-blue-200 rounded-2xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4"
               >
-                {/* Sisi Kiri: Foto & Kategori */}
+                {/* Sisi Kiri: Foto */}
                 <div className="flex items-center gap-3.5">
                   <div className="relative w-32 h-24 sm:w-36 sm:h-24 rounded-xl bg-slate-100 border border-slate-200/90 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
-                    <img
-                      src={mainPhoto}
-                      alt={eq.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
+                    {mainPhoto ? (
+                      <img
+                        src={mainPhoto}
+                        alt={eq.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    ) : null}
 
-                    {/* Fallback Icon jika gambar gagal */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-slate-400 pointer-events-none -z-0">
+                    {/* Fallback Icon jika gambar gagal atau tidak ada */}
+                    <div className={`absolute inset-0 flex flex-col items-center justify-center p-2 text-slate-400 pointer-events-none ${mainPhoto ? '-z-0' : 'z-0'}`}>
                       <CategoryIcon className="w-8 h-8 opacity-40 text-slate-600" />
                     </div>
 
-                    {/* Kategori Badge Top-Left */}
-                    <div className="absolute top-1.5 left-1.5 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full border border-slate-200/80 shadow-xs">
-                      <span className="text-[9px] font-bold text-slate-700 tracking-wide uppercase">
-                        {eq.category || 'Alat'}
-                      </span>
-                    </div>
-
                     {/* Photo count indicator Bottom */}
-                    <div className="absolute bottom-1.5 left-1.5 bg-slate-900/60 backdrop-blur-xs text-white px-1.5 py-0.5 rounded text-[9px] font-semibold flex items-center gap-1 shadow-xs">
+                    <div className="absolute bottom-1.5 left-1.5 bg-slate-900/60 backdrop-blur-xs text-white px-1.5 py-0.5 rounded text-[9px] font-semibold flex items-center gap-1 shadow-xs z-10">
                       <span>▧</span>
                       <span>{photoCount} foto</span>
                     </div>

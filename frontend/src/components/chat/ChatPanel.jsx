@@ -395,7 +395,9 @@ export default function ChatPanel({
   return (
     <div
       className={`box-border w-full flex flex-col md:flex-row bg-white rounded-2xl ring-1 ring-slate-200 overflow-hidden shadow-xs ${
-        isEmbedded ? 'h-[720px]' : 'flex-1 min-h-0 max-w-[1920px] mx-auto my-0'
+        isEmbedded
+          ? 'h-[calc(100vh-60px)]'
+          : 'h-[calc(100vh-130px)] md:h-[calc(100vh-120px)] flex-1 min-h-0 max-w-[1920px] mx-auto my-0'
       }`}
     >
       {/* ── SIDEBAR KIRI: Daftar Percakapan Tersimpan ──────────────────────────── */}

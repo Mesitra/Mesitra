@@ -82,7 +82,12 @@ export default function InventoryCard({
   description,
   onManage,
   rawItem,
-  item
+  item,
+  photos,
+  images,
+  foto,
+  photo,
+  image
 }) {
   const itemData = rawItem || item || {}
   const itemNama = nama || name || itemData.nama || itemData.name || 'Alat Tanpa Nama'
@@ -92,7 +97,20 @@ export default function InventoryCard({
   const itemDeposit = deposit ?? itemData.deposit ?? 'Deposit Rp 0'
   const itemKategori = kategori || category || itemData.kategori || itemData.category || 'Peralatan'
   const itemDeskripsi = deskripsi || description || itemData.deskripsi || itemData.description || 'Kondisi prima · Siap disewa'
-  const itemFotoCount = fotoCount ?? (Array.isArray(itemData.images) && itemData.images.length > 0 ? itemData.images.length : 1)
+
+  // Periksa array/properti foto (photos / images) untuk foto utama
+  const rawPhotos = photos || images || itemData.photos || itemData.images || foto || photo || image || itemData.foto || itemData.photo || itemData.image
+  const photoList = Array.isArray(rawPhotos)
+    ? rawPhotos
+    : typeof rawPhotos === 'string' && rawPhotos.trim()
+      ? [rawPhotos.trim()]
+      : []
+
+  const mainPhoto = photoList.length > 0
+    ? (typeof photoList[0] === 'string' ? photoList[0] : (photoList[0]?.url || photoList[0]?.src || null))
+    : (typeof itemData.imageUrl === 'string' ? itemData.imageUrl : null)
+
+  const itemFotoCount = fotoCount ?? (photoList.length > 0 ? photoList.length : 1)
   const handleKelola = onKelola || onManage
 
   const statusConfig = getStatusBadgeConfig(itemStatus)
@@ -102,21 +120,32 @@ export default function InventoryCard({
     <div className="bg-white border border-slate-200/90 hover:border-blue-200 rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
       {/* Kolom Kiri: Foto / Pictogram Preview */}
       <div className="flex items-center gap-3.5">
-        <div className="relative w-32 h-24 sm:w-36 sm:h-24 rounded-xl bg-slate-50 border border-slate-200/80 shrink-0 flex flex-col justify-between p-2.5 shadow-2xs">
-          {/* Badge Kategori */}
-          <div className="bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full border border-slate-200/80 shadow-2xs w-fit">
-            <span className="text-[9px] font-bold text-slate-700 tracking-wide uppercase">
-              {itemKategori}
-            </span>
-          </div>
+        <div className="relative w-32 h-24 sm:w-36 sm:h-24 rounded-xl bg-slate-50 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center shadow-2xs">
+          {/* Conditional rendering: Foto utama jika tersedia, atau fallback icon jika tidak ada */}
+          {mainPhoto ? (
+            <img
+              src={mainPhoto}
+              alt={itemNama}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center">
+              {renderedIcon}
+            </div>
+          )}
 
-          {/* Icon Pictogram */}
-          <div className="flex items-center justify-center my-auto">
-            {renderedIcon}
-          </div>
+          {/* Fallback Icon jika gambar gagal dimuat */}
+          {mainPhoto && (
+            <div className="absolute inset-0 flex items-center justify-center -z-0 pointer-events-none">
+              {renderedIcon}
+            </div>
+          )}
 
           {/* Indikator Jumlah Foto */}
-          <div className="text-[9px] font-medium text-slate-500 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200/60 shadow-2xs w-fit flex items-center gap-1">
+          <div className="absolute bottom-1.5 left-1.5 text-[9px] font-medium text-slate-500 bg-white/90 backdrop-blur-xs px-1.5 py-0.5 rounded border border-slate-200/60 shadow-2xs flex items-center gap-1 z-10">
             <span>▧</span>
             <span>{itemFotoCount} foto</span>
           </div>
