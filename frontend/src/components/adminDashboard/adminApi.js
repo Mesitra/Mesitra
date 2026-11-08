@@ -7,7 +7,8 @@ import { getAdminToken } from '../adminAuth/adminSession'
  * penyewa yang tersimpan di `token` tidak pernah terpakai di sini.
  */
 
-export const ADMIN_API_BASE = 'http://localhost:5000/api/admin'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+export const ADMIN_API_BASE = `${API_BASE}/api/admin`
 
 /**
  * Request generik ke backend admin.

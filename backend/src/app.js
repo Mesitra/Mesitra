@@ -88,17 +88,14 @@ export function createApp() {
   app.use(requestLogger)
   app.use(
     cors({
-      origin: (origin, callback) => {
-        if (!origin) return callback(null, true)
-        if (config.corsOrigins.includes(origin)) return callback(null, true)
-        if (config.nodeEnv === 'development' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
-          return callback(null, true)
-        }
-        return callback(null, false)
+      origin: function (origin, callback) {
+        // Izinkan semua origin selama masa development
+        callback(null, true);
       },
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true
+      credentials: true,
+      optionsSuccessStatus: 200 // Beberapa browser lama butuh ini
     })
   )
   // Batas body 12mb supaya unggahan foto (data URL base64) tetap diterima utuh.
