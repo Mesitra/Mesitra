@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Search, ChevronRight, Inbox, ArrowLeft, Layers, RefreshCw, AlertCircle } from 'lucide-react'
 import AdminSidebar from './AdminSidebar'
 import StatusBadge from './StatusBadge'
@@ -23,6 +23,7 @@ import {
  */
 export default function AdminDashboard({ onLogout }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeMenu = searchParams.get('tab') || 'verifikasi'
 
@@ -31,6 +32,15 @@ export default function AdminDashboard({ onLogout }) {
   const [pengajuan, setPengajuan] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam === 'mediasi') {
+      navigate('/portal-internal-hq/mediasi-sengketa', { replace: true })
+    } else if (tabParam === 'pencairan') {
+      navigate('/portal-internal-hq/pencairan-dana', { replace: true })
+    }
+  }, [searchParams, navigate])
 
   const handleLogout = () => {
     if (onLogout) {
@@ -41,10 +51,12 @@ export default function AdminDashboard({ onLogout }) {
   }
 
   const handleNavigateMenu = (menuKey) => {
-    if (menuKey === 'verifikasi') {
+    if (menuKey === 'verifikasi' || menuKey === '/portal-internal-hq/dashboard') {
       navigate('/portal-internal-hq/dashboard')
-    } else if (menuKey === 'pencairan') {
+    } else if (menuKey === 'pencairan' || menuKey === '/portal-internal-hq/pencairan-dana') {
       navigate('/portal-internal-hq/pencairan-dana')
+    } else if (menuKey === 'mediasi' || menuKey === '/portal-internal-hq/mediasi-sengketa') {
+      navigate('/portal-internal-hq/mediasi-sengketa')
     } else {
       setSearchParams({ tab: menuKey })
     }
@@ -52,7 +64,11 @@ export default function AdminDashboard({ onLogout }) {
 
   const BREADCRUMB_TITLES = {
     verifikasi: 'Verifikasi Akun',
-    pencairan: 'Pencairan Dana'
+    pencairan: 'Pencairan Dana',
+    mediasi: 'Mediasi Sengketa',
+    '/portal-internal-hq/dashboard': 'Verifikasi Akun',
+    '/portal-internal-hq/pencairan-dana': 'Pencairan Dana',
+    '/portal-internal-hq/mediasi-sengketa': 'Mediasi Sengketa'
   }
 
   const loadPengajuan = useCallback(async () => {
@@ -145,7 +161,7 @@ export default function AdminDashboard({ onLogout }) {
             <span className="text-xs text-slate-400">Portal Admin</span>
             <span className="text-xs text-slate-400">/</span>
             <span className="text-xs font-semibold text-slate-900">
-              {BREADCRUMB_TITLES[activeMenu] || 'Verifikasi Akun'}
+              {BREADCRUMB_TITLES[location.pathname] || BREADCRUMB_TITLES[activeMenu] || 'Verifikasi Akun'}
             </span>
           </div>
 

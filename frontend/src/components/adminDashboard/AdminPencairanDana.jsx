@@ -120,6 +120,7 @@ export default function AdminPencairanDana({ onLogout }) {
         onNavigate={(key) => {
           if (key === 'verifikasi') navigate('/portal-internal-hq/dashboard')
           if (key === 'pencairan') navigate('/portal-internal-hq/pencairan-dana')
+          if (key === 'mediasi') navigate('/portal-internal-hq/mediasi-sengketa')
         }}
         counts={{ verifikasi: 0, pencairan: jumlahMenunggu }}
         onLogout={handleLogout}

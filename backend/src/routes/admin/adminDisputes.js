@@ -61,8 +61,8 @@ const DISPUTE_ORDER_INCLUDE = {
  * GET /disputes
  * Mengambil daftar sengketa aktif atau riwayat resolusi.
  * Parameter query opsional:
- * - status: 'OPEN' | 'INVESTIGATING' | 'RESOLVED_OWNER_WIN' | 'RESOLVED_RENTER_WIN' | 'RESOLVED_SPLIT' | 'ALL'
- *   (default: memuat sengketa aktif OPEN & INVESTIGATING)
+ * - status: 'AKTIF' | 'SELESAI' | 'OPEN' | 'INVESTIGATING' | 'RESOLVED_OWNER_WIN' | 'RESOLVED_RENTER_WIN' | 'RESOLVED_SPLIT' | 'ALL'
+ *   (default: memuat semua sengketa atau sesuai query filter)
  */
 adminDisputesRouter.get('/disputes', async (req, res, next) => {
   try {
@@ -70,8 +70,24 @@ adminDisputesRouter.get('/disputes', async (req, res, next) => {
 
     const where = {}
 
+    const VALID_ENUM_STATUSES = [
+      'OPEN',
+      'INVESTIGATING',
+      'RESOLVED_OWNER_WIN',
+      'RESOLVED_RENTER_WIN',
+      'RESOLVED_SPLIT',
+      'ESCALATED_LEGAL'
+    ]
+
     if (status && String(status).toUpperCase() !== 'ALL') {
-      where.status = String(status).toUpperCase()
+      const normalized = String(status).trim().toUpperCase()
+      if (normalized === 'AKTIF' || normalized === 'ACTIVE') {
+        where.status = { in: ['OPEN', 'INVESTIGATING', 'ESCALATED_LEGAL'] }
+      } else if (normalized === 'SELESAI' || normalized === 'RESOLVED') {
+        where.status = { in: ['RESOLVED_OWNER_WIN', 'RESOLVED_RENTER_WIN', 'RESOLVED_SPLIT'] }
+      } else if (VALID_ENUM_STATUSES.includes(normalized)) {
+        where.status = normalized
+      }
     }
 
     if (search && String(search).trim()) {
@@ -86,26 +102,44 @@ adminDisputesRouter.get('/disputes', async (req, res, next) => {
       ]
     }
 
-    const disputes = await prisma.disputeTicket.findMany({
-      where,
-      include: {
-        order: { select: DISPUTE_ORDER_INCLUDE },
-        renter: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            phone: true
+    const [disputes, countAktif, countSelesai] = await Promise.all([
+      prisma.disputeTicket.findMany({
+        where,
+        include: {
+          order: { select: DISPUTE_ORDER_INCLUDE },
+          renter: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
           }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.disputeTicket.count({
+        where: { status: { in: ['OPEN', 'INVESTIGATING', 'ESCALATED_LEGAL'] } }
+      }),
+      prisma.disputeTicket.count({
+        where: { status: { in: ['RESOLVED_OWNER_WIN', 'RESOLVED_RENTER_WIN', 'RESOLVED_SPLIT'] } }
+      })
+    ])
+
+    const enrichedDisputes = disputes.map((d) => ({
+      ...d,
+      owner: d.order?.equipment?.owner || null,
+      description: d.disputeReason
+    }))
 
     return res.json({
       message: 'Daftar tiket sengketa berhasil dimuat',
-      total: disputes.length,
-      disputes
+      total: enrichedDisputes.length,
+      counts: {
+        aktif: countAktif,
+        selesai: countSelesai
+      },
+      disputes: enrichedDisputes
     })
   } catch (error) {
     return next(error)
@@ -152,7 +186,11 @@ adminDisputesRouter.get('/disputes/:id', async (req, res, next) => {
 
     return res.json({
       message: 'Detail tiket sengketa berhasil dimuat',
-      dispute
+      dispute: {
+        ...dispute,
+        owner: dispute.order?.equipment?.owner || null,
+        description: dispute.disputeReason
+      }
     })
   } catch (error) {
     return next(error)

@@ -14,8 +14,9 @@ import DompetPage from './pages/DompetPage'
 import ProfilSaya from './pages/ProfilSaya'
 import AdminAuthWrapper from './components/adminAuth/AdminAuthWrapper'
 import AdminDashboardPlaceholder from './components/adminAuth/AdminDashboardPlaceholder'
-import AdminProtectedRoute from './components/adminAuth/AdminProtectedRoute'
 import AdminDetailPengajuan from './components/adminDashboard/AdminDetailPengajuan'
+import AdminProtectedRoute from './components/adminAuth/AdminProtectedRoute'
+import AdminSengketa from './pages/admin/AdminSengketa'
 import AdminPencairanDana from './components/adminDashboard/AdminPencairanDana'
 import AdminRoute from './components/auth/AdminRoute'
 import AdminLayout from './layouts/AdminLayout'
@@ -447,6 +448,14 @@ export default function App() {
           }
         />
         <Route
+          path="/portal-internal-hq/mediasi-sengketa"
+          element={
+            <AdminProtectedRoute>
+              <AdminSengketa />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
           path="/portal-internal-hq/pencairan-dana"
           element={
             <AdminProtectedRoute>
@@ -469,6 +478,8 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<Navigate to="kyc" replace />} />
             <Route path="kyc" element={<KycDashboard />} />
+            <Route path="mediasi-sengketa" element={<AdminSengketa />} />
+            <Route path="pencairan-dana" element={<AdminPencairanDana />} />
           </Route>
         </Route>
 

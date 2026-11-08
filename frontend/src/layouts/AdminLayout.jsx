@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { ShieldCheck, LogOut } from 'lucide-react'
+import { ShieldCheck, LogOut, DollarSign, Scale } from 'lucide-react'
 import { logoutAdmin, getAdminUser } from '../components/adminAuth/adminSession'
 
 export default function AdminLayout() {
@@ -8,11 +8,22 @@ export default function AdminLayout() {
   const adminUser = getAdminUser()
 
   const menuItems = [
-    { path: '/admin/kyc', label: 'Verifikasi Akun', icon: ShieldCheck }
+    { path: '/admin/kyc', label: 'Verifikasi Akun', icon: ShieldCheck },
+    { path: '/portal-internal-hq/pencairan-dana', label: 'Pencairan Dana', icon: DollarSign },
+    { path: '/portal-internal-hq/mediasi-sengketa', label: 'Mediasi Sengketa', icon: Scale }
   ]
 
+  const BREADCRUMB_MAP = {
+    '/admin/kyc': 'Verifikasi Akun',
+    '/admin/mediasi-sengketa': 'Mediasi Sengketa',
+    '/admin/pencairan-dana': 'Pencairan Dana',
+    '/portal-internal-hq/dashboard': 'Verifikasi Akun',
+    '/portal-internal-hq/pencairan-dana': 'Pencairan Dana',
+    '/portal-internal-hq/mediasi-sengketa': 'Mediasi Sengketa'
+  }
+
   const activeMenu = menuItems.find(m => location.pathname.startsWith(m.path))
-  const pageTitle = activeMenu?.label || 'Verifikasi Akun'
+  const pageTitle = BREADCRUMB_MAP[location.pathname] || activeMenu?.label || 'Verifikasi Akun'
 
   const handleLogout = () => {
     logoutAdmin(navigate)
@@ -39,7 +50,7 @@ export default function AdminLayout() {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition cursor-pointer ${
                   isActive
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-50'
@@ -66,7 +77,7 @@ export default function AdminLayout() {
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-600 transition"
+              className="p-2 text-slate-400 hover:text-rose-600 transition cursor-pointer"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />

@@ -1,9 +1,11 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ShieldCheck,
   LogOut,
   Layers,
-  DollarSign
+  DollarSign,
+  Scale
 } from 'lucide-react'
 import { getAdminUser } from '../adminAuth/adminSession'
 
@@ -13,8 +15,27 @@ import { getAdminUser } from '../adminAuth/adminSession'
  */
 
 const MENU = [
-  { key: 'verifikasi', label: 'Verifikasi Akun', icon: ShieldCheck, badgeKey: 'verifikasi' },
-  { key: 'pencairan', label: 'Pencairan Dana', icon: DollarSign, badgeKey: 'pencairan' }
+  {
+    key: 'verifikasi',
+    path: '/portal-internal-hq/dashboard',
+    label: 'Verifikasi Akun',
+    icon: ShieldCheck,
+    badgeKey: 'verifikasi'
+  },
+  {
+    key: 'pencairan',
+    path: '/portal-internal-hq/pencairan-dana',
+    label: 'Pencairan Dana',
+    icon: DollarSign,
+    badgeKey: 'pencairan'
+  },
+  {
+    key: 'mediasi',
+    path: '/portal-internal-hq/mediasi-sengketa',
+    label: 'Mediasi Sengketa',
+    icon: Scale,
+    badgeKey: 'mediasi'
+  }
 ]
 
 /**
@@ -24,7 +45,9 @@ const MENU = [
  * @param {object} props.counts - jumlah antrean per menu
  * @param {function} props.onLogout - aksi keluar sesi
  */
-export default function AdminSidebar({ activeKey = 'verifikasi', onNavigate, counts = {}, onLogout }) {
+export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLogout }) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const adminUser = getAdminUser()
   const namaAdmin = adminUser?.fullName || adminUser?.name || 'Rani Admin'
   const emailAdmin = adminUser?.email || 'admin@myrent.com'
@@ -35,6 +58,22 @@ export default function AdminSidebar({ activeKey = 'verifikasi', onNavigate, cou
     .map((part) => part[0])
     .join('')
     .toUpperCase()
+
+  const handleItemClick = (item) => {
+    if (onNavigate) {
+      onNavigate(item.key)
+    }
+    navigate(item.path)
+  }
+
+  const isItemActive = (item) => {
+    if (activeKey) {
+      return activeKey === item.key || activeKey === item.path
+    }
+    if (location.pathname === item.path) return true
+    if (item.key === 'verifikasi' && location.pathname.startsWith('/portal-internal-hq/dashboard')) return true
+    return false
+  }
 
   return (
     <aside className="hidden lg:flex sticky top-0 h-screen w-[248px] shrink-0 flex-col gap-1 p-[22px_16px] bg-white border-r border-slate-200">
@@ -53,14 +92,14 @@ export default function AdminSidebar({ activeKey = 'verifikasi', onNavigate, cou
       <nav className="flex flex-col gap-1">
         {MENU.map((item) => {
           const Icon = item.icon
-          const isActive = item.key === activeKey
+          const isActive = isItemActive(item)
           const badge = item.badgeKey ? counts[item.badgeKey] : null
 
           return (
             <button
               key={item.key}
               type="button"
-              onClick={() => onNavigate && onNavigate(item.key)}
+              onClick={() => handleItemClick(item)}
               className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] text-left transition-colors cursor-pointer ${
                 isActive ? 'bg-blue-50' : 'hover:bg-slate-50'
               }`}

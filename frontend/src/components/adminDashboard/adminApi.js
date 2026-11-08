@@ -116,3 +116,34 @@ export async function rejectWithdrawal(id, rejectionReason) {
   })
   return data.withdrawal ?? null
 }
+
+// ── Disputes (Mediasi Sengketa) ──────────────────────────────────────────
+
+/** Daftar tiket sengketa. */
+export async function fetchDisputes(status = 'AKTIF', search = '') {
+  const params = new URLSearchParams()
+  if (status && status !== 'ALL') params.set('status', status)
+  if (search) params.set('search', search)
+  const query = params.toString()
+  const data = await adminRequest(`/disputes${query ? `?${query}` : ''}`)
+  return {
+    disputes: data.disputes ?? [],
+    total: data.total ?? 0,
+    counts: data.counts ?? { aktif: 0, selesai: 0 }
+  }
+}
+
+/** Detail satu tiket sengketa. */
+export async function fetchDispute(id) {
+  const data = await adminRequest(`/disputes/${encodeURIComponent(id)}`)
+  return data.dispute ?? null
+}
+
+/** Putuskan mediasi sengketa oleh admin. */
+export async function resolveDispute(id, payload) {
+  const data = await adminRequest(`/disputes/${encodeURIComponent(id)}/resolve`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload)
+  })
+  return data.dispute ?? null
+}
