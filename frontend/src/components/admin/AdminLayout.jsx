@@ -1,34 +1,16 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  LayoutDashboard,
   UserCheck,
-  Scale,
-  Package,
-  ReceiptText,
-  Users,
-  Settings,
   ExternalLink,
   ChevronRight
 } from 'lucide-react';
 
 // Impor komponen modular admin
-import DashboardUtama from './DashboardUtama';
 import VerifikasiKYC from './VerifikasiKYC';
-import MediasiKlaim from './MediasiKlaim';
-import ModerasiAlat from './ModerasiAlat';
-import TransaksiAdmin from './TransaksiAdmin';
-import ManajemenPengguna from './ManajemenPengguna';
-import PengaturanAdmin from './PengaturanAdmin';
 
 const MENU_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard Utama', icon: LayoutDashboard },
-  { id: 'kyc', label: 'Verifikasi KYC', icon: UserCheck, badge: 7, badgeColor: 'bg-blue-100 text-blue-700' },
-  { id: 'klaim', label: 'Mediasi Klaim', icon: Scale, badge: 2, badgeColor: 'bg-amber-100 text-amber-700' },
-  { id: 'alat', label: 'Katalog & Moderasi Alat', icon: Package, badge: 4, badgeColor: 'bg-purple-100 text-purple-700' },
-  { id: 'transaksi', label: 'Manajemen Transaksi', icon: ReceiptText },
-  { id: 'users', label: 'Semua Pengguna', icon: Users },
-  { id: 'pengaturan', label: 'Pengaturan Sistem', icon: Settings }
+  { id: 'kyc', label: 'Verifikasi Akun', icon: UserCheck }
 ];
 
 export default function AdminLayout() {
@@ -36,7 +18,7 @@ export default function AdminLayout() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Tab aktif langsung disinkronisasi dari URL Search Params (?tab=...)
-  const activeTab = searchParams.get('tab') || 'dashboard';
+  const activeTab = searchParams.get('tab') || 'kyc';
 
   const handleTabChange = (tabId) => {
     setSearchParams({ tab: tabId });
@@ -45,24 +27,7 @@ export default function AdminLayout() {
   const currentMenu = MENU_ITEMS.find((m) => m.id === activeTab) || MENU_ITEMS[0];
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardUtama onNavigateTab={handleTabChange} />;
-      case 'kyc':
-        return <VerifikasiKYC onNavigateTab={handleTabChange} />;
-      case 'klaim':
-        return <MediasiKlaim onNavigateTab={handleTabChange} />;
-      case 'alat':
-        return <ModerasiAlat onNavigateTab={handleTabChange} />;
-      case 'transaksi':
-        return <TransaksiAdmin onNavigateTab={handleTabChange} />;
-      case 'users':
-        return <ManajemenPengguna onNavigateTab={handleTabChange} />;
-      case 'pengaturan':
-        return <PengaturanAdmin onNavigateTab={handleTabChange} />;
-      default:
-        return <DashboardUtama onNavigateTab={handleTabChange} />;
-    }
+    return <VerifikasiKYC onNavigateTab={handleTabChange} />;
   };
 
   return (
@@ -143,14 +108,6 @@ export default function AdminLayout() {
             >
               <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
               <span>Buka Tampilan Publik</span>
-            </button>
-
-            <button
-              onClick={() => handleTabChange('pengaturan')}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-100 transition cursor-pointer"
-              title="Pengaturan Sistem"
-            >
-              <Settings className="h-4 w-4" />
             </button>
           </div>
         </header>

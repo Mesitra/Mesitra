@@ -262,7 +262,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-row items-stretch">
-        <AdminSidebar activeKey="verifikasi" counts={{ verifikasi: 0, mediasi: 2 }} onLogout={handleLogout} />
+        <AdminSidebar activeKey="verifikasi" counts={{ verifikasi: 0 }} onLogout={handleLogout} />
         <div className="flex-1 min-w-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-center">
             <RefreshCw className="w-5 h-5 text-[#2563EB] animate-spin" />
@@ -277,7 +277,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
   if (error || !pengajuan) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-row items-stretch">
-        <AdminSidebar activeKey="verifikasi" counts={{ verifikasi: jumlahMenunggu, mediasi: 2 }} onLogout={handleLogout} />
+        <AdminSidebar activeKey="verifikasi" counts={{ verifikasi: jumlahMenunggu }} onLogout={handleLogout} />
         <div className="flex-1 min-w-0 flex items-center justify-center p-6">
           <div className="w-full max-w-md bg-white border border-[#E2E8F0] rounded-[14px] p-8 text-center flex flex-col gap-4">
             <div className="w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto">
@@ -310,7 +310,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-row items-stretch">
       <AdminSidebar
         activeKey="verifikasi"
-        counts={{ verifikasi: jumlahMenunggu, mediasi: 2 }}
+        counts={{ verifikasi: jumlahMenunggu }}
         onLogout={handleLogout}
       />
 

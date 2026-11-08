@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { ShieldCheck, DollarSign, Scale, Package, LogOut } from 'lucide-react'
+import { ShieldCheck, LogOut } from 'lucide-react'
 import { logoutAdmin, getAdminUser } from '../components/adminAuth/adminSession'
 
 export default function AdminLayout() {
@@ -8,14 +8,11 @@ export default function AdminLayout() {
   const adminUser = getAdminUser()
 
   const menuItems = [
-    { path: '/admin/kyc', label: 'Verifikasi KYC', icon: ShieldCheck },
-    { path: '/admin/finansial', label: 'Finansial', icon: DollarSign },
-    { path: '/admin/sengketa', label: 'Sengketa', icon: Scale },
-    { path: '/admin/moderasi', label: 'Moderasi', icon: Package }
+    { path: '/admin/kyc', label: 'Verifikasi Akun', icon: ShieldCheck }
   ]
 
   const activeMenu = menuItems.find(m => location.pathname.startsWith(m.path))
-  const pageTitle = activeMenu?.label || 'Dashboard Admin'
+  const pageTitle = activeMenu?.label || 'Verifikasi Akun'
 
   const handleLogout = () => {
     logoutAdmin(navigate)

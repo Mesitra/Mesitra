@@ -11,12 +11,6 @@ import {
   TAB_PENGAJUAN
 } from './adminDashboardData'
 
-// Komponen section admin
-import MediasiKlaim from '../admin/MediasiKlaim'
-import ManajemenPengguna from '../admin/ManajemenPengguna'
-import TransaksiAdmin from '../admin/TransaksiAdmin'
-import PengaturanAdmin from '../admin/PengaturanAdmin'
-import ModerasiAlat from '../admin/ModerasiAlat'
 
 /**
  * Dashboard Admin HQ — tabel daftar pengajuan (tab Semua / Menunggu / Perlu
@@ -51,12 +45,7 @@ export default function AdminDashboard({ onLogout }) {
   }
 
   const BREADCRUMB_TITLES = {
-    verifikasi: 'Verifikasi Akun',
-    mediasi: 'Mediasi Klaim',
-    alat: 'Moderasi Alat',
-    pengguna: 'Semua Pengguna',
-    transaksi: 'Transaksi',
-    pengaturan: 'Pengaturan'
+    verifikasi: 'Verifikasi Akun'
   }
 
   const loadPengajuan = useCallback(async () => {
@@ -109,7 +98,7 @@ export default function AdminDashboard({ onLogout }) {
       <AdminSidebar
         activeKey={activeMenu}
         onNavigate={handleNavigateMenu}
-        counts={{ verifikasi: jumlahAntrean, mediasi: 2, alat: 4 }}
+        counts={{ verifikasi: jumlahAntrean }}
         onLogout={handleLogout}
       />
 
@@ -132,11 +121,6 @@ export default function AdminDashboard({ onLogout }) {
               className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800"
             >
               <option value="verifikasi">Verifikasi Akun</option>
-              <option value="mediasi">Mediasi Klaim</option>
-              <option value="alat">Moderasi Alat</option>
-              <option value="pengguna">Semua Pengguna</option>
-              <option value="transaksi">Transaksi</option>
-              <option value="pengaturan">Pengaturan</option>
             </select>
             <button
               type="button"
@@ -335,11 +319,6 @@ export default function AdminDashboard({ onLogout }) {
         </>
       )}
 
-          {activeMenu === 'mediasi' && <MediasiKlaim onNavigateTab={handleNavigateMenu} />}
-          {activeMenu === 'alat' && <ModerasiAlat onNavigateTab={handleNavigateMenu} />}
-          {activeMenu === 'pengguna' && <ManajemenPengguna onNavigateTab={handleNavigateMenu} />}
-          {activeMenu === 'transaksi' && <TransaksiAdmin onNavigateTab={handleNavigateMenu} />}
-          {activeMenu === 'pengaturan' && <PengaturanAdmin onNavigateTab={handleNavigateMenu} />}
         </main>
       </div>
     </div>
