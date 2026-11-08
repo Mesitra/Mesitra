@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ShieldCheck,
@@ -17,8 +17,11 @@ import {
   Package,
   Scissors,
   Flame,
-  BadgeCheck
+  BadgeCheck,
+  Layers
 } from 'lucide-react'
+import { useAdminAuth } from './adminAuth/adminSession'
+import { hasPenyewaSession, hasPemilikSession } from '../lib/userSession'
 
 export default function LandingPage({
   onNavigateLogin,
@@ -27,6 +30,30 @@ export default function LandingPage({
   onNavigateCatalog
 }) {
   const navigate = useNavigate()
+  const { isAdmin } = useAdminAuth()
+  const [userAuth, setUserAuth] = useState(() => ({
+    isPenyewa: hasPenyewaSession(),
+    isPemilik: hasPemilikSession()
+  }))
+
+  useEffect(() => {
+    const syncUser = () => {
+      setUserAuth({
+        isPenyewa: hasPenyewaSession(),
+        isPemilik: hasPemilikSession()
+      })
+    }
+    syncUser()
+    window.addEventListener('storage', syncUser)
+    window.addEventListener('myrent:user-updated', syncUser)
+    return () => {
+      window.removeEventListener('storage', syncUser)
+      window.removeEventListener('myrent:user-updated', syncUser)
+    }
+  }, [])
+
+  const isUserLoggedIn = userAuth.isPenyewa || userAuth.isPemilik
+  const isPemilikUser = userAuth.isPemilik
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [howItWorksRole, setHowItWorksRole] = useState('penyewa') // 'penyewa' | 'pemilik'
 
@@ -166,35 +193,99 @@ export default function LandingPage({
             </button>
           </nav>
 
-          {/* Right Action Button: Single CTA (Masuk ke Akun) */}
-          <div className="hidden sm:flex items-center">
-            <button
-              type="button"
-              onClick={() => handleLoginClick('penyewa')}
-              className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer"
-            >
-              Masuk ke Akun
-            </button>
-          </div>
+          {/* Right Action Button: Dynamic CTA */}
+          {isAdmin ? (
+            <div className="hidden sm:flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold px-4 sm:px-5 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer border border-slate-800"
+                title="Kembali ke Dashboard Admin HQ"
+              >
+                <Layers className="w-4 h-4 text-blue-400 shrink-0" />
+                <span>Kembali ke MyRent HQ</span>
+              </button>
+            </div>
+          ) : isUserLoggedIn ? (
+            <div className="hidden sm:flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate(isPemilikUser ? '/dashboard-pemilik' : '/beranda-sewa')}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                <span>{isPemilikUser ? 'Dashboard Pemilik' : 'Buka Beranda Sewa'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center">
+              <button
+                type="button"
+                onClick={() => handleLoginClick('penyewa')}
+                className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                Masuk ke Akun
+              </button>
+            </div>
+          )}
 
-          {/* Mobile Menu & Login Button */}
-          <div className="flex sm:hidden items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleLoginClick('penyewa')}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
-            >
-              Masuk
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-              aria-label="Toggle Navigation Menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
+          {/* Mobile Menu & Action Button */}
+          {isAdmin ? (
+            <div className="flex sm:hidden items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer border border-slate-800"
+              >
+                <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <span>MyRent HQ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                aria-label="Toggle Navigation Menu"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
+          ) : isUserLoggedIn ? (
+            <div className="flex sm:hidden items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate(isPemilikUser ? '/dashboard-pemilik' : '/beranda-sewa')}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
+              >
+                Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                aria-label="Toggle Navigation Menu"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
+          ) : (
+            <div className="flex sm:hidden items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleLoginClick('penyewa')}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
+              >
+                Masuk
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                aria-label="Toggle Navigation Menu"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Dropdown Menu */}
@@ -229,13 +320,39 @@ export default function LandingPage({
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => handleLoginClick('penyewa')}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-xl text-sm font-semibold shadow-xs transition-colors cursor-pointer"
-              >
-                Masuk ke Akun
-              </button>
+              {isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    navigate('/portal-internal-hq/dashboard')
+                  }}
+                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-center rounded-xl text-sm font-bold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Layers className="w-4 h-4 text-blue-400 shrink-0" />
+                  <span>Kembali ke MyRent HQ</span>
+                </button>
+              ) : isUserLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    navigate(isPemilikUser ? '/dashboard-pemilik' : '/beranda-sewa')
+                  }}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-xl text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>{isPemilikUser ? 'Dashboard Pemilik' : 'Buka Beranda Sewa'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleLoginClick('penyewa')}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-xl text-sm font-semibold shadow-xs transition-colors cursor-pointer"
+                >
+                  Masuk ke Akun
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -263,24 +380,38 @@ export default function LandingPage({
 
             {/* Dual CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto pt-2">
-              <button
-                type="button"
-                onClick={() => handleLoginClick('penyewa')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all cursor-pointer group"
-              >
-                <Search className="w-4 h-4" />
-                <span>Cari &amp; Sewa Alat Sekarang</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
+              {isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/portal-internal-hq/dashboard')}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl shadow-md shadow-slate-900/20 hover:shadow-lg transition-all cursor-pointer border border-slate-800"
+                >
+                  <Layers className="w-4 h-4 text-blue-400" />
+                  <span>Kembali ke MyRent HQ</span>
+                  <ArrowRight className="w-4 h-4 text-blue-400" />
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleLoginClick('penyewa')}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all cursor-pointer group"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span>Cari &amp; Sewa Alat Sekarang</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
 
-              <button
-                type="button"
-                onClick={handleRegisterPemilikClick}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 active:scale-98 text-slate-800 font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 shadow-2xs transition-all cursor-pointer"
-              >
-                <Building2 className="w-4 h-4 text-slate-500" />
-                <span>Daftarkan Alat Anda (Pemilik)</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={handleRegisterPemilikClick}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 active:scale-98 text-slate-800 font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 shadow-2xs transition-all cursor-pointer"
+                  >
+                    <Building2 className="w-4 h-4 text-slate-500" />
+                    <span>Daftarkan Alat Anda (Pemilik)</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Trust Badges / Social Proof Metrics Bar */}
@@ -842,12 +973,22 @@ export default function LandingPage({
                   </button>
                 </li>
                 <li>
-                  <button
-                    onClick={() => handleLoginClick('penyewa')}
-                    className="hover:text-blue-600 transition-colors cursor-pointer"
-                  >
-                    Masuk ke Akun
-                  </button>
+                  {isAdmin ? (
+                    <button
+                      onClick={() => navigate('/portal-internal-hq/dashboard')}
+                      className="text-blue-600 font-bold hover:underline transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Kembali ke MyRent HQ</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleLoginClick('penyewa')}
+                      className="hover:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      Masuk ke Akun
+                    </button>
+                  )}
                 </li>
                 <li>
                   <button

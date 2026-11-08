@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+
 /**
  * Helper aksesiblitas sesi Administrator HQ.
  * Dipakai bersama oleh AdminProtectedRoute, sidebar dashboard admin, dan halaman detail pengajuan.
@@ -17,11 +19,12 @@ export const ADMIN_USER_KEY = 'admin_user'
 
 /**
  * Ambil token admin dari localStorage.
+ * Mendukung key standar 'admin_token' serta 'adminToken'.
  * @returns {string|null}
  */
 export function getAdminToken() {
   try {
-    return localStorage.getItem(ADMIN_TOKEN_KEY)
+    return localStorage.getItem(ADMIN_TOKEN_KEY) || localStorage.getItem('adminToken')
   } catch {
     // localStorage tidak tersedia (mis. mode privat / SSR)
     return null
@@ -30,11 +33,12 @@ export function getAdminToken() {
 
 /**
  * Ambil data user admin dari localStorage.
+ * Mendukung key standar 'admin_user' serta 'adminUser'.
  * @returns {object|null}
  */
 export function getAdminUser() {
   try {
-    const raw = localStorage.getItem(ADMIN_USER_KEY)
+    const raw = localStorage.getItem(ADMIN_USER_KEY) || localStorage.getItem('adminUser')
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -43,13 +47,21 @@ export function getAdminUser() {
 
 /**
  * Simpan token & data user admin ke localStorage.
+ * Menembakkan event sinkronisasi 'myrent:admin-session-updated'.
  * @param {string} token
  * @param {object} user
  */
 export function setAdminSession(token, user) {
   try {
-    if (token) localStorage.setItem(ADMIN_TOKEN_KEY, token)
-    if (user) localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(user))
+    if (token) {
+      localStorage.setItem(ADMIN_TOKEN_KEY, token)
+      localStorage.setItem('adminToken', token)
+    }
+    if (user) {
+      localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(user))
+      localStorage.setItem('adminUser', JSON.stringify(user))
+    }
+    window.dispatchEvent(new Event('myrent:admin-session-updated'))
   } catch {
     // abaikan error storage
   }
@@ -80,6 +92,33 @@ export function hasAdminSession() {
 }
 
 /**
+ * Custom React Hook untuk memantau status autentikasi Admin secara reaktif.
+ * Sinkron dengan perubahan localStorage di tab yang sama maupun antar-tab.
+ * @returns {{ isAdmin: boolean, adminUser: object|null, hasAdminSession: boolean }}
+ */
+export function useAdminAuth() {
+  const [isAdmin, setIsAdmin] = useState(() => hasAdminSession())
+  const [adminUser, setAdminUser] = useState(() => getAdminUser())
+
+  useEffect(() => {
+    const syncAdminSession = () => {
+      setIsAdmin(hasAdminSession())
+      setAdminUser(getAdminUser())
+    }
+
+    syncAdminSession()
+    window.addEventListener('storage', syncAdminSession)
+    window.addEventListener('myrent:admin-session-updated', syncAdminSession)
+    return () => {
+      window.removeEventListener('storage', syncAdminSession)
+      window.removeEventListener('myrent:admin-session-updated', syncAdminSession)
+    }
+  }, [])
+
+  return { isAdmin, adminUser, hasAdminSession: isAdmin }
+}
+
+/**
  * Hapus seluruh kredensial admin dari localStorage.
  * Key `token` / `user` milik penyewa tidak disentuh.
  */
@@ -87,6 +126,9 @@ export function clearAdminSession() {
   try {
     localStorage.removeItem(ADMIN_TOKEN_KEY)
     localStorage.removeItem(ADMIN_USER_KEY)
+    localStorage.removeItem('adminToken')
+    localStorage.removeItem('adminUser')
+    window.dispatchEvent(new Event('myrent:admin-session-updated'))
   } catch {
     // abaikan error storage, token sudah dianggap tidak berlaku
   }

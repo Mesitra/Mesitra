@@ -1,4 +1,5 @@
-import { Sparkles, ArrowLeft } from 'lucide-react'
+import { Sparkles, ArrowLeft, Layers } from 'lucide-react'
+import { hasAdminSession } from './adminAuth/adminSession'
 
 /**
  * Komponen Navbar atas terpadu untuk halaman registrasi (Penyewa UMKM & Pemilik Alat).
@@ -76,16 +77,29 @@ export default function RegisterTopBar({
             <span className="sm:hidden">Beranda</span>
           </button>
 
-          {/* Tombol Ke Halaman Login */}
-          <button
-            type="button"
-            onClick={handleLogin}
-            className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50/70 border border-blue-200 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl transition-all cursor-pointer shadow-2xs"
-            title="Ke Halaman Login"
-          >
-            <span className="hidden sm:inline">Ke Halaman Login</span>
-            <span className="sm:hidden">Masuk</span>
-          </button>
+          {/* Tombol Ke Halaman Login atau Kembali ke MyRent HQ */}
+          {hasAdminSession() ? (
+            <button
+              type="button"
+              onClick={() => { window.location.href = '/portal-internal-hq/dashboard' }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl transition-all cursor-pointer shadow-2xs"
+              title="Kembali ke Dashboard MyRent HQ"
+            >
+              <Layers className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden sm:inline">Kembali ke MyRent HQ</span>
+              <span className="sm:hidden">MyRent HQ</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50/70 border border-blue-200 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl transition-all cursor-pointer shadow-2xs"
+              title="Ke Halaman Login"
+            >
+              <span className="hidden sm:inline">Ke Halaman Login</span>
+              <span className="sm:hidden">Masuk</span>
+            </button>
+          )}
         </div>
       )}
       </div>

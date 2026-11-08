@@ -11,7 +11,8 @@ import {
   ArrowUpRight,
   Rocket,
   ShoppingBag,
-  UserCog
+  UserCog,
+  Layers
 } from 'lucide-react'
 import ModalDompet from '../pesananSaya/ModalDompet'
 import { getUnreadCount } from '../../lib/chatsApi'
@@ -22,6 +23,7 @@ import {
   getUserPowerLimit,
   logoutUser
 } from '../../lib/userSession'
+import { hasAdminSession } from '../adminAuth/adminSession'
 
 export default function NavbarPenyewa({
   activeTab = 'jelajahi',
@@ -332,6 +334,21 @@ export default function NavbarPenyewa({
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-blue-500 shrink-0" />
               </Link>
+
+              {/* Sesi Admin HQ Aktif */}
+              {hasAdminSession() && (
+                <Link
+                  to="/portal-internal-hq/dashboard"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full py-1.5 px-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-bold rounded-xl flex items-center justify-between text-[11px] no-underline transition-colors shadow-2xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <span>Kembali ke MyRent HQ</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                </Link>
+              )}
 
               {/* Dompet Card Trigger */}
               <button

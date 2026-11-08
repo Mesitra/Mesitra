@@ -7,23 +7,30 @@ import {
   Eye,
   EyeOff,
   Check,
-  AlertCircle
+  AlertCircle,
+  Layers
 } from 'lucide-react'
 import AuthNavbar from './AuthNavbar'
 import { clearPending, writePending } from '../lib/registration'
 import { clearUserSession } from '../lib/userSession'
+import { hasAdminSession } from './adminAuth/adminSession'
 
 export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToLanding }) {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Setiap kali halaman login dimuat (termasuk saat user menekan tombol Back browser ke halaman login),
-  // bersihkan seluruh sesi agar kredensial lama tidak bisa digunakan kembali tanpa login ulang.
+  // Proteksi Route Guard: Bila terdeteksi ada sesi Admin yang aktif di browser,
+  // langsung arahkan kembali ke Dashboard Admin HQ agar admin tidak kebingungan
+  // melihat formulir login akun reguler (Penyewa / Pemilik).
   useEffect(() => {
+    if (hasAdminSession()) {
+      navigate('/portal-internal-hq/dashboard', { replace: true })
+      return
+    }
     clearUserSession()
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-  }, [])
+  }, [navigate])
   const [prevLocationKey, setPrevLocationKey] = useState(location.key)
   const [role, setRole] = useState(location.state?.defaultRole || location.state?.role || 'penyewa')
 
@@ -212,6 +219,35 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
     }
   }
 
+
+  if (hasAdminSession()) {
+    return (
+      <div className="min-h-screen w-full bg-slate-50 flex flex-col justify-start items-center text-slate-800 font-sans">
+        <AuthNavbar onBackToHome={handleBack} />
+        <div className="flex-1 w-full max-w-md mx-auto px-6 py-16 flex flex-col items-center justify-center text-center">
+          <div className="w-full bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="w-12 h-12 rounded-xl bg-slate-900 text-blue-400 flex items-center justify-center mx-auto">
+              <Layers className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Sesi Administrator HQ Aktif</h2>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                Anda terdeteksi sedang memiliki sesi aktif sebagai Administrator Internal HQ. Sedang mengalihkan Anda ke Dashboard Admin...
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/portal-internal-hq/dashboard', { replace: true })}
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2"
+            >
+              <Layers className="w-4 h-4 text-blue-400" />
+              <span>Kembali ke MyRent HQ</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen w-full bg-slate-50 flex flex-col justify-between items-center text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-700">

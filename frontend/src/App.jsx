@@ -27,6 +27,7 @@ import CheckoutWizard from './components/checkout/CheckoutWizard'
 import CheckoutStep3 from './components/checkout/CheckoutStep3'
 import OwnerDashboard from './pages/OwnerDashboard'
 import { logoutUser, clearUserSession, getUserToken } from './lib/userSession'
+import { hasAdminSession } from './components/adminAuth/adminSession'
 import {
   Building2,
   KeyRound,
@@ -42,7 +43,8 @@ import {
   CheckCircle2,
   ArrowLeft,
   Star,
-  Factory
+  Factory,
+  Layers
 } from 'lucide-react'
 
 const initialRentals = [
@@ -99,6 +101,18 @@ const initialRentals = [
     tags: ['Gas LPG + Listrik 60W', 'Digital Timer', 'Loyang 40x60']
   }
 ]
+
+/**
+ * Route Guard untuk rute otentikasi publik (/login, /register/*).
+ * Jika Admin sedang memiliki sesi aktif di browser, langsung dialihkan
+ * ke Dashboard HQ agar tidak terjadi kebingungan atau session desync.
+ */
+function PublicAuthGuard({ children }) {
+  if (hasAdminSession()) {
+    return <Navigate to="/portal-internal-hq/dashboard" replace />
+  }
+  return children
+}
 
 export default function App() {
   const navigate = useNavigate()
@@ -206,17 +220,19 @@ export default function App() {
         <Route
           path="/login"
           element={
-            <AuthPage
-              onLoginSuccess={handleLoginSuccess}
-              onBackToLanding={() => navigate('/')}
-              onNavigateRegister={(selectedRole) => {
-                if (selectedRole === 'pemilik') {
-                  navigate('/register/pemilik')
-                } else {
-                  navigate('/register/penyewa')
-                }
-              }}
-            />
+            <PublicAuthGuard>
+              <AuthPage
+                onLoginSuccess={handleLoginSuccess}
+                onBackToLanding={() => navigate('/')}
+                onNavigateRegister={(selectedRole) => {
+                  if (selectedRole === 'pemilik') {
+                    navigate('/register/pemilik')
+                  } else {
+                    navigate('/register/penyewa')
+                  }
+                }}
+              />
+            </PublicAuthGuard>
           }
         />
 
@@ -224,13 +240,15 @@ export default function App() {
         <Route
           path="/register/penyewa"
           element={
-            <RegisterPenyewaAlat
-              onNavigateLogin={() => navigate('/login')}
-              onBackToLogin={() => navigate('/login')}
-              onBackToHome={() => navigate('/')}
-              onRegisterSuccess={handleRegisterPenyewaFinish}
-              onFinish={handleRegisterPenyewaFinish}
-            />
+            <PublicAuthGuard>
+              <RegisterPenyewaAlat
+                onNavigateLogin={() => navigate('/login')}
+                onBackToLogin={() => navigate('/login')}
+                onBackToHome={() => navigate('/')}
+                onRegisterSuccess={handleRegisterPenyewaFinish}
+                onFinish={handleRegisterPenyewaFinish}
+              />
+            </PublicAuthGuard>
           }
         />
 
@@ -238,11 +256,13 @@ export default function App() {
         <Route
           path="/register/pemilik"
           element={
-            <RegisterPemilikAlat
-              onBackToLogin={() => navigate('/login')}
-              onBackToHome={() => navigate('/')}
-              onFinish={handleRegisterPemilikFinish}
-            />
+            <PublicAuthGuard>
+              <RegisterPemilikAlat
+                onBackToLogin={() => navigate('/login')}
+                onBackToHome={() => navigate('/')}
+                onFinish={handleRegisterPemilikFinish}
+              />
+            </PublicAuthGuard>
           }
         />
 
@@ -504,6 +524,7 @@ function DashboardView({
   onNavigateBerandaSewa,
   onNavigateDetailAlat
 }) {
+  const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       {/* Toast Notification */}
@@ -584,13 +605,24 @@ function DashboardView({
               <span>Beranda</span>
             </button>
 
-            <button
-              onClick={onNavigateLogin}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-blue-600 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
-              title="Kembali ke halaman Auth"
-            >
-              <span>Auth</span>
-            </button>
+            {hasAdminSession() ? (
+              <button
+                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all cursor-pointer shadow-xs"
+                title="Kembali ke Dashboard Admin HQ"
+              >
+                <Layers className="w-3.5 h-3.5 text-blue-400" />
+                <span>MyRent HQ</span>
+              </button>
+            ) : (
+              <button
+                onClick={onNavigateLogin}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-blue-600 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
+                title="Kembali ke halaman Auth"
+              >
+                <span>Auth</span>
+              </button>
+            )}
           </div>
         </div>
       </header>

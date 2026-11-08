@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { LOGIN_PATH, getSessionUser, getUserToken, isPemilik } from '../../lib/userSession'
+import { hasAdminSession } from '../adminAuth/adminSession'
 
 /**
  * Pelindung rute khusus Pemilik Alat.
@@ -13,6 +14,7 @@ import { LOGIN_PATH, getSessionUser, getUserToken, isPemilik } from '../../lib/u
  * tombol Back browser atau lewat URL langsung SEJAK logout sudah menghapus
  * token dari localStorage — sehingga session belum benar-benar permanen.
  *
+ * Jika sesi admin HQ aktif, dialihkan langsung ke dashboard admin HQ.
  * Jika salah satu tidak terpenuhi, pengguna diarahkan ke halaman login
  * (`/login` → AuthPage) memakai `replace` supaya halaman yang baru saja
  * ditinggalkan tidak bisa dibuka kembali lewat tombol Back browser.
@@ -27,6 +29,9 @@ export default function PemilikProtectedRoute({ children }) {
   const isAllowed = Boolean(token) && isPemilik(user)
 
   if (!isAllowed) {
+    if (hasAdminSession()) {
+      return <Navigate to="/portal-internal-hq/dashboard" replace />
+    }
     return <Navigate to={LOGIN_PATH} replace state={{ from: location.pathname }} />
   }
 
