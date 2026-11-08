@@ -56,6 +56,9 @@ export default function ChatPanel({
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev)
+        if (isEmbedded || prev.has('tab') || (typeof window !== 'undefined' && window.location.pathname.includes('dashboard'))) {
+          next.set('tab', 'pesan')
+        }
         if (chatId && !String(chatId).startsWith('draft')) {
           next.set('chatId', chatId)
         } else {

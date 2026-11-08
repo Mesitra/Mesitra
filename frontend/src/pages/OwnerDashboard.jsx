@@ -35,7 +35,6 @@ import { listEquipments, createEquipment, updateEquipment, deleteEquipment, form
 import { listReviews } from '../lib/reviewsApi'
 import { getSessionUser, logoutUser, getUserInitials } from '../lib/userSession'
 import { formatShortDate, formatLongDate } from '../lib/dateHelpers'
-import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from 'recharts'
 import ModalTambahAlat from '../components/owner/ModalTambahAlat'
 import ModalKelolaAlat from '../components/owner/ModalKelolaAlat'
 import ModalVerifikasiInspeksi from '../components/owner/ModalVerifikasiInspeksi'
@@ -228,23 +227,59 @@ function OwnerDashboardContent() {
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab')
+  const chatIdFromUrl = searchParams.get('chatId')
+
   const [activeTab, setActiveTab] = useState(() => {
     if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') return 'alat'
-    if (tabFromUrl === 'chat' || tabFromUrl === 'pesan') return 'chat'
-    return tabFromUrl || 'ringkasan'
+    if (tabFromUrl === 'chat' || tabFromUrl === 'pesan') return 'pesan'
+    if (tabFromUrl) return tabFromUrl
+    // Fallback Cerdas: Jika tab tidak ada di URL tetapi ada chatId, buka tab pesan
+    if (chatIdFromUrl) return 'pesan'
+    return 'ringkasan'
   })
 
-  const isChatTab = activeTab === 'chat' || location.pathname === '/pesan' || location.pathname.startsWith('/pesan/')
+  const isChatTab = activeTab === 'pesan' || activeTab === 'chat' || location.pathname === '/pesan' || location.pathname.startsWith('/pesan/')
 
+  // Sinkronisasi tab saat URL search params berganti dan Fallback Cerdas untuk chatId
   useEffect(() => {
-    if (tabFromUrl === 'alat-saya' || tabFromUrl === 'alat') {
+    const currentTab = searchParams.get('tab')
+    const currentChatId = searchParams.get('chatId')
+
+    if (!currentTab && currentChatId) {
+      setActiveTab('pesan')
+      setSearchParams({ tab: 'pesan', chatId: currentChatId }, { replace: true })
+    } else if (currentTab === 'alat' || currentTab === 'alat-saya') {
       setActiveTab('alat')
-    } else if (tabFromUrl === 'chat' || tabFromUrl === 'pesan') {
-      setActiveTab('chat')
-    } else if (tabFromUrl) {
-      setActiveTab(tabFromUrl)
+      if (currentTab === 'alat-saya') {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('tab', 'alat')
+          return next
+        }, { replace: true })
+      }
+    } else if (currentTab === 'pesan' || currentTab === 'chat') {
+      setActiveTab('pesan')
+      if (currentTab === 'chat') {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('tab', 'pesan')
+          return next
+        }, { replace: true })
+      }
+    } else if (currentTab) {
+      setActiveTab(currentTab)
     }
-  }, [tabFromUrl])
+  }, [searchParams, setSearchParams])
+
+  // Handler navigasi perpindahan tab sidebar dengan single source of truth URL params
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab)
+    if (newTab !== 'pesan' && newTab !== 'chat') {
+      setSelectedChatPartner(null)
+    }
+    // Bersihkan parameter chatId dan orderId saat berpindah tab agar URL bersih sesuai section aktif
+    setSearchParams({ tab: newTab })
+  }
   const [toastMessage, setToastMessage] = useState('')
   const [actionLoadingId, setActionLoadingId] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -503,14 +538,18 @@ function OwnerDashboardContent() {
 
   const totalNotificationBadge = unreadNotificationCount
 
-  // Data mingguan untuk grafik Recharts (Task 2)
-  const weeklyRevenueData = useMemo(() => {
-    return calculateWeeklyRevenue(orders)
+  // Data mingguan untuk grafik Bar Chart Pendapatan (Task 2)
+  const chartData = useMemo(() => {
+    const rawData = calculateWeeklyRevenue(orders)
+    return rawData.map((d) => ({
+      label: d.label,
+      amount: Number(d.revenue) || 0
+    }))
   }, [orders])
 
   const maxRevenue = useMemo(() => {
-    return Math.max(...weeklyRevenueData.map((d) => d.revenue), 0)
-  }, [weeklyRevenueData])
+    return Math.max(...chartData.map((d) => d.amount), 1)
+  }, [chartData])
 
   // Filter ulasan di Tab Ulasan (Task 4)
   const filteredReviews = useMemo(() => {
@@ -681,10 +720,7 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => {
-                setActiveTab('ringkasan')
-                setSearchParams({})
-              }}
+              onClick={() => handleTabChange('ringkasan')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'ringkasan'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
@@ -699,10 +735,7 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => {
-                setActiveTab('alat')
-                setSearchParams({ tab: 'alat-saya' })
-              }}
+              onClick={() => handleTabChange('alat')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'alat' || activeTab === 'alat-saya'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
@@ -720,10 +753,7 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => {
-                setActiveTab('pesanan')
-                setSearchParams({ tab: 'pesanan' })
-              }}
+              onClick={() => handleTabChange('pesanan')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'pesanan'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
@@ -743,17 +773,9 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => {
-                setActiveTab('chat')
-                setSelectedChatPartner(null)
-                setSearchParams((prev) => {
-                  const next = new URLSearchParams(prev)
-                  next.set('tab', 'chat')
-                  return next
-                })
-              }}
+              onClick={() => handleTabChange('pesan')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === 'chat'
+                activeTab === 'pesan' || activeTab === 'chat'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
@@ -771,7 +793,7 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => setActiveTab('dompet')}
+              onClick={() => handleTabChange('dompet')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'dompet'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
@@ -786,7 +808,7 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => setActiveTab('profil')}
+              onClick={() => handleTabChange('profil')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'profil'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
@@ -808,7 +830,7 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => setActiveTab('ulasan')}
+              onClick={() => handleTabChange('ulasan')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'ulasan'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
@@ -826,7 +848,7 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => setActiveTab('pengaturan')}
+              onClick={() => handleTabChange('pengaturan')}
               className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'pengaturan'
                   ? 'bg-blue-50 text-blue-700 shadow-2xs'
@@ -841,8 +863,12 @@ function OwnerDashboardContent() {
 
             <button
               type="button"
-              onClick={() => showToast('Pusat Bantuan MyRent siap melayani Anda 24/7 di WhatsApp Official')}
-              className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
+              onClick={() => handleTabChange('bantuan')}
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'bantuan'
+                  ? 'bg-blue-50 text-blue-700 shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
             >
               <div className="flex items-center gap-2.5">
                 <HelpCircle className="w-4 h-4" />
@@ -898,7 +924,7 @@ function OwnerDashboardContent() {
       {/* ── KONTEN UTAMA ─────────────────────────────────────────────────── */}
       <main className="flex-1 p-6 md:px-10 lg:px-12 py-5 overflow-y-auto max-w-[1920px] mx-auto w-full space-y-5">
         {/* TopBar & Notification Bell (Task 2: Popover Dropdown) */}
-        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && activeTab !== 'chat' && activeTab !== 'profil' && activeTab !== 'ulasan' && (
+        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && activeTab !== 'pesan' && activeTab !== 'chat' && activeTab !== 'profil' && activeTab !== 'ulasan' && (
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -908,11 +934,14 @@ function OwnerDashboardContent() {
                 {activeTab === 'dompet' && 'Dompet & Escrow'}
                 {activeTab === 'profil' && 'Profil Toko'}
                 {activeTab === 'pengaturan' && 'Pengaturan'}
+                {activeTab === 'bantuan' && 'Pusat Bantuan & Dukungan'}
               </h1>
               <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">
                 {activeTab === 'ulasan'
                   ? `Menampilkan ulasan pelanggan untuk seluruh alat di ${tenantProfile?.storeName || 'Toko Anda'}`
-                  : `Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
+                  : activeTab === 'bantuan'
+                    ? 'Pusat panduan operasional dan layanan bantuan resmi MyRent'
+                    : `Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
               </p>
             </div>
 
@@ -1042,7 +1071,7 @@ function OwnerDashboardContent() {
                         <button
                           type="button"
                           onClick={() => {
-                            setActiveTab('pesanan')
+                            handleTabChange('pesanan')
                             setIsNotificationOpen(false)
                           }}
                           className="font-bold text-blue-600 hover:underline cursor-pointer"
@@ -1094,45 +1123,54 @@ function OwnerDashboardContent() {
                   </div>
                 </div>
 
-                {/* Visual Bar Chart Trend Pendapatan dengan Recharts (Task 2) */}
-                <div className="my-4 pt-2 w-full h-24">
-                  <ResponsiveContainer width="100%" height={80}>
-                    <BarChart data={weeklyRevenueData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                      <XAxis
-                        dataKey="label"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: '#94A3B8' }}
-                      />
-                      <Tooltip
-                        cursor={{ fill: 'transparent' }}
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload
-                            return (
-                              <div className="bg-slate-900 text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg shadow-lg">
-                                <span className="text-slate-300 mr-1">{data.label}:</span>
-                                <span>{formatRupiah(data.revenue)}</span>
-                              </div>
-                            )
-                          }
-                          return null
-                        }}
-                      />
-                      <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
-                        {weeklyRevenueData.map((entry, index) => {
-                          const isHighest = entry.revenue === maxRevenue || index === weeklyRevenueData.length - 1
-                          return (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={isHighest ? '#2563EB' : '#E2E8F0'}
-                              className="hover:opacity-85 transition-opacity"
-                            />
-                          )
-                        })}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                {/* Visual Bar Chart Trend Pendapatan (Task 2) */}
+                <div className="my-4 pt-2 w-full">
+                  {/* Plot Area Grafik dengan Tinggi Tetap dan Garis Sumbu X */}
+                  <div className="h-52 w-full grid grid-cols-6 items-end gap-3 sm:gap-5 px-2 pt-8 pb-2 border-b border-slate-100">
+                    {chartData.map((d, index) => {
+                      const heightPct = d.amount > 0
+                        ? Math.max(Math.round((d.amount / maxRevenue) * 100), 12)
+                        : 6
+                      const isHighest = d.amount > 0 && (d.amount === maxRevenue || index === chartData.length - 1)
+                      const barColor = d.amount === 0
+                        ? 'bg-slate-200'
+                        : isHighest
+                          ? 'bg-blue-600 shadow-xs'
+                          : 'bg-blue-200 hover:bg-blue-500'
+
+                      return (
+                        <div
+                          key={`col-${index}`}
+                          className="h-full flex flex-col items-center justify-end group relative"
+                        >
+                          {/* Tooltip Pill Nominal di atas bar (muncul saat hover) */}
+                          <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none z-20 px-2.5 py-1 bg-slate-900 text-white text-[10.5px] font-semibold rounded-lg shadow-lg whitespace-nowrap">
+                            <span>{formatRupiah(d.amount)}</span>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                          </div>
+
+                          {/* Batang Bar Proporsional */}
+                          <div
+                            style={{ height: `${heightPct}%` }}
+                            className={`w-full max-w-[36px] sm:max-w-[44px] rounded-t-lg transition-all duration-300 cursor-pointer ${barColor}`}
+                            title={`${d.label}: ${formatRupiah(d.amount)}`}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Label Sumbu X (Periode / Minggu) di Bawah Garis Sumbu */}
+                  <div className="w-full grid grid-cols-6 gap-3 sm:gap-5 px-2 pt-2">
+                    {chartData.map((d, index) => (
+                      <div
+                        key={`lbl-${index}`}
+                        className="text-center text-xs font-medium text-slate-500 mt-2 truncate"
+                      >
+                        {d.label}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Foot Stats Row */}
@@ -1210,7 +1248,7 @@ function OwnerDashboardContent() {
                 <div className="pt-3 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => setActiveTab('pesanan')}
+                    onClick={() => handleTabChange('pesanan')}
                     className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <span>Lihat Jadwal Lengkap</span>
@@ -1250,7 +1288,7 @@ function OwnerDashboardContent() {
 
               {/* Task 4: Rating Toko terhubung ke Database Riil & Clickable */}
               <div
-                onClick={() => setActiveTab('ulasan')}
+                onClick={() => handleTabChange('ulasan')}
                 className="bg-white hover:border-amber-200 border border-slate-200/90 rounded-2xl p-4 shadow-sm space-y-1 cursor-pointer transition-all group"
                 title="Buka daftar lengkap ulasan pelanggan"
               >
@@ -1305,7 +1343,7 @@ function OwnerDashboardContent() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('pesanan')}
+                  onClick={() => handleTabChange('pesanan')}
                   className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
                 >
                   Lihat Semua Pesanan
@@ -1439,19 +1477,15 @@ function OwnerDashboardContent() {
                   equipmentName: order.equipment?.name
                 }
               })
-              setActiveTab('chat')
-              setSearchParams((prev) => {
-                const next = new URLSearchParams(prev)
-                next.set('tab', 'chat')
-                return next
-              })
+              setActiveTab('pesan')
+              setSearchParams({ tab: 'pesan' })
             }}
             actionLoadingId={actionLoadingId}
           />
         )}
 
         {/* ── TAB CONTENT: PESAN MASUK (CHAT) ──────────────────────────────── */}
-        {activeTab === 'chat' && (
+        {(activeTab === 'pesan' || activeTab === 'chat') && (
           <div className="w-full animate-in fade-in duration-200">
             <ChatPanel
               isEmbedded={true}
@@ -1470,11 +1504,7 @@ function OwnerDashboardContent() {
         {activeTab === 'profil' && (
           <ProfilToko
             currentUser={currentUser}
-            onSwitchTab={(tab) => {
-              setActiveTab(tab)
-              if (tab === 'alat') setSearchParams({ tab: 'alat-saya' })
-              else setSearchParams({ tab })
-            }}
+            onSwitchTab={(tab) => handleTabChange(tab)}
             setToastMessage={setToastMessage}
           />
         )}
@@ -1504,6 +1534,71 @@ function OwnerDashboardContent() {
                 <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center">
                   <Check className="w-3 h-3" />
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB CONTENT: BANTUAN ─────────────────────────────────────────── */}
+        {activeTab === 'bantuan' && (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            {/* Kartu Bantuan WhatsApp Official */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Layanan Aktif 24/7
+                  </div>
+                  <h2 className="text-lg font-extrabold text-slate-900 mt-2">
+                    Pusat Bantuan &amp; Dukungan Operasional
+                  </h2>
+                  <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+                    Tim Customer Support MyRent siap mendampingi Anda terkait proses verifikasi BAST serah terima unit, penarikan dana escrow dompet, hingga kendala penyewa.
+                  </p>
+                </div>
+                <a
+                  href="https://wa.me/6281234567890?text=Halo%20Admin%20MyRent,%20saya%20pemilik%20alat%20butuh%20bantuan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Chat WhatsApp Official</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Grid Panduan Singkat */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                  1
+                </div>
+                <h3 className="text-xs font-bold text-slate-900">Proses Escrow &amp; Pencairan</h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Dana sewa disimpan aman di rekening escrow MyRent dan otomatis masuk ke dompet Anda setelah masa sewa &amp; inspeksi BAST selesai disetujui.
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                  2
+                </div>
+                <h3 className="text-xs font-bold text-slate-900">Verifikasi BAST &amp; Inspeksi</h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Unggah bukti foto/video kondisi alat saat serah terima dan pengembalian unit untuk jaminan klaim deposit jika terjadi kerusakan.
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                  3
+                </div>
+                <h3 className="text-xs font-bold text-slate-900">Kebijakan Pembatalan</h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Penyewa dapat membatalkan pesanan sebelum alat dikirim dengan ketentuan penalti sesuai ketentuan durasi yang berlaku di MyRent.
+                </p>
               </div>
             </div>
           </div>
