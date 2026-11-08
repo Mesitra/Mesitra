@@ -571,3 +571,4 @@ export default function UlasanRating({ tenantProfile: propTenantProfile, current
     </div>
   )
 }
+

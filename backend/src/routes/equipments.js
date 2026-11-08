@@ -927,6 +927,8 @@ equipmentsRouter.get('/:id', async (req, res, next) => {
         userId: r.userId,
         rating: r.rating,
         comment: r.comment,
+        ownerReply: r.ownerReply || null,
+        repliedAt: r.repliedAt || null,
         createdAt: r.createdAt,
         user: r.user
           ? {

@@ -12,6 +12,7 @@ import {
   Truck,
   Wrench,
   Camera,
+  Store,
   X
 } from 'lucide-react'
 import NavbarPenyewa from '../common/NavbarPenyewa'
@@ -26,6 +27,7 @@ import {
   MONTH_NAMES,
   diffDays,
   formatLongDate,
+  formatShortDate,
   isEquipmentAvailableInRange,
   normalizeDate
 } from '../../lib/dateHelpers'
@@ -558,6 +560,33 @@ export default function DetailAlat({
                     <p className="text-xs text-slate-600 leading-relaxed m-0 italic">
                       &ldquo;{rev.comment}&rdquo;
                     </p>
+
+                    {/* Balasan Pemilik Toko (Task 1: Render Balasan Pemilik di Sisi Penyewa) */}
+                    {rev.ownerReply && (
+                      <div className="mt-1.5 p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5 animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                            <Store className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span>
+                              Respon Pemilik Toko
+                              {equipment?.owner?.tenantProfile?.storeName
+                                ? ` (${equipment.owner.tenantProfile.storeName})`
+                                : equipment?.owner?.fullName
+                                ? ` (${equipment.owner.fullName})`
+                                : ''}
+                            </span>
+                          </span>
+                          {rev.repliedAt && (
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              {formatShortDate(rev.repliedAt)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed pl-3 border-l-2 border-blue-600 m-0 font-normal">
+                          {rev.ownerReply}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
