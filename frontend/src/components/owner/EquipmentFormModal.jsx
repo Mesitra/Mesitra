@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
   X,
   Plus,
@@ -95,6 +95,52 @@ export function normalizeAccessories(rawList) {
       return null
     })
     .filter(Boolean)
+}
+
+/**
+ * Komparasi rekursif akurat untuk membandingkan state form dengan data inisial,
+ * menangani perbandingan array (seperti deliveryMethods / accessories),
+ * objek bersarang, nilai boolean, dan casting tipe number vs string angka.
+ */
+export function isDeepEqual(val1, val2) {
+  if (val1 === val2) return true
+  if (val1 == null || val2 == null) return val1 === val2
+
+  if (typeof val1 === 'boolean' || typeof val2 === 'boolean') {
+    return Boolean(val1) === Boolean(val2)
+  }
+
+  const isNum1 = typeof val1 === 'number' || (typeof val1 === 'string' && val1.trim() !== '' && !isNaN(Number(val1)))
+  const isNum2 = typeof val2 === 'number' || (typeof val2 === 'string' && val2.trim() !== '' && !isNaN(Number(val2)))
+  if (isNum1 && isNum2) {
+    return Number(val1) === Number(val2)
+  }
+
+  if (typeof val1 === 'string' && typeof val2 === 'string') {
+    return val1.trim() === val2.trim()
+  }
+
+  if (Array.isArray(val1) && Array.isArray(val2)) {
+    if (val1.length !== val2.length) return false
+    for (let i = 0; i < val1.length; i++) {
+      if (!isDeepEqual(val1[i], val2[i])) return false
+    }
+    return true
+  }
+  if (Array.isArray(val1) !== Array.isArray(val2)) return false
+
+  if (typeof val1 === 'object' && typeof val2 === 'object') {
+    const keys1 = Object.keys(val1)
+    const keys2 = Object.keys(val2)
+    if (keys1.length !== keys2.length) return false
+    for (const key of keys1) {
+      if (!Object.prototype.hasOwnProperty.call(val2, key)) return false
+      if (!isDeepEqual(val1[key], val2[key])) return false
+    }
+    return true
+  }
+
+  return false
 }
 
 /**
@@ -210,6 +256,9 @@ export default function EquipmentFormModal({
   const [isActive, setIsActive] = useState(true)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  // Tracking State Awal untuk Deteksi Perubahan (isDirty)
+  const [initialData, setInitialData] = useState(null)
+
   // Feedback states
   const [loading, setLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -244,50 +293,83 @@ export default function EquipmentFormModal({
   // Populate data saat mode edit atau saat equipment berubah
   useEffect(() => {
     if (equipment && isEditMode) {
-      setName(equipment.name || equipment.nama || '')
-      setCategory(equipment.category || equipment.kategori || 'Mesin Kopi')
-      setCondition(equipment.condition || 'Prima')
-      setStock(equipment.stock || 1)
-      setLocation(equipment.location || 'Jakarta Selatan')
-      setDescription(equipment.description || equipment.deskripsi || '')
+      const initName = equipment.name || equipment.nama || ''
+      const initCategory = equipment.category || equipment.kategori || 'Mesin Kopi'
+      const initCondition = equipment.condition || 'Prima'
+      const initStock = equipment.stock || 1
+      const initLocation = equipment.location || 'Jakarta Selatan'
+      const initDescription = equipment.description || equipment.deskripsi || ''
 
       const priceVal = equipment.pricePerDay ?? equipment.hargaNominal ?? equipment.harga ?? ''
-      setPricePerDay(priceVal)
-
       const depositVal = equipment.deposit ?? ''
-      setDeposit(depositVal)
+      const minRentVal = equipment.minRentDays ?? 1
+      const bufferDaysVal = equipment.maintenanceBufferDays ?? 1
+      const powerWattVal = equipment.powerWatt ?? (equipment.daya ? parseInt(equipment.daya, 10) : 0)
+      const weightKgVal = equipment.weightKg ?? 10
+      const dimensionsVal = equipment.dimensions || '40 × 30 × 30 cm'
 
-      setMinRentDays(equipment.minRentDays ?? 1)
-      setMaintenanceBufferDays(equipment.maintenanceBufferDays ?? 1)
-
-      setPowerWatt(equipment.powerWatt ?? (equipment.daya ? parseInt(equipment.daya, 10) : 0))
-      setWeightKg(equipment.weightKg ?? 10)
-      setDimensions(equipment.dimensions || '40 × 30 × 30 cm')
-
-      const initialDelivery = Array.isArray(equipment.deliveryMethods)
-        ? equipment.deliveryMethods
+      const rawDelivery = Array.isArray(equipment.deliveryMethods)
+        ? equipment.deliveryMethods.map((m) => String(m).trim().toUpperCase())
         : ['PICKUP', 'COURIER']
-      setDeliveryPickup(initialDelivery.includes('PICKUP'))
-      setDeliveryCourier(initialDelivery.includes('COURIER'))
-      setDeliveryFee(equipment.deliveryFee ?? 45000)
+      const initPickup = rawDelivery.includes('PICKUP')
+      const initCourier = rawDelivery.includes('COURIER')
+      const initFee = equipment.deliveryFee ?? 45000
 
-      if (Array.isArray(equipment.images) && equipment.images.length > 0) {
-        setImages(equipment.images)
-      } else {
-        setImages([])
-      }
+      const initImages = Array.isArray(equipment.images) && equipment.images.length > 0
+        ? [...equipment.images]
+        : []
 
-      if (Array.isArray(equipment.accessories) && equipment.accessories.length > 0) {
-        setAccessories(normalizeAccessories(equipment.accessories))
-      } else {
-        setAccessories([])
-      }
+      const initAccessories = Array.isArray(equipment.accessories) && equipment.accessories.length > 0
+        ? normalizeAccessories(equipment.accessories)
+        : []
 
       const activeFlag =
         equipment.isActive !== undefined
           ? Boolean(equipment.isActive)
           : String(equipment.status || '').toUpperCase() !== 'NONAKTIF' && !equipment.isDeleted
+
+      setName(initName)
+      setCategory(initCategory)
+      setCondition(initCondition)
+      setStock(initStock)
+      setLocation(initLocation)
+      setDescription(initDescription)
+      setPricePerDay(priceVal)
+      setDeposit(depositVal)
+      setMinRentDays(minRentVal)
+      setMaintenanceBufferDays(bufferDaysVal)
+      setPowerWatt(powerWattVal)
+      setWeightKg(weightKgVal)
+      setDimensions(dimensionsVal)
+      setDeliveryPickup(initPickup)
+      setDeliveryCourier(initCourier)
+      setDeliveryFee(initFee)
+      setImages(initImages)
+      setAccessories(initAccessories)
       setIsActive(activeFlag)
+
+      setInitialData({
+        name: initName,
+        category: initCategory,
+        condition: initCondition,
+        stock: initStock,
+        location: initLocation,
+        description: initDescription,
+        pricePerDay: priceVal,
+        deposit: depositVal,
+        minRentDays: minRentVal,
+        maintenanceBufferDays: bufferDaysVal,
+        powerWatt: powerWattVal,
+        weightKg: weightKgVal,
+        dimensions: dimensionsVal,
+        deliveryPickup: initPickup,
+        deliveryCourier: initCourier,
+        deliveryFee: initFee,
+        deliveryMethods: [initPickup ? 'PICKUP' : null, initCourier ? 'COURIER' : null].filter(Boolean),
+        images: initImages,
+        accessories: initAccessories,
+        isActive: activeFlag
+      })
     } else {
       // Reset form ke default create mode: SEMUA FIELD INPUT KOSONG
       setName('')
@@ -309,6 +391,7 @@ export default function EquipmentFormModal({
       setImages([]) // KOSONG SECARA DEFAULT
       setAccessories([]) // KOSONG SECARA DEFAULT UNTUK ALAT BARU
       setIsActive(true)
+      setInitialData(null)
     }
 
     setNewAccessoryName('')
@@ -597,6 +680,64 @@ export default function EquipmentFormModal({
     isDeliveryEmpty ||
     isDeliveryFeeEmpty
 
+  // ── DETEKSI PERUBAHAN FORM DATA (DIRTY STATE) MENGGUNAKAN DEEP EQUALITY ────
+  const currentFormData = useMemo(() => {
+    const curDeliveryMethods = [
+      deliveryPickup ? 'PICKUP' : null,
+      deliveryCourier ? 'COURIER' : null
+    ].filter(Boolean)
+
+    return {
+      name,
+      category,
+      condition,
+      stock,
+      location,
+      description,
+      pricePerDay,
+      deposit,
+      minRentDays,
+      maintenanceBufferDays,
+      powerWatt,
+      weightKg,
+      dimensions,
+      deliveryPickup,
+      deliveryCourier,
+      deliveryFee: deliveryCourier ? deliveryFee : (initialData?.deliveryFee ?? ''),
+      deliveryMethods: curDeliveryMethods,
+      images,
+      accessories,
+      isActive
+    }
+  }, [
+    name,
+    category,
+    condition,
+    stock,
+    location,
+    description,
+    pricePerDay,
+    deposit,
+    minRentDays,
+    maintenanceBufferDays,
+    powerWatt,
+    weightKg,
+    dimensions,
+    deliveryPickup,
+    deliveryCourier,
+    deliveryFee,
+    images,
+    accessories,
+    isActive,
+    initialData
+  ])
+
+  const isDirty = useMemo(() => {
+    if (!isEditMode) return true
+    if (!initialData) return false
+    return !isDeepEqual(currentFormData, initialData)
+  }, [isEditMode, initialData, currentFormData])
+
   const isSubmitDisabled =
     loading ||
     deleteLoading ||
@@ -604,7 +745,8 @@ export default function EquipmentFormModal({
     isProcessingAccPhoto ||
     !hasPhotos ||
     !hasAllAccessoryPhotos ||
-    hasEmptyFields
+    hasEmptyFields ||
+    (isEditMode && !isDirty)
 
   // PENTING: Early return diletakkan SETELAH seluruh Hook terpanggil agar tidak melanggar aturan React
   if (!isOpen) return null
@@ -1492,10 +1634,25 @@ export default function EquipmentFormModal({
                     Unggah foto bukti untuk semua aksesoris ({missingAccPhotos.length} belum ada foto)
                   </span>
                 </div>
+              ) : isDeliveryEmpty ? (
+                <div className="text-[11px] text-amber-600 font-bold flex items-center gap-1.5 animate-in fade-in">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Pilih minimal satu opsi serah terima / logistik alat</span>
+                </div>
               ) : hasEmptyFields ? (
                 <div className="text-[11px] text-amber-600 font-bold flex items-center gap-1.5 animate-in fade-in">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>Lengkapi seluruh field formulir yang masih kosong untuk mengaktifkan tombol</span>
+                </div>
+              ) : isEditMode && !isDirty ? (
+                <div className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5 animate-in fade-in">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Data alat tersinkronisasi (belum ada perubahan)</span>
+                </div>
+              ) : isEditMode && isDirty ? (
+                <div className="text-[11px] text-blue-600 font-bold flex items-center gap-1.5 animate-in fade-in">
+                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                  <span>Ada perubahan data yang belum disimpan</span>
                 </div>
               ) : null}
             </div>
@@ -1517,8 +1674,12 @@ export default function EquipmentFormModal({
                     ? 'Unggah minimal 1 foto asli alat untuk mengaktifkan tombol ini'
                     : !hasAllAccessoryPhotos
                     ? `Unggah foto bukti untuk ${missingAccPhotos.length} aksesoris yang belum memiliki foto`
+                    : isDeliveryEmpty
+                    ? 'Pilih minimal satu opsi serah terima / logistik alat'
                     : hasEmptyFields
                     ? 'Lengkapi semua field formulir di atas untuk mengaktifkan tombol ini'
+                    : isEditMode && !isDirty
+                    ? 'Belum ada perubahan data untuk disimpan'
                     : ''
                 }
                 className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 ${
