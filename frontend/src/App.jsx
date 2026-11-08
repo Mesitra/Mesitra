@@ -15,6 +15,9 @@ import AdminAuthWrapper from './components/adminAuth/AdminAuthWrapper'
 import AdminDashboardPlaceholder from './components/adminAuth/AdminDashboardPlaceholder'
 import AdminProtectedRoute from './components/adminAuth/AdminProtectedRoute'
 import AdminDetailPengajuan from './components/adminDashboard/AdminDetailPengajuan'
+import AdminRoute from './components/auth/AdminRoute'
+import AdminLayout from './layouts/AdminLayout'
+import KycDashboard from './pages/admin/KycDashboard'
 import UserProtectedRoute from './components/common/UserProtectedRoute'
 import PemilikProtectedRoute from './components/common/PemilikProtectedRoute'
 import CheckoutWizard from './components/checkout/CheckoutWizard'
@@ -418,14 +421,6 @@ export default function App() {
         />
         {/* Route Cepat Admin / Dashboard Admin */}
         <Route
-          path="/admin"
-          element={
-            <AdminProtectedRoute>
-              <Navigate to="/portal-internal-hq/dashboard?tab=mediasi" replace />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
           path="/dashboard-admin"
           element={
             <AdminProtectedRoute>
@@ -433,6 +428,13 @@ export default function App() {
             </AdminProtectedRoute>
           }
         />
+
+        {/* Admin Area Baru dengan AdminLayout */}
+        <Route path="/admin" element={<AdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="kyc" element={<KycDashboard />} />
+          </Route>
+        </Route>
 
         {/* Fallback jika route tidak ditemukan */}
         <Route path="*" element={<Navigate to="/" replace />} />
