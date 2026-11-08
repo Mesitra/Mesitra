@@ -215,6 +215,7 @@ equipmentsRouter.get('/', async (req, res, next) => {
 
     if (includeDeleted !== 'true') {
       where.isDeleted = false
+      where.isTakedownByAdmin = false
     }
 
     if (status) {

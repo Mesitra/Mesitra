@@ -68,6 +68,7 @@ reviewsRouter.get('/owner', optionalAuth, async (req, res, next) => {
     const take = limit
 
     const where = {
+      isDeleted: false,
       equipment: {
         ownerId: String(ownerId)
       }
@@ -167,7 +168,7 @@ reviewsRouter.get('/', optionalAuth, async (req, res, next) => {
   try {
     const { equipmentId, ownerId, rating } = req.query
 
-    const where = {}
+    const where = { isDeleted: false }
 
     if (equipmentId) {
       where.equipmentId = String(equipmentId)
