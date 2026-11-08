@@ -67,7 +67,7 @@ before(async () => {
 
   await prisma.equipment.upsert({
     where: { id: TEST_EQUIPMENT_ID },
-    update: {},
+    update: { ownerId: owner.id },
     create: {
       id: TEST_EQUIPMENT_ID,
       ownerId: owner.id,
@@ -167,4 +167,59 @@ test('POST /api/orders/:id/review menolak ulasan duplikat untuk pesanan yang sam
   assert.equal(res.status, 400)
   const body = await res.json()
   assert.equal(body.error.code, 'ALREADY_REVIEWED')
+})
+
+test('GET /api/reviews/owner mengembalikan ulasan owner dengan server-side pagination (?page=1&limit=10)', async () => {
+  const res = await fetch(`${baseUrl}/api/reviews/owner?page=1&limit=10`, {
+    headers: {
+      Authorization: `Bearer ${ownerToken}`
+    }
+  })
+
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.ok(Array.isArray(body.data))
+  assert.equal(typeof body.totalPages, 'number')
+  assert.equal(body.currentPage, 1)
+  assert.ok(body.data.length >= 1)
+  assert.equal(body.data[0].orderId, TEST_ORDER_ID)
+})
+
+test('POST /api/reviews/:id/reply pemilik membalas ulasan penyewa', async () => {
+  // Dapatkan ID review yang telah dibuat sebelumnya
+  const listRes = await fetch(`${baseUrl}/api/reviews/owner`, {
+    headers: {
+      Authorization: `Bearer ${ownerToken}`
+    }
+  })
+  const listBody = await listRes.json()
+  const review = listBody.data.find((r) => r.orderId === TEST_ORDER_ID)
+  assert.ok(review, 'Review harus ada')
+
+  const res = await fetch(`${baseUrl}/api/reviews/${review.id}/reply`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${ownerToken}`
+    },
+    body: JSON.stringify({
+      reply: 'Terima kasih atas ulasannya! Kami senang mesin kopi bekerja dengan baik.'
+    })
+  })
+
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.equal(body.data.ownerReply, 'Terima kasih atas ulasannya! Kami senang mesin kopi bekerja dengan baik.')
+  assert.ok(body.data.repliedAt)
+
+  // Verifikasi via GET /api/reviews/owner
+  const verifyRes = await fetch(`${baseUrl}/api/reviews/owner`, {
+    headers: {
+      Authorization: `Bearer ${ownerToken}`
+    }
+  })
+  const verifyBody = await verifyRes.json()
+  const updated = verifyBody.data.find((r) => r.id === review.id)
+  assert.equal(updated.ownerReply, 'Terima kasih atas ulasannya! Kami senang mesin kopi bekerja dengan baik.')
+  assert.ok(updated.repliedAt)
 })

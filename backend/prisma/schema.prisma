@@ -218,14 +218,16 @@ model Order {
 }
 
 model Review {
-  id          String   @id @default(uuid())
-  orderId     String   @unique
+  id          String    @id @default(uuid())
+  orderId     String    @unique
   equipmentId String
   userId      String
   rating      Int
-  comment     String   @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  comment     String    @db.Text
+  ownerReply  String?   @db.Text
+  repliedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)

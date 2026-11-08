@@ -44,6 +44,8 @@ import AlatSaya from './dashboardPemilik/AlatSaya'
 import PesananMasuk from './dashboardPemilik/PesananMasuk'
 import DompetPemilik from './dashboardPemilik/DompetPemilik'
 import ProfilToko from './dashboardPemilik/ProfilToko'
+import UlasanRating from './dashboardPemilik/UlasanRating'
+import { fetchUserProfile } from '../lib/profileApi'
 import ChatPanel from '../components/chat/ChatPanel'
 import { getUnreadCount } from '../lib/chatsApi'
 import { listNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../lib/notificationsApi'
@@ -209,6 +211,7 @@ const FALLBACK_REVIEWS = [
 function OwnerDashboardContent() {
   const navigate = useNavigate()
   const currentUser = getSessionUser() || { fullName: 'Kopi Senja Roastery', role: 'PEMILIK' }
+  const [tenantProfile, setTenantProfile] = useState(currentUser?.tenantProfile || null)
   const { escrowBalance } = useWallet()
 
   // State
@@ -289,12 +292,17 @@ function OwnerDashboardContent() {
       const user = getSessionUser()
       const equipParams = user?.id ? { ownerId: user.id, allStatus: 'true' } : { allStatus: 'true' }
 
-      const [orderRes, equipRes, reviewRes, notifRes] = await Promise.all([
+      const [orderRes, equipRes, reviewRes, notifRes, profileRes] = await Promise.all([
         listOwnerOrders().catch(() => listOrders({ as: 'owner' }).catch(() => null)),
         listEquipments(equipParams).catch(() => null),
         listReviews({ as: 'owner' }).catch(() => null),
-        listNotifications().catch(() => null)
+        listNotifications().catch(() => null),
+        fetchUserProfile().catch(() => null)
       ])
+
+      if (profileRes?.tenantProfile || profileRes?.profile?.tenantProfile) {
+        setTenantProfile(profileRes.tenantProfile || profileRes.profile?.tenantProfile)
+      }
 
       // Data Notifikasi In-App
       if (Array.isArray(notifRes)) {
@@ -890,7 +898,7 @@ function OwnerDashboardContent() {
       {/* ── KONTEN UTAMA ─────────────────────────────────────────────────── */}
       <main className="flex-1 p-6 md:px-10 lg:px-12 py-5 overflow-y-auto max-w-[1920px] mx-auto w-full space-y-5">
         {/* TopBar & Notification Bell (Task 2: Popover Dropdown) */}
-        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && activeTab !== 'chat' && activeTab !== 'profil' && (
+        {activeTab !== 'alat' && activeTab !== 'alat-saya' && activeTab !== 'pesanan' && activeTab !== 'dompet' && activeTab !== 'chat' && activeTab !== 'profil' && activeTab !== 'ulasan' && (
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -902,7 +910,9 @@ function OwnerDashboardContent() {
                 {activeTab === 'pengaturan' && 'Pengaturan'}
               </h1>
               <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">
-                {`Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
+                {activeTab === 'ulasan'
+                  ? `Menampilkan ulasan pelanggan untuk seluruh alat di ${tenantProfile?.storeName || 'Toko Anda'}`
+                  : `Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
               </p>
             </div>
 
@@ -1395,224 +1405,9 @@ function OwnerDashboardContent() {
           </>
         )}
 
-        {/* ── TAB CONTENT: ULASAN & RATING (TASK 4: TAB LENGKAP) ─────────────── */}
+        {/* ── TAB CONTENT: ULASAN & RATING ──────────────────────────────────── */}
         {activeTab === 'ulasan' && (
-          <div className="space-y-5 animate-in fade-in duration-200">
-            {/* Header Summary Box */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 md:p-6 shadow-sm">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                {/* Big Score Card */}
-                <div className="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-center space-y-2">
-                  <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-                    {reviewsMeta.averageRating ? reviewsMeta.averageRating.toFixed(1).replace('.', ',') : '4,8'}
-                  </div>
-                  <div className="flex items-center gap-1 text-amber-400">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-5 h-5 ${
-                          star <= Math.round(reviewsMeta.averageRating || 5)
-                            ? 'fill-amber-400 text-amber-400'
-                            : 'text-slate-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-xs font-bold text-slate-600">
-                    {reviewsMeta.total} Ulasan Pelanggan
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <BadgeCheck className="w-3 h-3" />
-                    100% Terverifikasi
-                  </span>
-                </div>
-
-                {/* Rating Distribution Breakdown Bars */}
-                <div className="md:col-span-2 space-y-2">
-                  <div className="text-xs font-bold text-slate-700 mb-2">
-                    Distribusi Penilaian Bintang
-                  </div>
-                  {[5, 4, 3, 2, 1].map((star) => {
-                    const count = reviewsMeta.distribution?.[star] || 0
-                    const total = reviewsMeta.total || 1
-                    const percentage = Math.round((count / total) * 100)
-
-                    return (
-                      <div key={star} className="flex items-center gap-3 text-xs">
-                        <div className="flex items-center gap-1 w-16 text-slate-600 font-semibold shrink-0">
-                          <span>{star}</span>
-                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        </div>
-                        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            style={{ width: `${percentage}%` }}
-                            className="h-full bg-amber-400 rounded-full transition-all duration-300"
-                          />
-                        </div>
-                        <div className="w-12 text-right text-[11px] font-semibold text-slate-400 tabular-nums shrink-0">
-                          {count} ({percentage}%)
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Filter Chips & Search Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => setStarFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                    starFilter === 'ALL'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  Semua ({reviewsMeta.total})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStarFilter(5)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap ${
-                    starFilter === 5
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  <span>5 Bintang</span>
-                  <span className="text-[10px] opacity-80">({reviewsMeta.distribution?.[5] || 0})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStarFilter(4)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap ${
-                    starFilter === 4
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  <span>4 Bintang</span>
-                  <span className="text-[10px] opacity-80">({reviewsMeta.distribution?.[4] || 0})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStarFilter(3)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap ${
-                    starFilter === 3
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  <span>3 Bintang</span>
-                  <span className="text-[10px] opacity-80">({reviewsMeta.distribution?.[3] || 0})</span>
-                </button>
-              </div>
-
-              {/* Search in reviews */}
-              <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={reviewSearchQuery}
-                  onChange={(e) => setReviewSearchQuery(e.target.value)}
-                  placeholder="Cari ulasan atau alat..."
-                  className="w-full bg-white text-xs rounded-xl pl-9 pr-3 py-2 text-slate-800 placeholder-slate-400 border border-slate-200 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs"
-                />
-              </div>
-            </div>
-
-            {/* List of Customer Reviews */}
-            <div className="space-y-3.5">
-              {filteredReviews.length === 0 ? (
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-2">
-                  <Star className="w-10 h-10 text-slate-300 mx-auto" />
-                  <div className="text-sm font-bold text-slate-800">
-                    Tidak ada ulasan ditemukan
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    Coba sesuaikan filter bintang atau kata kunci pencarian Anda.
-                  </div>
-                </div>
-              ) : (
-                filteredReviews.map((rev) => {
-                  const renterName = rev.user?.fullName || rev.user?.email || 'Penyewa Terverifikasi'
-                  const businessName = rev.user?.kycData?.businessName || null
-                  const equipmentName = rev.equipment?.name || 'Alat Produksi UMKM'
-
-                  return (
-                    <div
-                      key={rev.id}
-                      className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-300 transition-colors"
-                    >
-                      {/* Review Top Meta */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
-                            {getUserInitials(rev.user)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-900">
-                                {renterName}
-                              </span>
-                              {businessName && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                                  {businessName}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-blue-600 font-medium mt-0.5">
-                              {equipmentName}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 self-end sm:self-auto">
-                          <div className="flex items-center gap-0.5 text-amber-400">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-3.5 h-3.5 ${
-                                  i < rev.rating
-                                    ? 'fill-amber-400 text-amber-400'
-                                    : 'text-slate-200'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-[11px] text-slate-400 font-medium">
-                            {formatShortDate(rev.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Comment Body */}
-                      <blockquote className="text-xs text-slate-700 leading-relaxed font-normal">
-                        “{rev.comment}”
-                      </blockquote>
-
-                      {/* Footer Badge */}
-                      <div className="pt-2 flex items-center justify-between text-[11px] text-slate-400">
-                        <div className="flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="text-emerald-700 font-medium">Transaksi Sewa Selesai</span>
-                          {rev.order?.invoiceNumber && (
-                            <span className="text-slate-400">· {rev.order.invoiceNumber}</span>
-                          )}
-                        </div>
-                        <span className="text-slate-400 font-medium">
-                          Masa sewa terverifikasi
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </div>
+          <UlasanRating currentUser={currentUser} tenantProfile={tenantProfile} />
         )}
 
         {/* ── TAB CONTENT: ALAT SAYA ────────────────────────────────────────── */}
