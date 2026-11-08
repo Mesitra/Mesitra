@@ -149,7 +149,7 @@ export default function ModalKontrakSewa({
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <div>
-                  <div className="text-[13px] font-bold text-emerald-800">Kontrak Disetujui ✓</div>
+                  <div className="text-[13px] font-bold text-emerald-800">Kontrak Disetujui</div>
                   <div className="text-[11px] text-emerald-600">
                     Disetujui pada: {d.agreedAt ? new Date(d.agreedAt).toLocaleString('id-ID') : new Date().toLocaleString('id-ID')}
                   </div>

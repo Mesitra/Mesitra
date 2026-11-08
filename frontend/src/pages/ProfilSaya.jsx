@@ -474,14 +474,14 @@ export default function ProfilSaya() {
               <div className="bg-white/80 p-2.5 rounded-lg border border-slate-200/80 flex items-start gap-2">
                 <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-slate-900 font-bold block">🔒 Data Kependudukan Resmi (Terkunci)</strong>
+                  <strong className="text-slate-900 font-bold block">Data Kependudukan Resmi (Terkunci)</strong>
                   NIK, Nama KTP, Tempat/Tanggal Lahir, serta Berkas Foto KTP berstatus <strong>read-only</strong> karena telah diaudit verifikator admin MyRent.
                 </div>
               </div>
               <div className="bg-white/80 p-2.5 rounded-lg border border-blue-200/80 flex items-start gap-2">
                 <Check className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-blue-900 font-bold block">✏️ Data Operasional (Dapat Disesuaikan)</strong>
+                  <strong className="text-blue-900 font-bold block">Data Operasional (Dapat Disesuaikan)</strong>
                   Kapasitas daya listrik PLN, nama &amp; foto workshop, alamat pengiriman kargo, serta rekening bank pencairan deposit dapat Anda perbarui kapan saja.
                 </div>
               </div>

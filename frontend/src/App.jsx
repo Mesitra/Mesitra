@@ -6,6 +6,7 @@ import RegisterPenyewaAlat from './components/registerPenyewaAlat'
 import RegisterPemilikAlat from './components/registerPemilikAlat/RegisterPemilikAlat'
 import BerandaSewa from './components/berandaPenyewa/BerandaSewa'
 import DetailAlat from './components/detailAlat/DetailAlat'
+import HalamanCheckoutSewa from './components/detailAlat/HalamanCheckoutSewa'
 import Pesan from './pages/Pesan'
 import PesananSaya from './pages/PesananSaya'
 import KembalikanAlatWizard from './components/kembalikanAlat/KembalikanAlatWizard'
@@ -38,7 +39,9 @@ import {
   DollarSign,
   Sparkles,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  Star,
+  Factory
 } from 'lucide-react'
 
 const initialRentals = [
@@ -103,15 +106,20 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [toastMessage, setToastMessage] = useState('')
 
-  // Keamanan Navigasi Browser: Bila pengguna menekan tombol Back bawaan browser
-  // saat sedang dalam sesi login, otomatis bersihkan sesi login agar tidak dapat
-  // kembali masuk ke area akun tanpa melakukan autentikasi ulang.
+  // Keamanan Navigasi Browser: Bila pengguna menekan tombol Back bawaan desktop browser
+  // mundur hingga ke halaman Login atau Landing page ('/login', '/masuk', '/'),
+  // otomatis bersihkan sesi agar tidak dapat kembali masuk ke area akun tanpa autentikasi ulang.
+  // Navigasi internal di dalam halaman website (seperti tombol back antar-halaman) tetap menjaga sesi aktif.
   useEffect(() => {
     const handlePopState = () => {
-      const token = getUserToken()
-      if (token) {
-        clearUserSession()
-        setCurrentUser(null)
+      const path = window.location.pathname
+      // Hanya bersihkan sesi bila tombol back bawaan browser mundur ke halaman login/landing
+      if (path === '/login' || path === '/masuk' || path === '/') {
+        const token = getUserToken()
+        if (token) {
+          clearUserSession()
+          setCurrentUser(null)
+        }
       }
     }
 
@@ -268,7 +276,7 @@ export default function App() {
                 onSelectProduct={(product, dateRange) => {
                   navigate(`/alat/${product.id}`, { state: { dateRange } })
                 }}
-                onNavigateHome={() => navigate('/')}
+                onNavigateHome={() => navigate('/beranda-sewa')}
               />
             </UserProtectedRoute>
           }
@@ -280,8 +288,8 @@ export default function App() {
           element={
             <UserProtectedRoute>
               <DetailAlat
-                onBack={() => (window.history.length > 1 ? navigate(-1) : navigate('/beranda-sewa'))}
-                onNavigateHome={() => navigate('/')}
+                onBack={() => navigate('/beranda-sewa')}
+                onNavigateHome={() => navigate('/beranda-sewa')}
               />
             </UserProtectedRoute>
           }
@@ -291,9 +299,27 @@ export default function App() {
           element={
             <UserProtectedRoute>
               <DetailAlat
-                onBack={() => (window.history.length > 1 ? navigate(-1) : navigate('/beranda-sewa'))}
-                onNavigateHome={() => navigate('/')}
+                onBack={() => navigate('/beranda-sewa')}
+                onNavigateHome={() => navigate('/beranda-sewa')}
               />
+            </UserProtectedRoute>
+          }
+        />
+
+        {/* Halaman Baru Khusus Checkout Sewa Alat (Atur Tanggal, Pengiriman, Rincian Biaya) */}
+        <Route
+          path="/sewa/:equipmentId"
+          element={
+            <UserProtectedRoute>
+              <HalamanCheckoutSewa />
+            </UserProtectedRoute>
+          }
+        />
+        <Route
+          path="/alat/:id/sewa"
+          element={
+            <UserProtectedRoute>
+              <HalamanCheckoutSewa />
             </UserProtectedRoute>
           }
         />
@@ -675,7 +701,8 @@ function DashboardView({
                     </span>
                   </div>
                   <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur px-2 py-0.5 rounded-md text-[11px] font-semibold text-amber-600 shadow-xs flex items-center gap-1">
-                    ★ {item.rating}
+                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                    <span>{item.rating}</span>
                   </div>
                 </div>
 
@@ -790,8 +817,8 @@ function DashboardPemilikPlaceholder({ onLogout }) {
 
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-white border border-slate-200/90 rounded-2xl p-8 shadow-md shadow-slate-200/50 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mx-auto text-2xl shadow-xs">
-            🏭
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
+            <Factory className="w-8 h-8 text-blue-600" />
           </div>
           <div className="space-y-1.5">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">

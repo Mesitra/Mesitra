@@ -13,7 +13,7 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Loader2, TriangleAlert, MapPin, Zap, ChevronRight,
-  MessageCircle, Clock, ArrowLeft, Lock
+  MessageCircle, Clock, ArrowLeft, Lock, Check, Truck, Store
 } from 'lucide-react'
 import AvailabilityCalendar from '../detailAlat/AvailabilityCalendar'
 import { getEquipment, formatRupiah } from '../../lib/equipmentsApi'
@@ -42,7 +42,7 @@ function WizardSteps({ current }) {
                     : 'bg-white ring-1 ring-slate-200 text-slate-400'
                 }`}
               >
-                {isDone ? '✓' : stepNum}
+                {isDone ? <Check className="w-3 h-3" /> : stepNum}
               </div>
               <span
                 className={`text-[12px] font-${isActive ? 'bold' : 'medium'} ${
@@ -412,9 +412,13 @@ export default function CheckoutStep1({ wizardData, updateWizard, onNext }) {
 
               <div className="w-full p-3.5 sm:p-4 rounded-xl ring-2 ring-blue-600 bg-blue-50/70 flex items-center justify-between gap-3 transition-all">
                 <div className="flex items-center gap-3 sm:gap-3.5 flex-1 min-w-0">
-                  <span className="text-2xl select-none shrink-0">
-                    {deliveryMethod === 'COURIER' ? '🚚' : '🏪'}
-                  </span>
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                    {deliveryMethod === 'COURIER' ? (
+                      <Truck className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <Store className="w-5 h-5 text-blue-600" />
+                    )}
+                  </div>
                   <div className="flex flex-col gap-0.5 text-left flex-1 min-w-0">
                     <span className="text-[13px] font-bold text-slate-900 truncate">
                       {deliveryMethod === 'COURIER' ? 'Diantar kurir toko' : 'Ambil di gudang pemilik'}
@@ -535,9 +539,10 @@ export default function CheckoutStep1({ wizardData, updateWizard, onNext }) {
                   .replace(/^0/, '62')}`}
                 target="_blank"
                 rel="noreferrer"
-                className="block w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[13px] font-bold rounded-xl text-center transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[13px] font-bold rounded-xl text-center transition-colors"
               >
-                💬 Chat via WhatsApp
+                <MessageCircle className="w-4 h-4" />
+                <span>Chat via WhatsApp</span>
               </a>
             )}
             <button

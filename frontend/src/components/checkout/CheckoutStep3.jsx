@@ -14,9 +14,12 @@ import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import {
   Loader2, Clock, Copy, CheckCircle2, AlertCircle,
-  CreditCard, Wallet, QrCode, Building2
+  CreditCard, Wallet, QrCode, Building2, Smartphone,
+  Lock, ShieldCheck, Check
 } from 'lucide-react'
 import { getOrder, mockPay } from '../../lib/ordersApi'
+import { getWalletInfo } from '../../lib/walletApi'
+import { getSessionUser, setUserSession } from '../../lib/userSession'
 
 // ── QRIS SVG Generator ─────────────────────────────────────────────────────────
 function QrisCode({ invoiceNumber, amount }) {
@@ -107,10 +110,11 @@ function useCountdown(deadlineISO) {
 
 // ── Payment Method Tabs ───────────────────────────────────────────────────────
 const PAYMENT_METHODS = [
-  { id: 'QRIS', label: 'QRIS', icon: <QrCode className="w-4 h-4" /> },
-  { id: 'VA_BCA', label: 'Virtual Account BCA', icon: <Building2 className="w-4 h-4" /> },
-  { id: 'EWALLET', label: 'E-wallet', icon: <Wallet className="w-4 h-4" /> },
-  { id: 'CARD', label: 'Kartu Kredit/Debit', icon: <CreditCard className="w-4 h-4" /> }
+  { id: 'WALLET', label: 'Saldo Dompet', badge: 'Instan dari Akun', icon: <Wallet className="w-5 h-5" /> },
+  { id: 'QRIS', label: 'QRIS', badge: 'Instan & Bebas Biaya', icon: <QrCode className="w-5 h-5" /> },
+  { id: 'VA_BCA', label: 'Virtual Account', badge: 'BCA Auto-Verif', icon: <Building2 className="w-5 h-5" /> },
+  { id: 'EWALLET', label: 'E-wallet', badge: 'GoPay / OVO / DANA', icon: <Smartphone className="w-5 h-5" /> },
+  { id: 'CARD', label: 'Kartu Kredit/Debit', badge: 'Visa / Mastercard', icon: <CreditCard className="w-5 h-5" /> }
 ]
 
 function WizardSteps() {
@@ -126,7 +130,7 @@ function WizardSteps() {
               <div className={`w-[22px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-bold ${
                 isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-blue-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-400'
               }`}>
-                {isDone ? '✓' : i + 1}
+                {isDone ? <Check className="w-3 h-3" /> : i + 1}
               </div>
               <span className={`text-[12px] font-${isActive ? 'bold' : 'medium'} ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>{label}</span>
             </div>
@@ -146,7 +150,12 @@ export default function CheckoutStep3() {
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState('QRIS')
+  const [paymentMethod, setPaymentMethod] = useState('WALLET')
+  const [walletBalance, setWalletBalance] = useState(() => {
+    const user = getSessionUser()
+    return Number(user?.walletBalance || 0)
+  })
+  const [walletAlert, setWalletAlert] = useState('')
   const [copied, setCopied] = useState(false)
   const [ewalletType, setEwalletType] = useState('GOPAY')
   const [ewalletPhone, setEwalletPhone] = useState('')
@@ -164,6 +173,7 @@ export default function CheckoutStep3() {
   // 24-hour payment deadline countdown
   const paymentCountdown = useCountdown(order?.paymentDeadline)
 
+  // Fetch data pesanan
   useEffect(() => {
     if (!orderId) { setError('Order ID tidak ditemukan'); setLoading(false); return }
     let active = true
@@ -184,30 +194,80 @@ export default function CheckoutStep3() {
     return () => { active = false }
   }, [orderId, navigate])
 
+  // Fetch saldo dompet terbaru akun penyewa/pemilik
+  useEffect(() => {
+    let active = true
+    getWalletInfo()
+      .then(info => {
+        if (active && info && typeof info.walletBalance === 'number') {
+          setWalletBalance(info.walletBalance)
+        }
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [])
+
+  const handleSelectMethod = (id) => {
+    setPaymentMethod(id)
+    setWalletAlert('')
+  }
+
   const handleMockPay = useCallback(async () => {
     if (mockState !== 'idle') return
-    setMockState('verifying')
 
-    // Simulasi delay verifikasi
-    await new Promise(r => setTimeout(r, 1800))
+    const totalAmt = order?.totalPaid || 0
+
+    // Validasi saldo dompet jika metode yang dipilih adalah Saldo Dompet
+    if (paymentMethod === 'WALLET' && walletBalance < totalAmt) {
+      setWalletAlert(
+        'Maaf saldo dompet anda tidak cukup, tolong isi saldo dompet terlebih dahulu atau gunakan metode pembayaran lainnya'
+      )
+      return
+    }
+
+    setMockState('verifying')
+    setWalletAlert('')
+
+    // Simulasi delay proses transaksi
+    await new Promise(r => setTimeout(r, 1400))
 
     try {
-      await mockPay(orderId, paymentMethod)
+      const result = await mockPay(orderId, paymentMethod)
+
+      // Jika bayar menggunakan Saldo Dompet, perbarui sisa saldo akun
+      if (paymentMethod === 'WALLET') {
+        const nextBalance = result?.newWalletBalance !== undefined
+          ? result.newWalletBalance
+          : Math.max(0, walletBalance - totalAmt)
+        setWalletBalance(nextBalance)
+        const sessUser = getSessionUser()
+        if (sessUser) {
+          sessUser.walletBalance = nextBalance
+          setUserSession(null, sessUser)
+        }
+      }
+
       setMockState('success')
 
       // Redirect setelah 2 detik
       setTimeout(() => {
         navigate('/pesanan-saya', {
           state: {
-            successMessage: `🎉 Pembayaran ${order?.invoiceNumber} berhasil! Menunggu konfirmasi pemilik alat.`
+            successMessage: `Pembayaran ${order?.invoiceNumber} berhasil! Menunggu konfirmasi pemilik alat.`
           }
         })
-      }, 2000)
+      }, 1800)
     } catch (err) {
       setMockState('idle')
-      alert(err.message || 'Gagal memproses pembayaran')
+      if (err.code === 'INSUFFICIENT_WALLET_BALANCE' || err.message?.includes('tidak cukup')) {
+        setWalletAlert(
+          'Maaf saldo dompet anda tidak cukup, tolong isi saldo dompet terlebih dahulu atau gunakan metode pembayaran lainnya'
+        )
+      } else {
+        alert(err.message || 'Gagal memproses pembayaran')
+      }
     }
-  }, [mockState, orderId, paymentMethod, navigate, order])
+  }, [mockState, orderId, paymentMethod, navigate, order, walletBalance])
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).catch(() => {})
@@ -306,30 +366,132 @@ export default function CheckoutStep3() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-5 items-start">
+        <div className="w-full flex flex-col md:flex-row gap-6 items-stretch md:items-start">
           {/* ── Left Column ────────────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0 flex flex-col gap-4">
+          <div className="w-full flex-1 min-w-0 flex flex-col gap-4">
 
             {/* Metode Pembayaran */}
             <div className="bg-white ring-1 ring-slate-200 rounded-[14px] p-5 flex flex-col gap-4">
-              <h2 className="text-[14px] font-bold text-slate-900">Pilih metode pembayaran</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PAYMENT_METHODS.map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => setPaymentMethod(m.id)}
-                    className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl ring-2 transition-all cursor-pointer text-[11px] font-semibold ${
-                      paymentMethod === m.id
-                        ? 'ring-blue-600 bg-blue-50 text-blue-700'
-                        : 'ring-slate-200 bg-white text-slate-600 hover:ring-blue-300 hover:text-blue-600'
-                    }`}
-                  >
-                    {m.icon}
-                    <span className="text-center leading-tight">{m.label}</span>
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <h2 className="text-[14px] font-bold text-slate-900">Pilih metode pembayaran</h2>
+                <span className="text-[11px] text-slate-500 font-medium">Semua transaksi terenkripsi</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                {PAYMENT_METHODS.map(m => {
+                  const isSelected = paymentMethod === m.id
+                  let badgeText = m.badge
+                  if (m.id === 'WALLET') {
+                    badgeText = `Rp ${Number(walletBalance).toLocaleString('id-ID')}`
+                  }
+
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => handleSelectMethod(m.id)}
+                      className={`relative flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-xl ring-2 transition-all cursor-pointer text-center ${
+                        isSelected
+                          ? 'ring-blue-600 bg-blue-50/70 text-blue-700 shadow-2xs'
+                          : 'ring-slate-200 bg-white text-slate-600 hover:ring-blue-300 hover:text-blue-600 hover:bg-slate-50/50'
+                      }`}
+                    >
+                      <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                        {m.icon}
+                      </div>
+                      <span className="text-[12px] font-bold leading-tight truncate w-full">{m.label}</span>
+                      <span className={`text-[10px] font-medium leading-none truncate w-full ${isSelected ? 'text-blue-600 font-semibold' : 'text-slate-400'}`}>
+                        {badgeText}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
+
+            {/* Panel Pembayaran Dinamis: Saldo Dompet */}
+            {paymentMethod === 'WALLET' && (
+              <div className="bg-white ring-1 ring-slate-200 rounded-[14px] p-5 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <Wallet className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-bold text-slate-900 leading-tight">Saldo Dompet Akun</div>
+                      <div className="text-[11px] text-slate-500">Pembayaran langsung dipotong dari saldo dompet Anda</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 shrink-0">
+                    Bebas Biaya
+                  </span>
+                </div>
+
+                {/* Rincian Saldo Dompet & Tagihan */}
+                <div className="p-4 bg-slate-50 ring-1 ring-slate-200 rounded-xl flex flex-col gap-2.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600">Saldo Dompet Anda:</span>
+                    <span className="font-extrabold text-slate-900 text-sm">
+                      Rp {Number(walletBalance).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600">Total Tagihan Pesanan:</span>
+                    <span className="font-extrabold text-blue-600 text-sm">
+                      Rp {totalAmount.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="h-px bg-slate-200 my-0.5" />
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-700 font-semibold">Sisa Saldo Setelah Pembayaran:</span>
+                    {walletBalance >= totalAmount ? (
+                      <span className="font-extrabold text-emerald-600 text-sm">
+                        Rp {(walletBalance - totalAmount).toLocaleString('id-ID')}
+                      </span>
+                    ) : (
+                      <span className="font-extrabold text-red-600 text-xs">
+                        Kurang Rp {(totalAmount - walletBalance).toLocaleString('id-ID')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Notifikasi / Alert Jika Saldo Dompet Kurang */}
+                {walletBalance < totalAmount ? (
+                  <div className="p-4 bg-amber-50 ring-1 ring-amber-300 rounded-xl flex items-start gap-3 animate-in fade-in">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1 text-xs text-amber-900 leading-relaxed">
+                      <p className="font-bold text-amber-950 text-[13px] mb-1">
+                        Saldo Dompet Tidak Cukup
+                      </p>
+                      <p className="m-0 text-slate-700">
+                        {walletAlert || 'Maaf saldo dompet anda tidak cukup, tolong isi saldo dompet terlebih dahulu atau gunakan metode pembayaran lainnya'}
+                      </p>
+                      <div className="mt-3 flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('QRIS')}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
+                        >
+                          Gunakan QRIS
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('VA_BCA')}
+                          className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          Gunakan Virtual Account
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-emerald-50 ring-1 ring-emerald-200 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Saldo dompet Anda mencukupi. Klik tombol <strong>Bayar</strong> di sebelah kanan untuk menyelesaikan pembayaran secara instan.</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Panel Pembayaran Dinamis */}
             {paymentMethod === 'QRIS' && (
@@ -490,19 +652,10 @@ export default function CheckoutStep3() {
                 </div>
               </div>
             )}
-
-            {/* Tombol Cek Status */}
-            <button
-              onClick={handleMockPay}
-              className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[13px] rounded-xl transition-all cursor-pointer border border-slate-200 flex items-center justify-center gap-2"
-            >
-              <CheckCircle2 className="w-4 h-4 text-slate-500" />
-              Saya sudah transfer — cek status pembayaran
-            </button>
           </div>
 
           {/* ── Right Column: Summary + CTA ─────────────────────────────────── */}
-          <div className="w-full lg:w-[320px] shrink-0 flex flex-col gap-4 sticky top-24">
+          <div className="w-full md:w-[320px] lg:w-[360px] shrink-0 flex flex-col gap-4 md:sticky md:top-24">
             {/* Detail Pesanan */}
             <div className="bg-white ring-1 ring-slate-200 rounded-[14px] p-5 flex flex-col gap-3">
               <div className="flex items-center justify-between">
@@ -559,21 +712,33 @@ export default function CheckoutStep3() {
             {/* CTA Bayar */}
             <button
               onClick={handleMockPay}
-              disabled={mockState !== 'idle'}
-              className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-extrabold text-[15px] rounded-xl transition-all cursor-pointer shadow-lg shadow-blue-500/30 active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={mockState !== 'idle' || (paymentMethod === 'WALLET' && walletBalance < totalAmount)}
+              className={`w-full py-4 text-white font-extrabold text-[15px] rounded-xl transition-all cursor-pointer shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 ${
+                paymentMethod === 'WALLET' && walletBalance < totalAmount
+                  ? 'bg-slate-400 cursor-not-allowed shadow-none'
+                  : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 shadow-blue-500/30'
+              }`}
             >
               {mockState === 'idle'
                 ? `Bayar Rp ${totalAmount.toLocaleString('id-ID')}`
                 : <><Loader2 className="w-4 h-4 animate-spin" /> Memproses…</>}
             </button>
+            {paymentMethod === 'WALLET' && walletBalance < totalAmount && (
+              <p className="text-[11px] text-red-600 text-center font-semibold leading-tight m-0">
+                Saldo dompet tidak mencukupi untuk pembayaran ini
+              </p>
+            )}
             <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
-              <span>🔒</span>
+              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span>Pembayaran diamankan oleh Escrow MyRent</span>
             </div>
 
             {/* Info Escrow */}
             <div className="p-3.5 bg-emerald-50 ring-1 ring-emerald-200 rounded-xl">
-              <div className="text-[11px] font-bold text-emerald-800 mb-1">🛡️ Perlindungan Escrow MyRent</div>
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 mb-1">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Perlindungan Escrow MyRent</span>
+              </div>
               <p className="text-[10px] text-emerald-700 leading-relaxed">
                 Dana Anda tidak langsung masuk ke pemilik. MyRent menahan dana hingga Anda mengkonfirmasi alat diterima dengan baik.
               </p>

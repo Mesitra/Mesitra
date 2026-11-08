@@ -13,12 +13,13 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Loader2, TriangleAlert, MapPin, Zap, ChevronLeft,
-  ScrollText, CheckCircle2, FileText, Clock, AlertCircle
+  ScrollText, CheckCircle2, FileText, Clock, AlertCircle,
+  Check, Truck, Store
 } from 'lucide-react'
 import ModalKontrakSewa from './ModalKontrakSewa'
 import { getEquipment } from '../../lib/equipmentsApi'
 import { createOrder } from '../../lib/ordersApi'
-import { getSessionUser } from '../../lib/userSession'
+import { getSessionUser, clearUserSession } from '../../lib/userSession'
 import { formatLongDate, normalizeDate } from '../../lib/dateHelpers'
 
 function WizardSteps({ current }) {
@@ -35,7 +36,7 @@ function WizardSteps({ current }) {
               <div className={`w-[22px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-bold transition-all ${
                 isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-blue-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-400'
               }`}>
-                {isDone ? '✓' : stepNum}
+                {isDone ? <Check className="w-3 h-3" /> : stepNum}
               </div>
               <span className={`text-[12px] font-${isActive ? 'bold' : 'medium'} ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>{label}</span>
             </div>
@@ -105,6 +106,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
   const [contractError, setContractError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [isAuthExpired, setIsAuthExpired] = useState(false)
 
   // Sinkronisasi renterNotes dan isAgreed ke sessionStorage draft (Task 3)
   useEffect(() => {
@@ -185,6 +187,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
 
     setSubmitting(true)
     setSubmitError('')
+    setIsAuthExpired(false)
 
     try {
       updateWizard({ renterNotes, isAgreed: true })
@@ -222,7 +225,18 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
       updateWizard({ orderId: order.id, invoiceNumber: order.invoiceNumber })
       onNext(order.id)
     } catch (err) {
-      setSubmitError(err.message || 'Gagal membuat pesanan. Silakan coba lagi.')
+      const isAuthErr =
+        err?.status === 401 ||
+        err?.code === 'INVALID_TOKEN' ||
+        err?.message?.includes('Token') ||
+        err?.message?.includes('kedaluwarsa')
+      if (isAuthErr) {
+        setIsAuthExpired(true)
+        setSubmitError('Sesi masuk Anda telah kedaluwarsa. Silakan masuk kembali untuk menyelesaikan pesanan.')
+      } else {
+        setIsAuthExpired(false)
+        setSubmitError(err.message || 'Gagal membuat pesanan. Silakan coba lagi.')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -272,7 +286,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
           <ChevronLeft className="w-4 h-4" /> Ubah rincian sewa (Step 1)
         </button>
 
-        <div className="w-full flex flex-col lg:flex-row gap-5 items-stretch lg:items-start">
+        <div className="w-full flex flex-col md:flex-row gap-5 items-stretch md:items-start">
           {/* ── Left Column ────────────────────────────────────────────────── */}
           <div className="w-full flex-1 min-w-0 flex flex-col gap-4.5">
 
@@ -304,8 +318,18 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
                 </div>
                 <div className="flex flex-col gap-1 p-3 bg-slate-50 rounded-xl">
                   <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Serah Terima</div>
-                  <div className="text-[12px] font-bold text-slate-900">
-                    {wizardData.deliveryMethod === 'COURIER' ? '🚚 Kurir Toko' : '🏪 Ambil Sendiri'}
+                  <div className="text-[12px] font-bold text-slate-900 flex items-center gap-1.5">
+                    {wizardData.deliveryMethod === 'COURIER' ? (
+                      <>
+                        <Truck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>Kurir Toko</span>
+                      </>
+                    ) : (
+                      <>
+                        <Store className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>Ambil Sendiri</span>
+                      </>
+                    )}
                   </div>
                   {wizardData.addons?.length > 0 && (
                     <div className="text-[11px] text-slate-500 mt-1">
@@ -347,7 +371,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
                 {isAgreed ? (
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 ring-1 ring-emerald-300 rounded-full">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-[11px] text-emerald-700 font-semibold">Kontrak Disetujui ✓</span>
+                    <span className="text-[11px] text-emerald-700 font-semibold">Kontrak Disetujui</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 ring-1 ring-amber-300 rounded-full">
@@ -396,7 +420,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
           </div>
 
           {/* ── Right Column: Ringkasan & CTA ─────────────────────────────── */}
-          <div className="w-full lg:w-[340px] shrink-0 sticky top-24 flex flex-col gap-4">
+          <div className="w-full md:w-[320px] lg:w-[340px] shrink-0 md:sticky md:top-24 flex flex-col gap-4">
             {/* Ringkasan Biaya */}
             <div className="bg-white ring-1 ring-slate-200 rounded-[14px] p-5 flex flex-col gap-3">
               <h2 className="text-[14px] font-bold text-slate-900">Ringkasan biaya</h2>
@@ -449,9 +473,23 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
 
             {/* Error Submit */}
             {submitError && (
-              <div className="flex items-start gap-2 p-3 bg-red-50 ring-1 ring-red-200 rounded-xl">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-red-700 font-semibold">{submitError}</p>
+              <div className="flex flex-col gap-2.5 p-3 bg-red-50 ring-1 ring-red-200 rounded-xl">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-red-700 font-semibold">{submitError}</p>
+                </div>
+                {isAuthExpired && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearUserSession()
+                      navigate('/login', { state: { from: `/checkout/${equipmentId}` } })
+                    }}
+                    className="w-full py-2 bg-red-600 hover:bg-red-700 active:scale-98 text-white font-bold text-xs rounded-lg transition-all cursor-pointer text-center"
+                  >
+                    Masuk Kembali ke Akun
+                  </button>
+                )}
               </div>
             )}
 
@@ -468,8 +506,9 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
               )}
             </button>
             {!isAgreed && (
-              <p className="text-[10px] text-red-600 text-center font-semibold">
-                ⚠ Setujui kontrak sewa terlebih dahulu
+              <p className="flex items-center justify-center gap-1.5 text-[10px] text-red-600 font-semibold">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>Setujui kontrak sewa terlebih dahulu</span>
               </p>
             )}
             <p className="text-[10px] text-slate-400 text-center">

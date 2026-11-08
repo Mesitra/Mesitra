@@ -13,7 +13,8 @@ import {
   Copy,
   Check,
   Loader2,
-  PackageCheck
+  PackageCheck,
+  Lock
 } from 'lucide-react'
 import ModalDokumenBAST from './ModalDokumenBAST'
 import ModalDompet from '../pesananSaya/ModalDompet'
@@ -122,8 +123,9 @@ export default function Step4RefundDeposit({ order, returnData }) {
         </div>
 
         <div className="pt-2.5 border-t border-blue-200/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <p className="text-xs text-slate-600 m-0 leading-relaxed max-w-xl">
-            🔒 <strong>Proteksi Dua Pihak:</strong> Pemilik alat memerlukan kode PIN ini untuk mengonfirmasi bahwa unit fisik telah sampai di gudangnya. Jangan berikan kode ini sebelum unit diserahkan!
+          <p className="text-xs text-slate-600 m-0 leading-relaxed max-w-xl flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5 text-blue-700 shrink-0 inline" />
+            <span><strong>Proteksi Dua Pihak:</strong> Pemilik alat memerlukan kode PIN ini untuk mengonfirmasi bahwa unit fisik telah sampai di gudangnya. Jangan berikan kode ini sebelum unit diserahkan!</span>
           </p>
 
           {!handedOverAt ? (

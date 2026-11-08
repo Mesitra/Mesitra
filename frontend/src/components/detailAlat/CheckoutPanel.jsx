@@ -14,6 +14,7 @@ export default function CheckoutPanel({
   ownerPhoto = null,
   ownerDisplayName = '',
   ownerInitials = 'PA',
+  onDateClick,
   onChatOwner,
   onAjukanSewa
 }) {
@@ -64,7 +65,14 @@ export default function CheckoutPanel({
 
       {/* Date Row */}
       <div className="box-border w-full h-fit shrink-0 flex flex-row gap-2.5 justify-start items-start">
-        <div className="box-border flex-1 h-fit flex flex-col gap-0.75 py-2.25 px-2.75 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[10px]">
+        <div
+          onClick={onDateClick}
+          role={onDateClick ? 'button' : undefined}
+          tabIndex={onDateClick ? 0 : undefined}
+          className={`box-border flex-1 h-fit flex flex-col gap-0.75 py-2.25 px-2.75 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[10px] ${
+            onDateClick ? 'cursor-pointer hover:bg-slate-50 hover:ring-blue-300 transition-all' : ''
+          }`}
+        >
           <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider whitespace-nowrap">
             Mulai
           </span>
@@ -72,7 +80,14 @@ export default function CheckoutPanel({
             {startDateText}
           </span>
         </div>
-        <div className="box-border flex-1 h-fit flex flex-col gap-0.75 py-2.25 px-2.75 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[10px]">
+        <div
+          onClick={onDateClick}
+          role={onDateClick ? 'button' : undefined}
+          tabIndex={onDateClick ? 0 : undefined}
+          className={`box-border flex-1 h-fit flex flex-col gap-0.75 py-2.25 px-2.75 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[10px] ${
+            onDateClick ? 'cursor-pointer hover:bg-slate-50 hover:ring-blue-300 transition-all' : ''
+          }`}
+        >
           <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider whitespace-nowrap">
             Selesai
           </span>
@@ -276,15 +291,12 @@ export default function CheckoutPanel({
 
             {/* Owner Meta */}
             <div className="box-border flex-1 h-fit flex flex-col gap-0.5 justify-start items-start min-w-0">
-              <div className="text-xs text-slate-900 font-bold text-left truncate w-full" title={owner.tenantProfile?.storeName || ownerDisplayName}>
+              <div className="text-xs sm:text-sm text-slate-900 font-bold text-left truncate w-full" title={owner.tenantProfile?.storeName || ownerDisplayName}>
                 {owner.tenantProfile?.storeName || ownerDisplayName}
               </div>
-              <div className="text-[10px] text-slate-400 font-normal text-left truncate w-full">
-                {owner.email || '-'}
-              </div>
               {(owner.tenantProfile?.city || owner.shopLocation || owner.address || owner.city) && (
-                <div className="text-[10px] text-slate-500 font-normal text-left truncate w-full flex items-center gap-1 pt-0.5">
-                  <MapPin className="w-2.75 h-2.75 text-slate-400 shrink-0" />
+                <div className="text-[11px] text-slate-500 font-normal text-left truncate w-full flex items-center gap-1 pt-0.5">
+                  <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                   <span className="truncate">{owner.tenantProfile?.city || owner.shopLocation || owner.address || owner.city}</span>
                 </div>
               )}
