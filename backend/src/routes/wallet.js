@@ -1,35 +1,11 @@
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
 import { config } from '../config.js'
+import { requireAuth } from '../middleware/authMiddleware.js'
 
 export const walletRouter = Router()
 
-/**
- * Middleware: Verifikasi JWT token & pasang userId ke request.
- */
-function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      error: { code: 'UNAUTHORIZED', message: 'Token otentikasi wajib disertakan' }
-    })
-  }
-
-  try {
-    const token = authHeader.split(' ')[1]
-    const decoded = jwt.verify(token, config.jwtSecret)
-    req.userId = decoded.userId
-    req.userRole = String(decoded.role || '').toUpperCase()
-    next()
-  } catch {
-    return res.status(401).json({
-      error: { code: 'INVALID_TOKEN', message: 'Token tidak valid atau telah kedaluwarsa' }
-    })
-  }
-}
-
-walletRouter.use(authenticate)
+walletRouter.use(requireAuth)
 
 /**
  * Helper: Kalkulasi finansial lengkap pemilik (Owner Wallet Engine)
@@ -388,7 +364,7 @@ walletRouter.post('/owner/withdraw', async (req, res, next) => {
     const reference = `WD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`
     const description = `Pencairan ke ${bankName} · ${last4}`
 
-    const [updatedUser, transaction] = await prisma.$transaction([
+    const [updatedUser, transaction, withdrawalRequest] = await prisma.$transaction([
       prisma.user.update({
         where: { id: req.userId },
         data: {
@@ -408,6 +384,19 @@ walletRouter.post('/owner/withdraw', async (req, res, next) => {
           reference,
           paymentMethod: bankName
         }
+      }),
+      prisma.withdrawalRequest.create({
+        data: {
+          withdrawalCode: reference,
+          userId: req.userId,
+          amount: numericAmount,
+          transferFee: 0,
+          netAmount: numericAmount,
+          bankName,
+          accountNumber: cleanNumber,
+          accountHolder: currentWallet.bankAccount?.accountHolder || 'Pemilik Alat',
+          status: 'MENUNGGU'
+        }
       })
     ])
 
@@ -417,6 +406,7 @@ walletRouter.post('/owner/withdraw', async (req, res, next) => {
       message: 'Penarikan saldo berhasil diproses',
       newBalance: updatedWallet.availableBalance,
       transaction,
+      withdrawalRequest,
       destinationAccount: currentWallet.bankAccount
     })
   } catch (error) {
