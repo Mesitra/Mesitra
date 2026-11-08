@@ -10,7 +10,8 @@ import { getUserToken } from './userSession'
 import { getAdminToken } from '../components/adminAuth/adminSession'
 
 function authHeaders() {
-  const token = getAdminToken() || getUserToken()
+  const isPortalAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/portal-internal-hq')
+  const token = isPortalAdmin ? (getAdminToken() || getUserToken()) : (getUserToken() || getAdminToken())
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -74,7 +75,12 @@ export async function createOrder(data) {
     body: JSON.stringify(data)
   })
   const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(body?.error?.message || 'Gagal membuat pesanan')
+  if (!res.ok) {
+    const err = new Error(body?.error?.message || 'Gagal membuat pesanan')
+    err.status = res.status
+    err.code = body?.error?.code
+    throw err
+  }
   return body?.data
 }
 
@@ -241,7 +247,12 @@ export async function mockPay(id, paymentMethod = 'QRIS') {
     body: JSON.stringify({ paymentMethod })
   })
   const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(body?.error?.message || 'Gagal memproses pembayaran')
+  if (!res.ok) {
+    const err = new Error(body?.error?.message || 'Gagal memproses pembayaran')
+    err.code = body?.error?.code
+    err.status = res.status
+    throw err
+  }
   return body
 }
 

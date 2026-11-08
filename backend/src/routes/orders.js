@@ -456,6 +456,70 @@ ordersRouter.patch('/:id/mock-pay', async (req, res, next) => {
       })
     }
 
+    const normalizedMethod = String(paymentMethod).toUpperCase()
+
+    // Jika membayar menggunakan Saldo Dompet Akun
+    if (normalizedMethod === 'WALLET' || normalizedMethod === 'DOMPET') {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { id: true, walletBalance: true }
+      })
+
+      const currentBalance = Number(user?.walletBalance || 0)
+      const totalAmount = Number(order.totalPaid || 0)
+
+      if (currentBalance < totalAmount) {
+        return res.status(400).json({
+          error: {
+            code: 'INSUFFICIENT_WALLET_BALANCE',
+            message: 'Maaf saldo dompet anda tidak cukup, tolong isi saldo dompet terlebih dahulu atau gunakan metode pembayaran lainnya'
+          }
+        })
+      }
+
+      // Potong saldo dompet dan buat catatan transaksi mutasi
+      const [updatedUser, , updatedOrder] = await prisma.$transaction([
+        prisma.user.update({
+          where: { id: req.userId },
+          data: {
+            walletBalance: {
+              decrement: totalAmount
+            }
+          }
+        }),
+        prisma.walletTransaction.create({
+          data: {
+            userId: req.userId,
+            type: 'SEWA_PAYMENT',
+            amount: totalAmount,
+            description: `Pembayaran sewa alat ${order.invoiceNumber}`,
+            status: 'BERHASIL',
+            reference: order.invoiceNumber,
+            paymentMethod: 'WALLET'
+          }
+        }),
+        prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: 'MENUNGGU_KONFIRMASI',
+            paymentMethod: 'WALLET',
+            paidAt: new Date()
+          },
+          include: {
+            equipment: {
+              include: { owner: { select: { id: true, fullName: true, email: true, phone: true } } }
+            }
+          }
+        })
+      ])
+
+      return res.json({
+        data: updatedOrder,
+        newWalletBalance: updatedUser.walletBalance,
+        message: 'Pembayaran via saldo dompet berhasil. Menunggu konfirmasi pemilik alat.'
+      })
+    }
+
     const updated = await prisma.order.update({
       where: { id: order.id },
       data: {

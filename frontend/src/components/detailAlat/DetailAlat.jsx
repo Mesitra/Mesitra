@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import {
+  ArrowLeft,
   Info,
   Loader2,
   MapPin,
@@ -104,6 +105,20 @@ export default function DetailAlat({
   // Kapasitas daya listrik usaha penyewa (dari sesi login di localStorage).
   const user = getSessionUser()
   const userPowerLimit = getUserPowerLimit(user)
+
+  // Deteksi mode mobile (< 1024px) untuk menonaktifkan seleksi tanggal pada halaman detail alat
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.innerWidth < 1024
+  })
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // ── Ambil detail alat dari backend ──────────────────────────────────────
   useEffect(() => {
@@ -257,7 +272,7 @@ export default function DetailAlat({
         <p className="text-xs text-slate-600">{error || 'Alat tidak ditemukan'}</p>
         <button
           type="button"
-          onClick={onBack || onNavigateHome}
+          onClick={() => (onBack ? onBack() : navigate('/beranda-sewa'))}
           className="mt-2 text-xs font-semibold text-blue-600 hover:underline bg-transparent border-0 cursor-pointer"
         >
           Kembali ke Jelajahi Alat
@@ -270,33 +285,39 @@ export default function DetailAlat({
 
   return (
     <div className="box-border w-full min-h-screen flex flex-col justify-start items-start bg-slate-50">
-      {/* 1. Global Navigation Bar */}
+      {/* 1. Global Navigation Bar — floating menu mobile disembunyikan saat di detail alat */}
       <NavbarPenyewa
         activeTab="jelajahi"
         dateRange="12 – 15 Jun"
-        onNavigateHome={onNavigateHome}
+        onNavigateHome={() => (onNavigateHome ? onNavigateHome() : navigate('/beranda-sewa'))}
+        hideBottomNav={true}
       />
 
       {/* 2. Main Detail Page Layout: Two Columns */}
-      <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-fit flex flex-col lg:flex-row gap-6 py-7 pb-12 justify-start items-start">
+      <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-fit flex flex-col lg:flex-row gap-6 py-7 pb-28 lg:pb-12 justify-start items-start">
         {/* Left Column: Media, Specs, Warning, Calendar, Description */}
         <section className="box-border flex-1 min-w-0 w-full h-fit flex flex-col gap-5.5 justify-start items-start">
-          {/* Breadcrumb Navigation */}
-          <nav className="box-border w-fit h-fit shrink-0 flex flex-row gap-2 justify-start items-center text-[11px]">
+          {/* Top Bar: Tombol Kembali & Breadcrumb Navigation */}
+          <div className="box-border w-full flex items-center gap-3">
             <button
               type="button"
-              onClick={onBack || onNavigateHome}
-              className="text-slate-600 font-normal hover:text-blue-600 cursor-pointer bg-transparent border-0 p-0"
+              onClick={() => (onBack ? onBack() : navigate('/beranda-sewa'))}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 active:scale-95 transition-all cursor-pointer shadow-xs text-xs font-semibold shrink-0"
+              title="Kembali ke Jelajahi Alat"
             >
-              Jelajahi Alat
+              <ArrowLeft className="w-4 h-4 text-slate-700" />
+              <span>Kembali</span>
             </button>
-            <span className="text-slate-400">/</span>
-            <span className="text-slate-600 font-normal">{equipment.category}</span>
-            <span className="text-slate-400">/</span>
-            <span className="text-slate-900 font-semibold truncate max-w-50 sm:max-w-none">
-              {equipment.name}
-            </span>
-          </nav>
+
+            {/* Breadcrumb Navigation */}
+            <nav className="box-border flex-1 min-w-0 flex flex-row items-center gap-2 text-[11px] truncate">
+              <span className="text-slate-600 font-normal whitespace-nowrap">{equipment.category}</span>
+              <span className="text-slate-400">/</span>
+              <span className="text-slate-900 font-semibold truncate">
+                {equipment.name}
+              </span>
+            </nav>
+          </div>
 
           {/* Image Gallery */}
           <ImageGallery
@@ -381,25 +402,35 @@ export default function DetailAlat({
             />
           )}
 
-          {/* Highlight Peringatan Minimal Sewa */}
+          {/* Highlight Peringatan Minimal Sewa & Jadwal Ketersediaan */}
           <div className="box-border w-full flex flex-row gap-2.5 p-3.5 justify-start items-center bg-blue-50/80 ring-1 ring-blue-200 rounded-[12px]">
             <Info className="w-4 h-4 shrink-0 text-blue-600" />
             <p className="text-xs text-blue-900 font-medium m-0">
-              Pilih tanggal sewa di kalender. Minimal sewa:{' '}
-              <span className="font-bold">{minRentDays} Hari</span>
+              {isMobile ? (
+                <>
+                  Jadwal ketersediaan alat (Minimal sewa:{' '}
+                  <span className="font-bold">{minRentDays} Hari</span>). Pemilihan tanggal sewa dilakukan pada halaman checkout.
+                </>
+              ) : (
+                <>
+                  Pilih tanggal sewa di kalender. Minimal sewa:{' '}
+                  <span className="font-bold">{minRentDays} Hari</span>
+                </>
+              )}
             </p>
           </div>
 
-          {/* Availability Calendar */}
+          {/* Availability Calendar — Read-only pada tampilan mobile (hanya untuk melihat jadwal ketersediaan) */}
           <AvailabilityCalendar
             monthTitle={`Ketersediaan ${MONTH_NAMES[calendarMonth]} ${calendarYear}`}
             year={calendarYear}
             month={calendarMonth}
             minRentDays={minRentDays}
-            selectionStart={selectionStart}
-            selectionEnd={selectionEnd}
-            onSelectionChange={handleSelectionChange}
+            selectionStart={isMobile ? null : selectionStart}
+            selectionEnd={isMobile ? null : selectionEnd}
+            onSelectionChange={isMobile ? undefined : handleSelectionChange}
             dayStatus={equipment.dayStatus}
+            readOnly={isMobile}
           />
 
           {/* Deskripsi Alat Card */}
@@ -599,10 +630,9 @@ export default function DetailAlat({
         </section>
 
         {/* Right Column: 1 Frame Card (Checkout + Profil Pemilik)
-            Tampil dalam 1 frame terpadu tanpa ruang kosong berlebih di bawahnya,
-            dan sticky secara dinamis di desktop agar scrolling mengalir alami. */}
-        <section className="box-border w-full lg:w-105 shrink-0 flex flex-col justify-start items-start">
-          <div className="box-border lg:sticky lg:top-24 w-full h-fit flex flex-col gap-3 justify-start items-start">
+            Tampil di desktop sebagai sidebar sticky. Pada mobile, checkout dialihkan ke halaman khusus. */}
+        <section className="box-border w-full lg:w-105 shrink-0 hidden lg:flex lg:sticky lg:top-24 z-10 self-start flex-col justify-start items-start">
+          <div className="box-border w-full h-fit lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto scrollbar-thin flex flex-col gap-3 justify-start items-start">
             {/* Peringatan: rentang tanggal belum lengkap */}
             {dateWarning && (
               <div className="box-border w-full flex flex-row gap-2 p-3 justify-start items-start bg-amber-50 ring-1 ring-amber-200 rounded-[10px]">
@@ -705,6 +735,49 @@ export default function DetailAlat({
           </div>
         </div>
       )}
+
+      {/* 3. Mobile Bottom Action Bar (Inspirasi Foto Kiri / Shopee Product Bar) */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] animate-in fade-in duration-200">
+        {/* Tombol Chat / Hubungi Pemilik */}
+        <button
+          type="button"
+          onClick={handleChatOwner}
+          className="flex flex-col items-center justify-center gap-0.5 text-slate-700 hover:text-blue-600 active:scale-95 px-3 py-1 bg-transparent border-0 cursor-pointer min-w-12 transition-colors"
+          title="Hubungi Pemilik / Chat"
+        >
+          <MessageSquare className="w-5 h-5 text-slate-700" />
+          <span className="text-[10px] font-semibold text-slate-600 whitespace-nowrap">Chat</span>
+        </button>
+
+        <div className="w-px h-7 bg-slate-200 shrink-0" />
+
+        {/* Info Tarif Sewa Singkat */}
+        <div className="flex flex-col items-start min-w-0 flex-1 pl-1">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Tarif Sewa</div>
+          <div className="text-sm font-extrabold text-blue-600 truncate leading-tight">
+            {formatRupiah(equipment.pricePerDay)}
+            <span className="text-[10px] text-slate-500 font-normal ml-0.5">/ hari</span>
+          </div>
+        </div>
+
+        {/* Tombol Mentrigger Halaman Checkout Baru */}
+        <button
+          type="button"
+          onClick={() => {
+            navigate(`/sewa/${equipment.id}`, {
+              state: {
+                equipment,
+                selectionStart: selectionStart?.toISOString()?.slice(0, 10),
+                selectionEnd: (selectionEnd || selectionStart)?.toISOString()?.slice(0, 10),
+                rentalDays
+              }
+            })
+          }}
+          className="bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs sm:text-sm px-5 py-2.75 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer whitespace-nowrap border-0"
+        >
+          <span>Sewa Sekarang</span>
+        </button>
+      </div>
 
       {/* Optional: Update Power Modal Demo */}
       {showPowerModal && (

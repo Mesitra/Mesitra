@@ -7,7 +7,8 @@ import { getUserToken } from './userSession'
 import { getAdminToken } from '../components/adminAuth/adminSession'
 
 function authHeaders() {
-  const token = getAdminToken() || getUserToken()
+  const isPortalAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/portal-internal-hq')
+  const token = isPortalAdmin ? (getAdminToken() || getUserToken()) : (getUserToken() || getAdminToken())
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -31,6 +32,10 @@ export async function listChats() {
  * Mengambil total pesan belum dibaca.
  */
 export async function getUnreadCount() {
+  const isPortalAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/portal-internal-hq')
+  const token = isPortalAdmin ? (getAdminToken() || getUserToken()) : (getUserToken() || getAdminToken())
+  if (!token) return 0
+
   const res = await fetch(`${API_BASE}/chats/unread-count?_t=${Date.now()}`, {
     headers: authHeaders(),
     cache: 'no-store'

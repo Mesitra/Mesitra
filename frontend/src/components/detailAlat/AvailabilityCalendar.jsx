@@ -12,7 +12,7 @@ export { DEFAULT_DAYS_STATUS }
 
 export default function AvailabilityCalendar({
   monthTitle,
-  subTitle = 'Pilih tanggal mulai & selesai sewa',
+  subTitle,
   year,
   month,
   minRentDays = 1,
@@ -21,8 +21,15 @@ export default function AvailabilityCalendar({
   selectionEnd = null,
   onSelectionChange,
   dayStatus: propDayStatus,
-  equipment
+  equipment,
+  readOnly = false
 }) {
+  const resolvedSubtitle =
+    subTitle !== undefined
+      ? subTitle
+      : readOnly
+      ? 'Jadwal ketersediaan & tanggal yang sudah disewa'
+      : 'Pilih tanggal mulai & selesai sewa'
   const now = new Date()
   const initialYear = Number.isInteger(year) ? year : now.getFullYear()
   const initialMonth = Number.isInteger(month) ? month : now.getMonth()
@@ -131,6 +138,9 @@ export default function AvailabilityCalendar({
   }
 
   const handleDayClick = (day) => {
+    // Mode read-only (mis. pada tampilan mobile detail alat) tidak mengizinkan seleksi tanggal
+    if (readOnly) return
+
     // Tanggal terisi atau buffer tidak bisa dipilih
     if (isForbiddenDay(day)) return
 
@@ -242,7 +252,7 @@ export default function AvailabilityCalendar({
             {displayTitle}
           </div>
           <div className="text-xs text-slate-500 font-normal text-left whitespace-nowrap">
-            {subTitle}
+            {resolvedSubtitle}
           </div>
         </div>
 
@@ -286,9 +296,9 @@ export default function AvailabilityCalendar({
         {daysArray.map((day) => {
           const status = getStatus(day)
           const isForbidden = status === 'terisi' || status === 'buffer'
-          const selectedStart = isStart(day)
-          const selectedEnd = isEnd(day)
-          const inRange = isBetween(day)
+          const selectedStart = !readOnly && isStart(day)
+          const selectedEnd = !readOnly && isEnd(day)
+          const inRange = !readOnly && isBetween(day)
 
           let styleClasses = ''
           if (selectedStart || selectedEnd) {
@@ -299,20 +309,22 @@ export default function AvailabilityCalendar({
             styleClasses = 'bg-blue-100 text-blue-800 font-semibold cursor-pointer hover:bg-blue-200'
           } else if (status === 'terisi') {
             // Terisi: dilarang, merah pudar kontras
-            styleClasses = 'bg-red-50 text-red-500 ring-1 ring-red-200/70 pointer-events-none opacity-50 cursor-not-allowed'
+            styleClasses = 'bg-red-50 text-red-500 ring-1 ring-red-200/70 pointer-events-none opacity-60 cursor-not-allowed'
           } else if (status === 'buffer') {
             // Buffer: dilarang, abu-abu kontras
-            styleClasses = 'bg-slate-100 text-slate-500 ring-1 ring-slate-300 pointer-events-none opacity-50 cursor-not-allowed'
+            styleClasses = 'bg-slate-100 text-slate-500 ring-1 ring-slate-300 pointer-events-none opacity-60 cursor-not-allowed'
           } else {
             // Tersedia
-            styleClasses = 'bg-white ring-1 ring-slate-200 text-slate-900 hover:bg-blue-50/50 hover:ring-blue-600 font-medium cursor-pointer'
+            styleClasses = readOnly
+              ? 'bg-white ring-1 ring-slate-200 text-slate-900 font-medium cursor-default'
+              : 'bg-white ring-1 ring-slate-200 text-slate-900 hover:bg-blue-50/50 hover:ring-blue-600 font-medium cursor-pointer'
           }
 
           return (
             <button
               key={day}
               type="button"
-              disabled={isForbidden}
+              disabled={isForbidden || readOnly}
               onClick={() => handleDayClick(day)}
               aria-label={`${day} ${status}`}
               aria-pressed={selectedStart || selectedEnd || inRange}
@@ -326,22 +338,28 @@ export default function AvailabilityCalendar({
 
       {/* Ringkasan seleksi + info minimal sewa */}
       <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
-        <div className="text-[11px] text-slate-600 font-medium tabular-nums text-left whitespace-nowrap">
-          {selectionStart ? (
-            <>
-              Mulai {formatShortDate(selectionStart)}
-              {selectionEnd
-                ? ` · Selesai ${formatShortDate(selectionEnd)} · ${rentalDays} hari sewa`
-                : isSingleDayValid
-                ? ` · Selesai ${formatShortDate(selectionStart)} · 1 hari sewa`
-                : ` · pilih tanggal selesai (minimal ${minDays} hari sewa)`}
-            </>
-          ) : (
-            'Belum ada tanggal dipilih'
-          )}
-        </div>
+        {readOnly ? (
+          <div className="text-[11px] text-slate-500 font-medium text-left">
+            Jadwal ketersediaan alat di atas dapat dilihat secara real-time. Pemilihan tanggal sewa dilakukan pada halaman checkout.
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-600 font-medium tabular-nums text-left whitespace-nowrap">
+            {selectionStart ? (
+              <>
+                Mulai {formatShortDate(selectionStart)}
+                {selectionEnd
+                  ? ` · Selesai ${formatShortDate(selectionEnd)} · ${rentalDays} hari sewa`
+                  : isSingleDayValid
+                  ? ` · Selesai ${formatShortDate(selectionStart)} · 1 hari sewa`
+                  : ` · pilih tanggal selesai (minimal ${minDays} hari sewa)`}
+              </>
+            ) : (
+              'Belum ada tanggal dipilih'
+            )}
+          </div>
+        )}
 
-        {notice && (
+        {!readOnly && notice && (
           <div
             role="alert"
             className="box-border w-full flex flex-row gap-3 p-3.5 sm:p-4 justify-between items-start bg-amber-50/95 border border-amber-300 border-l-4 border-l-amber-500 rounded-xl shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-200"
@@ -398,21 +416,24 @@ export default function AvailabilityCalendar({
           </span>
         </div>
 
-        {/* Dipilih (mulai & selesai) */}
-        <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-1.5 justify-start items-center">
-          <div className="box-border w-3 shrink-0 h-3 bg-blue-600 rounded"></div>
-          <span className="text-xs text-slate-600 font-medium whitespace-nowrap">
-            Dipilih
-          </span>
-        </div>
+        {/* Dipilih & Dalam rentang hanya bila tidak read-only */}
+        {!readOnly && (
+          <>
+            <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-1.5 justify-start items-center">
+              <div className="box-border w-3 shrink-0 h-3 bg-blue-600 rounded"></div>
+              <span className="text-xs text-slate-600 font-medium whitespace-nowrap">
+                Dipilih
+              </span>
+            </div>
 
-        {/* Rentang terpilih (in-between) */}
-        <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-1.5 justify-start items-center">
-          <div className="box-border w-3 shrink-0 h-3 bg-blue-100 rounded"></div>
-          <span className="text-xs text-slate-600 font-medium whitespace-nowrap">
-            Dalam rentang
-          </span>
-        </div>
+            <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-1.5 justify-start items-center">
+              <div className="box-border w-3 shrink-0 h-3 bg-blue-100 rounded"></div>
+              <span className="text-xs text-slate-600 font-medium whitespace-nowrap">
+                Dalam rentang
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

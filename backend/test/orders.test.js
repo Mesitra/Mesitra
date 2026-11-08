@@ -95,13 +95,19 @@ before(async () => {
 })
 
 after(async () => {
-  if (createdOrderId) {
-    await prisma.order.deleteMany({ where: { id: createdOrderId } })
-  }
-  await prisma.equipment.deleteMany({ where: { id: TEST_EQUIPMENT_ID } })
-  await prisma.user.deleteMany({ where: { email: { in: [TEST_RENTER_EMAIL, TEST_OWNER_EMAIL, TEST_ADMIN_EMAIL] } } })
-  if (server) {
-    server.close()
+  try {
+    if (createdOrderId) {
+      await prisma.order.deleteMany({ where: { id: createdOrderId } }).catch(() => {})
+    }
+    await prisma.equipment.deleteMany({ where: { id: TEST_EQUIPMENT_ID } }).catch(() => {})
+    await prisma.walletTransaction.deleteMany({ where: { userId: { in: [renterId, ownerId] } } }).catch(() => {})
+    await prisma.user.deleteMany({ where: { email: { in: [TEST_RENTER_EMAIL, TEST_OWNER_EMAIL, TEST_ADMIN_EMAIL] } } }).catch(() => {})
+  } catch {
+    // ignore
+  } finally {
+    if (server) {
+      server.close()
+    }
   }
 })
 
@@ -211,6 +217,89 @@ test('PATCH /api/orders/:id/mock-pay simulasi mock payment', async () => {
     body: JSON.stringify({ paymentMethod: 'VA_BCA' })
   })
   assert.equal(resRetry.status, 400)
+})
+
+test('Pembayaran pesanan dengan Saldo Dompet (WALLET) - validasi saldo kurang & saldo cukup', async () => {
+  // Buat order baru untuk pengujian dompet
+  const resOrder = await fetch(`${baseUrl}/api/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${renterToken}`
+    },
+    body: JSON.stringify({
+      equipmentId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+      startDate: '2026-11-20',
+      endDate: '2026-11-21',
+      rentalDays: 2,
+      deliveryMethod: 'PICKUP',
+      rentalCost: 100000,
+      depositAmount: 50000,
+      totalPaid: 150000
+    })
+  })
+  const orderJson = await resOrder.json()
+  assert.equal(orderJson.data.totalPaid, 150000)
+  const walletOrderId = orderJson.data.id
+
+  // 0. Pastikan saldo dompet 0 terlebih dahulu
+  await prisma.user.update({
+    where: { id: renterId },
+    data: { walletBalance: 0 }
+  })
+
+  // 1. Cek pembayaran saat saldo 0 (harus ditolak dengan pesan yang diminta user)
+  const resFail = await fetch(`${baseUrl}/api/orders/${walletOrderId}/mock-pay`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${renterToken}`
+    },
+    body: JSON.stringify({ paymentMethod: 'WALLET' })
+  })
+  const failJson = await resFail.json()
+  assert.equal(resFail.status, 400)
+  assert.equal(failJson.error.code, 'INSUFFICIENT_WALLET_BALANCE')
+  assert.ok(failJson.error.message.includes('Maaf saldo dompet anda tidak cukup'))
+
+  // 2. Top-up saldo dompet user agar mencukupi
+  await prisma.user.update({
+    where: { id: renterId },
+    data: { walletBalance: 200000 }
+  })
+
+  // 3. Bayar kembali menggunakan saldo dompet (harus sukses dan memotong saldo)
+  const resSuccess = await fetch(`${baseUrl}/api/orders/${walletOrderId}/mock-pay`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${renterToken}`
+    },
+    body: JSON.stringify({ paymentMethod: 'WALLET' })
+  })
+  const successJson = await resSuccess.json()
+  assert.equal(resSuccess.status, 200)
+  assert.equal(successJson.data.status, 'MENUNGGU_KONFIRMASI')
+  assert.equal(successJson.data.paymentMethod, 'WALLET')
+  assert.equal(successJson.newWalletBalance, 50000)
+
+  // Pastikan mutasi walletTransaction SEWA_PAYMENT tercatat
+  const tx = await prisma.walletTransaction.findFirst({
+    where: { reference: successJson.data.invoiceNumber }
+  })
+  assert.ok(tx)
+  assert.equal(tx.amount, 150000)
+  assert.equal(tx.type, 'SEWA_PAYMENT')
+
+  // Reset saldo renter kembali ke 0 agar tidak mengganggu test berikutnya
+  await prisma.user.update({
+    where: { id: renterId },
+    data: { walletBalance: 0 }
+  })
+
+  // Bersihkan data transaksi dan pesanan pengujian dompet
+  await prisma.walletTransaction.deleteMany({ where: { userId: renterId } })
+  await prisma.order.deleteMany({ where: { id: walletOrderId } })
 })
 
 test('Siklus alur SEWA_AKTIF -> INSPEKSI -> DISPUTE dengan disputeReason', async () => {
