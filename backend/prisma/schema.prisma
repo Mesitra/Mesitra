@@ -66,6 +66,16 @@ model User {
   // Saldo dompet digital / escrow payout
   walletBalance Int @default(0)
 
+  // Kontrol Suspensi Akun oleh Admin
+  isSuspended     Boolean   @default(false)
+  suspendedReason String?   @db.Text
+  suspendedAt     DateTime?
+  suspendedById   String?
+
+  // Audit Trail Verifikasi KYC
+  verifiedAt      DateTime?
+  verifiedById    String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -79,6 +89,10 @@ model User {
 
   withdrawalAccounts WithdrawalAccount[]
   walletTransactions WalletTransaction[]
+
+  withdrawalRequests WithdrawalRequest[]
+  disputeTickets     DisputeTicket[]     @relation("RenterDisputeTickets")
+  adminAuditLogs     AdminAuditLog[]     @relation("AdminActionLogs")
 
   tenantProfile  TenantProfile?
   notifications  Notification[]
@@ -116,6 +130,13 @@ model Equipment {
   stock                 Int             @default(1)
   // Soft delete flag untuk menjaga keutuhan riwayat Order
   isDeleted             Boolean         @default(false)
+
+  // Kontrol Takedown Admin
+  isTakedownByAdmin     Boolean         @default(false)
+  takedownReason        String?         @db.Text
+  takedownAt            DateTime?
+  moderatedById         String?
+
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 
@@ -126,6 +147,7 @@ model Equipment {
   @@index([ownerId])
   @@index([status])
   @@index([isDeleted])
+  @@index([isTakedownByAdmin])
 }
 
 /**
@@ -205,12 +227,18 @@ model Order {
   resolvedAt          DateTime?
   isResolvedByAdmin   Boolean   @default(false)
 
+  // Pencatatan Resmi Ledger Potongan Platform 5%
+  platformFeeRate     Float     @default(0.05)
+  platformFee         Int       @default(0)
+  netOwnerPayout      Int       @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User      @relation(fields: [userId], references: [id])
-  equipment Equipment @relation(fields: [equipmentId], references: [id])
-  review    Review?
+  user          User           @relation(fields: [userId], references: [id])
+  equipment     Equipment      @relation(fields: [equipmentId], references: [id])
+  review        Review?
+  disputeTicket DisputeTicket?
 
   @@index([userId])
   @@index([equipmentId])
@@ -218,16 +246,24 @@ model Order {
 }
 
 model Review {
-  id          String    @id @default(uuid())
-  orderId     String    @unique
-  equipmentId String
-  userId      String
-  rating      Int
-  comment     String    @db.Text
-  ownerReply  String?   @db.Text
-  repliedAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(uuid())
+  orderId        String    @unique
+  equipmentId    String
+  userId         String
+  rating         Int
+  comment        String    @db.Text
+  ownerReply     String?   @db.Text
+  repliedAt      DateTime?
+
+  // Moderasi Konten Ulasan
+  isDeleted      Boolean   @default(false)
+  isFlagged      Boolean   @default(false)
+  moderatedAt    DateTime?
+  moderatedById  String?
+  moderationNote String?   @db.Text
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
@@ -235,6 +271,7 @@ model Review {
 
   @@index([equipmentId])
   @@index([userId])
+  @@index([isDeleted])
 }
 
 model Conversation {
@@ -382,4 +419,92 @@ model TenantProfile {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum WithdrawalStatus {
+  MENUNGGU
+  DIPROSES
+  SELESAI
+  DITOLAK
+}
+
+enum DisputeStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED_OWNER_WIN
+  RESOLVED_RENTER_WIN
+  RESOLVED_SPLIT
+  ESCALATED_LEGAL
+}
+
+model WithdrawalRequest {
+  id               String           @id @default(uuid())
+  withdrawalCode   String           @unique
+  userId           String
+  amount           Int
+  transferFee      Int              @default(0)
+  netAmount        Int
+  bankName         String
+  accountNumber    String
+  accountHolder    String
+  status           WithdrawalStatus @default(MENUNGGU)
+  bankReference    String?
+  transferProofUrl String?
+  processedAt      DateTime?
+  processedById    String?
+  adminNotes       String?          @db.Text
+  rejectionReason  String?          @db.Text
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model DisputeTicket {
+  id                  String        @id @default(uuid())
+  ticketNumber        String        @unique
+  orderId             String        @unique
+  renterId            String
+  ownerId             String
+  claimAmount         Int
+  disputeReason       String        @db.Text
+  ownerPhotos         Json?
+  renterDefenseNote   String?       @db.Text
+  renterCounterPhotos Json?
+  status              DisputeStatus @default(OPEN)
+  finalDamageFee      Int?
+  refundToRenter      Int?
+  payoutToOwner       Int?
+  adminArbitrageNote  String?       @db.Text
+  arbitratedAt        DateTime?
+  arbitratedById      String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  renter User  @relation("RenterDisputeTickets", fields: [renterId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([ownerId])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation("AdminActionLogs", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([action])
+  @@index([targetType, targetId])
 }
