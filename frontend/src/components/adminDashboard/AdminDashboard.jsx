@@ -41,11 +41,18 @@ export default function AdminDashboard({ onLogout }) {
   }
 
   const handleNavigateMenu = (menuKey) => {
-    setSearchParams({ tab: menuKey })
+    if (menuKey === 'verifikasi') {
+      navigate('/portal-internal-hq/dashboard')
+    } else if (menuKey === 'pencairan') {
+      navigate('/portal-internal-hq/pencairan-dana')
+    } else {
+      setSearchParams({ tab: menuKey })
+    }
   }
 
   const BREADCRUMB_TITLES = {
-    verifikasi: 'Verifikasi Akun'
+    verifikasi: 'Verifikasi Akun',
+    pencairan: 'Pencairan Dana'
   }
 
   const loadPengajuan = useCallback(async () => {
