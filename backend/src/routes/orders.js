@@ -409,6 +409,7 @@ ordersRouter.post('/', async (req, res, next) => {
         paymentDeadline
       },
       include: {
+        user: { select: { fullName: true } },
         equipment: {
           include: { owner: { select: { id: true, fullName: true, email: true } } }
         }
@@ -417,9 +418,10 @@ ordersRouter.post('/', async (req, res, next) => {
 
     // Kirim notifikasi pesanan baru ke pemilik alat (non-blocking)
     sendNewOrderNotif(equipment.ownerId, {
+      orderId: order.id,
       invoiceNumber: order.invoiceNumber,
       equipmentName: equipment.name,
-      renterName: order.equipment?.owner?.fullName || 'Penyewa'
+      renterName: order.user?.fullName || 'Penyewa'
     }).catch(() => {})
 
     return res.status(201).json({ data: order })
@@ -821,6 +823,7 @@ ordersRouter.post('/:id/return-submit', async (req, res, next) => {
 
     // Kirim notifikasi inspeksi/deposit ke pemilik alat (non-blocking)
     sendInspectionNotif(order.equipment?.ownerId || updated.equipment?.ownerId, {
+      orderId: updated.id,
       invoiceNumber: updated.invoiceNumber,
       status: 'INSPEKSI'
     }).catch(() => {})
@@ -1043,6 +1046,7 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
 
       // Kirim notifikasi dispute ke pemilik (non-blocking)
       sendInspectionNotif(order.equipment?.ownerId, {
+        orderId: updated.id,
         invoiceNumber: updated.invoiceNumber,
         status: 'DISPUTE'
       }).catch(() => {})
@@ -1115,6 +1119,7 @@ ordersRouter.patch('/:id/dispute', async (req, res, next) => {
 
     // Kirim notifikasi dispute ke pemilik (non-blocking)
     sendInspectionNotif(order.equipment?.ownerId, {
+      orderId: updated.id,
       invoiceNumber: updated.invoiceNumber,
       status: 'DISPUTE'
     }).catch(() => {})

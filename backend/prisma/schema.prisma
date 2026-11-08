@@ -80,7 +80,8 @@ model User {
   withdrawalAccounts WithdrawalAccount[]
   walletTransactions WalletTransaction[]
 
-  tenantProfile TenantProfile?
+  tenantProfile  TenantProfile?
+  notifications  Notification[]
 }
 
 model Equipment {
@@ -323,6 +324,30 @@ model WalletTransaction {
  * pada User tetap dipertahankan untuk kompatibilitas mundur.
  * joinYear: tidak disimpan di sini; gunakan User.createdAt year saat membaca.
  */
+enum NotificationType {
+  ORDER_NEW
+  RETURN_REMINDER
+  INSPECTION
+  DISPUTE
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  title       String
+  message     String           @db.Text
+  type        NotificationType
+  isRead      Boolean          @default(false)
+  referenceId String? // orderId terkait, untuk deep-link ke OrderDetail
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
 model TenantProfile {
   id     String @id @default(uuid())
   userId String @unique

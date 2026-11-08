@@ -16,6 +16,7 @@ import { ordersRouter } from './routes/orders.js'
 import { reviewsRouter } from './routes/reviews.js'
 import { chatsRouter } from './routes/chats.js'
 import { walletRouter } from './routes/wallet.js'
+import { notificationsRouter } from './routes/notifications.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -60,6 +61,8 @@ const ENDPOINTS = [
   'GET /api/chats/:conversationId/messages',
   'POST /api/chats/messages',
   'GET /api/stats',
+  'GET /api/notifications',
+  'PATCH /api/notifications/:id/read',
   'GET /openapi.yaml'
 ]
 
@@ -106,6 +109,7 @@ export function createApp() {
   app.use('/api/chats', chatsRouter)
   app.use('/api/stats', statsRouter)
   app.use('/api/wallet', walletRouter)
+  app.use('/api/notifications', notificationsRouter)
 
 
 

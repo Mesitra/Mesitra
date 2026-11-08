@@ -46,6 +46,7 @@ import DompetPemilik from './dashboardPemilik/DompetPemilik'
 import ProfilToko from './dashboardPemilik/ProfilToko'
 import ChatPanel from '../components/chat/ChatPanel'
 import { getUnreadCount } from '../lib/chatsApi'
+import { listNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../lib/notificationsApi'
 import { WalletProvider, useWallet } from '../context/WalletContext'
 
 // Helper untuk mengelompokkan data pesanan (Orders) ke format mingguan dalam bulan berjalan
@@ -251,7 +252,9 @@ function OwnerDashboardContent() {
   const [chatUnreadCount, setChatUnreadCount] = useState(0)
   const [selectedChatPartner, setSelectedChatPartner] = useState(null)
 
-  // Notification Popover state (Task 2)
+  // Notification Popover state (Task 2 & 3)
+  const [notifications, setNotifications] = useState([])
+  const [targetOrderId, setTargetOrderId] = useState(null)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const notificationRef = useRef(null)
 
@@ -286,11 +289,17 @@ function OwnerDashboardContent() {
       const user = getSessionUser()
       const equipParams = user?.id ? { ownerId: user.id, allStatus: 'true' } : { allStatus: 'true' }
 
-      const [orderRes, equipRes, reviewRes] = await Promise.all([
+      const [orderRes, equipRes, reviewRes, notifRes] = await Promise.all([
         listOwnerOrders().catch(() => listOrders({ as: 'owner' }).catch(() => null)),
         listEquipments(equipParams).catch(() => null),
-        listReviews({ as: 'owner' }).catch(() => null)
+        listReviews({ as: 'owner' }).catch(() => null),
+        listNotifications().catch(() => null)
       ])
+
+      // Data Notifikasi In-App
+      if (Array.isArray(notifRes)) {
+        setNotifications(notifRes)
+      }
 
       // Data Orders
       if (Array.isArray(orderRes)) {
@@ -335,6 +344,17 @@ function OwnerDashboardContent() {
   useEffect(() => {
     fetchData()
     getUnreadCount().then(setChatUnreadCount).catch(() => {})
+
+    // Polling notifikasi in-app berkala (push-like sync)
+    const notifInterval = setInterval(() => {
+      listNotifications()
+        .then((data) => {
+          if (Array.isArray(data)) setNotifications(data)
+        })
+        .catch(() => {})
+    }, 10000)
+
+    return () => clearInterval(notifInterval)
   }, [activeTab])
 
   // Kalkulasi statistik dari data Orders dan Equipment
@@ -422,103 +442,58 @@ function OwnerDashboardContent() {
     ]
   }, [orders])
 
-  // Data notifikasi dinamis untuk Task 1 (Flattened per Item Individual)
-  const inspectionOrders = useMemo(() => {
-    return orders.filter((o) => o.status === 'INSPEKSI')
-  }, [orders])
+  // ── IN-APP NOTIFICATIONS ENGINE (TASK 3) ──────────────────────────────────
+  const unreadNotificationCount = useMemo(() => {
+    return notifications.filter((n) => !n.isRead).length
+  }, [notifications])
 
-  const notificationItems = useMemo(() => {
-    const items = []
+  const getNotificationMeta = (type) => {
+    switch (type) {
+      case 'ORDER_NEW':
+        return { icon: Inbox, colorBg: 'bg-blue-100', colorText: 'text-blue-700', badgeLabel: 'Pesanan Baru' }
+      case 'RETURN_REMINDER':
+        return { icon: Calendar, colorBg: 'bg-emerald-100', colorText: 'text-emerald-700', badgeLabel: 'Pengembalian' }
+      case 'INSPECTION':
+        return { icon: ShieldCheck, colorBg: 'bg-amber-100', colorText: 'text-amber-700', badgeLabel: 'Inspeksi' }
+      case 'DISPUTE':
+        return { icon: ShieldAlert, colorBg: 'bg-rose-100', colorText: 'text-rose-700', badgeLabel: 'Dispute' }
+      default:
+        return { icon: Bell, colorBg: 'bg-blue-100', colorText: 'text-blue-700', badgeLabel: 'Info' }
+    }
+  }
 
-    // 1. Permintaan sewa baru (MENUNGGU_KONFIRMASI) - Flattened per item pesanan
-    pendingOrders.forEach((order) => {
-      const renterName = order.user?.kycData?.businessName || order.user?.fullName || order.user?.email || 'Penyewa UMKM'
-      const equipmentName = order.equipment?.name || 'Alat Produksi'
-      items.push({
-        id: `notif-order-${order.id}`,
-        type: 'ORDER',
-        title: `Pesanan Baru: ${equipmentName}`,
-        desc: `Dari ${renterName} · ${order.invoiceNumber} (${order.rentalDays || 1} hari)`,
-        icon: Inbox,
-        colorBg: 'bg-blue-100',
-        colorText: 'text-blue-700',
-        action: () => {
-          setActiveTab('ringkasan')
-          setIsNotificationOpen(false)
-        }
+  const handleNotificationClick = async (notif) => {
+    // 1. Tembak endpoint PATCH /read agar badge berkurang secara real-time
+    if (!notif.isRead) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+      )
+      markNotificationAsRead(notif.id).catch((err) => {
+        console.warn('Gagal menandai notifikasi dibaca:', err)
       })
+    }
+
+    setIsNotificationOpen(false)
+
+    // 2. Redirect user ke halaman Detail Pesanan yang sesuai dengan referenceId
+    if (notif.referenceId) {
+      setTargetOrderId(notif.referenceId)
+      setActiveTab('pesanan')
+      setSearchParams({ tab: 'pesanan', orderId: notif.referenceId })
+    } else {
+      setActiveTab('pesanan')
+      setSearchParams({ tab: 'pesanan' })
+    }
+  }
+
+  const handleMarkAllAsRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+    markAllNotificationsAsRead().catch((err) => {
+      console.warn('Gagal menandai semua notifikasi dibaca:', err)
     })
+  }
 
-    // 2. Jadwal pengembalian - Flattened per jadwal pengembalian
-    upcomingReturns.forEach((item, idx) => {
-      const renterName = item.user?.fullName || 'Penyewa'
-      const equipmentName = item.equipment?.name || 'Unit Alat'
-      const returnDate = item.endDate ? formatShortDate(item.endDate) : 'Terdekat'
-      items.push({
-        id: `notif-return-${item.id || idx}`,
-        type: 'RETURN',
-        title: `Jadwal Pengembalian: ${equipmentName}`,
-        desc: `Penyewa: ${renterName} · Waktu: ${item.time || '14.00'} (${returnDate})`,
-        icon: Calendar,
-        colorBg: 'bg-emerald-100',
-        colorText: 'text-emerald-700',
-        action: () => {
-          setActiveTab('pesanan')
-          setSelectedInspectionOrder(insp)
-          setIsNotificationOpen(false)
-        }
-      })
-    })
-
-    // 3. Inspeksi yang menunggu verifikasi - Flattened per pesanan inspeksi
-    inspectionOrders.forEach((insp) => {
-      const renterName = insp.user?.kycData?.businessName || insp.user?.fullName || 'Penyewa'
-      const equipmentName = insp.equipment?.name || 'Unit Alat'
-      items.push({
-        id: `notif-insp-${insp.id}`,
-        type: 'INSPECTION',
-        title: `Verifikasi Inspeksi: ${equipmentName}`,
-        desc: `BAST diterima dari ${renterName} · Verifikasi unit untuk pelepasan deposit`,
-        icon: ShieldCheck,
-        colorBg: 'bg-amber-100',
-        colorText: 'text-amber-700',
-        action: () => {
-          setActiveTab('pesanan')
-          setSelectedInspectionOrder(insp)
-          setIsNotificationOpen(false)
-        }
-      })
-    })
-
-    // 4. Aktivitas ulasan/rating baru - Flattened per ulasan pelanggan
-    reviews.slice(0, 5).forEach((rev) => {
-      const reviewerName = rev.user?.kycData?.businessName || rev.user?.fullName || 'Pelanggan UMKM'
-      const equipmentName = rev.equipment?.name || 'Unit Alat'
-      const snippet = rev.comment
-        ? rev.comment.length > 50
-          ? `${rev.comment.slice(0, 50)}...`
-          : rev.comment
-        : 'Ulasan baru'
-
-      items.push({
-        id: `notif-review-${rev.id}`,
-        type: 'REVIEW',
-        title: `Ulasan Bintang ${rev.rating}: ${equipmentName}`,
-        desc: `"${snippet}" – ${reviewerName}`,
-        icon: Star,
-        colorBg: 'bg-amber-100',
-        colorText: 'text-amber-700',
-        action: () => {
-          setActiveTab('ulasan')
-          setIsNotificationOpen(false)
-        }
-      })
-    })
-
-    return items
-  }, [pendingOrders, upcomingReturns, inspectionOrders, reviews])
-
-  const totalNotificationBadge = notificationItems.length
+  const totalNotificationBadge = unreadNotificationCount
 
   // Data mingguan untuk grafik Recharts (Task 2)
   const weeklyRevenueData = useMemo(() => {
@@ -946,7 +921,7 @@ function OwnerDashboardContent() {
                   />
                 </div>
 
-                {/* Notification Bell with Dropdown Popover (Task 2) */}
+                {/* Notification Bell with Dropdown Popover (Task 2 & 3) */}
                 <div className="relative" ref={notificationRef}>
                   <button
                     type="button"
@@ -959,9 +934,9 @@ function OwnerDashboardContent() {
                     title="Notifikasi & Perlu Tindakan"
                   >
                     <Bell className="w-4 h-4" />
-                    {totalNotificationBadge > 0 && (
+                    {unreadNotificationCount > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-extrabold flex items-center justify-center shadow-xs">
-                        {totalNotificationBadge}
+                        {unreadNotificationCount}
                       </span>
                     )}
                   </button>
@@ -973,51 +948,75 @@ function OwnerDashboardContent() {
                       <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-slate-900">Perlu Tindakan &amp; Notifikasi</span>
-                          {totalNotificationBadge > 0 && (
+                          {unreadNotificationCount > 0 && (
                             <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700">
-                              {totalNotificationBadge}
+                              {unreadNotificationCount} baru
                             </span>
                           )}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setIsNotificationOpen(false)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {unreadNotificationCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleMarkAllAsRead}
+                              className="text-[10.5px] font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                            >
+                              Tandai semua dibaca
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setIsNotificationOpen(false)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* List Item Notifikasi */}
                       <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
-                        {notificationItems.length === 0 ? (
+                        {notifications.length === 0 ? (
                           <div className="py-8 text-center space-y-2">
                             <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
                             <div className="text-xs font-bold text-slate-800">
                               Semua beres!
                             </div>
                             <div className="text-[11px] text-slate-500">
-                              Tidak ada tindakan mendesak yang butuh perhatian saat ini.
+                              Tidak ada tindakan mendesak atau notifikasi baru saat ini.
                             </div>
                           </div>
                         ) : (
-                          notificationItems.map((item) => {
-                            const Icon = item.icon
+                          notifications.map((item) => {
+                            const meta = getNotificationMeta(item.type)
+                            const Icon = meta.icon
                             return (
                               <div
                                 key={item.id}
-                                onClick={item.action}
-                                className="p-2.5 rounded-xl hover:bg-slate-50 flex items-start gap-3 transition-colors cursor-pointer group"
+                                onClick={() => handleNotificationClick(item)}
+                                className={`p-2.5 rounded-xl flex items-start gap-3 transition-colors cursor-pointer group ${
+                                  !item.isRead ? 'bg-blue-50/70 hover:bg-blue-100/50' : 'hover:bg-slate-50'
+                                }`}
                               >
-                                <div className={`w-8 h-8 rounded-lg ${item.colorBg} ${item.colorText} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+                                <div className={`w-8 h-8 rounded-lg ${meta.colorBg} ${meta.colorText} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform relative`}>
                                   <Icon className="w-4 h-4" />
+                                  {!item.isRead && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
+                                  )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                                    {item.title}
+                                  <div className="flex items-center justify-between gap-1">
+                                    <div className={`text-xs ${!item.isRead ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-700'} group-hover:text-blue-600 transition-colors line-clamp-1`}>
+                                      {item.title}
+                                    </div>
+                                    {item.createdAt && (
+                                      <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                                        {formatShortDate(item.createdAt)}
+                                      </span>
+                                    )}
                                   </div>
-                                  <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                                    {item.desc}
+                                  <div className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">
+                                    {item.message}
                                   </div>
                                 </div>
                                 <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
@@ -1629,6 +1628,7 @@ function OwnerDashboardContent() {
         {activeTab === 'pesanan' && (
           <PesananMasuk
             orders={orders}
+            initialSelectedOrderId={targetOrderId}
             onAcceptOrder={handleTerimaPesanan}
             onRejectOrder={handleTolakPesanan}
             onInspectOrder={(o, mode) => setSelectedInspectionOrder(o ? { ...o, initialMode: mode || o.initialMode || 'APPROVE' } : null)}

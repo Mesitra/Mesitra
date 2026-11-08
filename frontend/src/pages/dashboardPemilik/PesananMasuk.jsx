@@ -99,7 +99,8 @@ export default function PesananMasuk({
   onRejectOrder,
   onOpenChat,
   onInspectOrder,
-  actionLoadingId
+  actionLoadingId,
+  initialSelectedOrderId
 }) {
   // ── State Utama (Task 2) ──────────────────────────────────────────────────
   const [orders, setOrders] = useState([])
@@ -211,6 +212,17 @@ export default function PesananMasuk({
     return activeOrders.find((o) => o.id === selectedOrder.id) || selectedOrder
   }, [activeOrders, selectedOrder])
 
+  // Auto-buka detail jika ada target orderId dari notifikasi atau URL
+  useEffect(() => {
+    const targetId = initialSelectedOrderId || new URLSearchParams(window.location.search).get('orderId')
+    if (targetId && activeOrders.length > 0) {
+      const match = activeOrders.find((o) => o.id === targetId || o.invoiceNumber === targetId)
+      if (match) {
+        setSelectedOrder(match)
+      }
+    }
+  }, [initialSelectedOrderId, activeOrders])
+
   // Handlers
   const handleSelectOrder = (order) => {
     setSelectedOrder(order)
@@ -218,6 +230,11 @@ export default function PesananMasuk({
 
   const handleCloseDetail = () => {
     setSelectedOrder(null)
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('orderId')) {
+      url.searchParams.delete('orderId')
+      window.history.replaceState({}, '', url.toString())
+    }
   }
 
   const handleAccept = async (id) => {
