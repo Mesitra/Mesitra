@@ -8,6 +8,11 @@ import { prisma } from '../lib/prisma.js'
  * dan memastikan akun tidak dalam status suspensi (isSuspended).
  */
 export async function requireAuth(req, res, next) {
+  // Skip auth check untuk OPTIONS preflight request
+  if (req.method === 'OPTIONS') {
+    return next()
+  }
+
   try {
     const authHeader = req.headers.authorization
 
