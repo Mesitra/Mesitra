@@ -17,6 +17,7 @@ import {
   markAllNotificationsAsRead
 } from '../../lib/notificationsApi'
 import { getUserToken } from '../../lib/userSession'
+import { realtimeClient } from '../../lib/realtimeClient'
 
 export default function NotificationBell({ className = '' }) {
   const navigate = useNavigate()
@@ -41,9 +42,21 @@ export default function NotificationBell({ className = '' }) {
 
   useEffect(() => {
     loadNotifications()
-    // Polling berkala 25 detik
+
+    // Langganan event real-time SSE (notifikasi instan 0ms)
+    const unsub = realtimeClient.subscribe('notification:new', (notif) => {
+      setNotifications((prev) => {
+        if (!notif?.id || prev.some((n) => n.id === notif.id)) return prev
+        return [notif, ...prev]
+      })
+    })
+
+    // Fallback polling berkala 25 detik
     const timer = setInterval(loadNotifications, 25000)
-    return () => clearInterval(timer)
+    return () => {
+      unsub()
+      clearInterval(timer)
+    }
   }, [token])
 
   // Click outside to close popover
@@ -248,3 +261,4 @@ export default function NotificationBell({ className = '' }) {
     </div>
   )
 }
+

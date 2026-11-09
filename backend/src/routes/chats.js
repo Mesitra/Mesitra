@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
 import { config } from '../config.js'
 import { ApiError } from '../lib/errors.js'
+import { realtimeService } from '../services/realtimeService.js'
 
 export const chatsRouter = Router()
 
@@ -228,7 +229,7 @@ chatsRouter.get('/:conversationId/messages', async (req, res, next) => {
     }
 
     // Tandai pesan dari lawan bicara sebagai sudah dibaca
-    await prisma.message.updateMany({
+    const updateResult = await prisma.message.updateMany({
       where: {
         conversationId,
         senderId: { not: req.userId },
@@ -236,6 +237,14 @@ chatsRouter.get('/:conversationId/messages', async (req, res, next) => {
       },
       data: { isRead: true }
     })
+
+    if (updateResult.count > 0) {
+      const partnerId = conversation.renterId === req.userId ? conversation.ownerId : conversation.renterId
+      realtimeService.sendToUser(partnerId, 'chat:read', {
+        conversationId,
+        readBy: req.userId
+      })
+    }
 
     const messages = await prisma.message.findMany({
       where: { conversationId },
@@ -373,6 +382,17 @@ chatsRouter.post('/messages', async (req, res, next) => {
           select: { id: true, fullName: true, role: true }
         }
       }
+    })
+
+    // Broadcast event realtime ke penerima dan pengirim
+    const partnerId = conversation.renterId === req.userId ? conversation.ownerId : conversation.renterId
+    realtimeService.sendToUser(partnerId, 'chat:message', {
+      message,
+      conversationId: conversation.id
+    })
+    realtimeService.sendToUser(req.userId, 'chat:message', {
+      message,
+      conversationId: conversation.id
     })
 
     return res.status(201).json({

@@ -5,6 +5,7 @@
  * Cek preferensi notifikasi pemilik (TenantProfile) sebelum insert.
  */
 import { prisma } from '../lib/prisma.js'
+import { realtimeService } from './realtimeService.js'
 
 // ─── Helper: ambil TenantProfile pemilik alat ───────────────────────────────
 
@@ -33,7 +34,7 @@ export async function sendNewOrderNotif(tenantId, orderData) {
   if (profile && profile.notifPesananBaru === false) return
 
   const { orderId, invoiceNumber, equipmentName, renterName } = orderData
-  return prisma.notification.create({
+  const notif = await prisma.notification.create({
     data: {
       userId: tenantId,
       type: 'ORDER_NEW',
@@ -42,6 +43,8 @@ export async function sendNewOrderNotif(tenantId, orderData) {
       referenceId: orderId ?? null
     }
   })
+  realtimeService.sendToUser(tenantId, 'notification:new', notif)
+  return notif
 }
 
 /**
@@ -56,7 +59,7 @@ export async function sendReturnReminder(tenantId, orderData) {
   if (profile && profile.notifPengembalianAlat === false) return
 
   const { orderId, invoiceNumber, equipmentName, endDate } = orderData
-  return prisma.notification.create({
+  const notif = await prisma.notification.create({
     data: {
       userId: tenantId,
       type: 'RETURN_REMINDER',
@@ -65,6 +68,8 @@ export async function sendReturnReminder(tenantId, orderData) {
       referenceId: orderId ?? null
     }
   })
+  realtimeService.sendToUser(tenantId, 'notification:new', notif)
+  return notif
 }
 
 /**
@@ -80,7 +85,7 @@ export async function sendInspectionNotif(tenantId, orderData) {
 
   const { orderId, invoiceNumber, status } = orderData
   const isDispute = status === 'DISPUTE'
-  return prisma.notification.create({
+  const notif = await prisma.notification.create({
     data: {
       userId: tenantId,
       type: isDispute ? 'DISPUTE' : 'INSPECTION',
@@ -91,4 +96,6 @@ export async function sendInspectionNotif(tenantId, orderData) {
       referenceId: orderId ?? null
     }
   })
+  realtimeService.sendToUser(tenantId, 'notification:new', notif)
+  return notif
 }

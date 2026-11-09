@@ -23,8 +23,12 @@ export function errorHandler(err, req, res, _next) {
     })
   }
 
-  console.error(err)
+  console.error(`[ErrorTracker] 500 Internal Error req=${req.id || '-'}:`, err?.stack || err)
   return res.status(500).json({
-    error: { code: 'INTERNAL_ERROR', message: 'Terjadi kesalahan internal pada server' }
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'Terjadi kesalahan internal pada server',
+      requestId: req.id || null
+    }
   })
 }

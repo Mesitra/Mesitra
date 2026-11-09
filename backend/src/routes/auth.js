@@ -14,8 +14,10 @@ import {
   normalizeNik,
   normalizeBankAccount
 } from '../lib/userValidation.js'
+import { authLimiter } from '../middleware/rateLimiter.js'
 
 export const authRouter = Router()
+authRouter.use(authLimiter)
 
 /**
  * Normalisasi role ke ENUM Prisma: PENYEWA | PEMILIK

@@ -17,6 +17,7 @@ import { reviewsRouter } from './routes/reviews.js'
 import { chatsRouter } from './routes/chats.js'
 import { walletRouter } from './routes/wallet.js'
 import { notificationsRouter } from './routes/notifications.js'
+import { realtimeRouter } from './routes/realtime.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -124,6 +125,7 @@ export function createApp() {
   app.use('/api/stats', statsRouter)
   app.use('/api/wallet', walletRouter)
   app.use('/api/notifications', notificationsRouter)
+  app.use('/api/realtime', realtimeRouter)
 
 
 

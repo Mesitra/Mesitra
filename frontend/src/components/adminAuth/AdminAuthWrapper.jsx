@@ -54,11 +54,11 @@ export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
       if (data.token && data.user) {
         if (String(data.user.role).toUpperCase() === 'ADMIN') {
           setAdminSession(data.token, data.user)
-          navigate('/admin/kyc')
+          navigate('/admin/kyc', { replace: true })
         } else {
           localStorage.setItem('token', data.token)
           localStorage.setItem('user', JSON.stringify(data.user))
-          navigate('/beranda-sewa')
+          navigate('/beranda-sewa', { replace: true })
         }
       }
     } catch (err) {
@@ -102,7 +102,7 @@ export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
       }
 
       // Arahkan ke rute dashboard admin
-      navigate('/admin/kyc')
+      navigate('/admin/kyc', { replace: true })
     } catch (err) {
       setError(err.message || 'Verifikasi OTP gagal. Silakan coba lagi.')
     } finally {
@@ -138,7 +138,7 @@ export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
       setError={setError}
       rememberDevice={rememberDevice}
       setRememberDevice={setRememberDevice}
-      onBackToHome={() => navigate('/')}
+      onBackToHome={() => navigate('/', { replace: true })}
     />
   )
 }

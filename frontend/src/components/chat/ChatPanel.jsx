@@ -19,6 +19,7 @@ import ChatContextCard from './ChatContextCard'
 import { listChats, getChatMessages, sendMessage, checkPartnerChat } from '../../lib/chatsApi'
 import { getSessionUser, getUserInitials } from '../../lib/userSession'
 import { formatShortDate } from '../../lib/dateHelpers'
+import { realtimeClient } from '../../lib/realtimeClient'
 
 export default function ChatPanel({
   initialPartnerId = null,
@@ -292,14 +293,36 @@ export default function ChatPanel({
     // Ambil riwayat pesan awal
     fetchRoomMessages(true)
 
-    // Task 3: Mekanisme Short Polling setiap 3000ms (3 detik) selama room chat terbuka
+    // Langganan event real-time SSE untuk pesan masuk instan (0ms latency)
+    const unsubMessage = realtimeClient.subscribe('chat:message', (data) => {
+      if (data?.conversationId === currentChatId && data?.message) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === data.message.id)) return prev
+          return [...prev, data.message]
+        })
+      }
+      // Perbarui juga daftar percakapan di bilah samping
+      fetchConversations(true)
+    })
+
+    const unsubRead = realtimeClient.subscribe('chat:read', (data) => {
+      if (data?.conversationId === currentChatId) {
+        setMessages((prev) =>
+          prev.map((m) => (m.senderId === currentUserId ? { ...m, isRead: true } : m))
+        )
+      }
+    })
+
+    // Fallback: Mekanisme Short Polling setiap 3000ms selama room chat terbuka
     const pollInterval = setInterval(() => {
       fetchRoomMessages(false)
     }, 3000)
 
-    // Bersihkan interval saat komponen di-unmount atau chat berganti
+    // Bersihkan listener & interval saat komponen di-unmount atau chat berganti
     return () => {
       isActive = false
+      unsubMessage()
+      unsubRead()
       clearInterval(pollInterval)
     }
   }, [selectedChat?.id, selectedChat?.isDraft])

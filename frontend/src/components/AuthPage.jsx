@@ -149,7 +149,7 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
             : 'Akun Anda sedang menunggu verifikasi admin.'
         )
 
-        navigate(userRole === 'PEMILIK' ? '/register/pemilik' : '/register/penyewa')
+        navigate(userRole === 'PEMILIK' ? '/register/pemilik' : '/register/penyewa', { replace: true })
         return
       }
 

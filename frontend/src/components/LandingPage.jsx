@@ -46,9 +46,13 @@ export default function LandingPage({
     syncUser()
     window.addEventListener('storage', syncUser)
     window.addEventListener('myrent:user-updated', syncUser)
+    window.addEventListener('popstate', syncUser)
+    window.addEventListener('focus', syncUser)
     return () => {
       window.removeEventListener('storage', syncUser)
       window.removeEventListener('myrent:user-updated', syncUser)
+      window.removeEventListener('popstate', syncUser)
+      window.removeEventListener('focus', syncUser)
     }
   }, [])
 

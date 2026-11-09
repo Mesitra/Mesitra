@@ -23,9 +23,9 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.7.3",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.6.0",
     "prisma": "^6.19.3"
-  },
-  "devDependencies": {}
+  }
 }

@@ -32,6 +32,7 @@ import OwnerDashboard from './pages/OwnerDashboard'
 import { logoutUser, clearUserSession, getUserToken } from './lib/userSession'
 import { hasAdminSession } from './components/adminAuth/adminSession'
 import NotificationBell from './components/common/NotificationBell'
+import PublicOnlyRoute from './components/common/PublicOnlyRoute'
 import {
   Building2,
   KeyRound,
@@ -106,47 +107,12 @@ const initialRentals = [
   }
 ]
 
-/**
- * Route Guard untuk rute otentikasi publik (/login, /register/*).
- * Jika Admin sedang memiliki sesi aktif di browser, langsung dialihkan
- * ke Dashboard HQ agar tidak terjadi kebingungan atau session desync.
- */
-function PublicAuthGuard({ children }) {
-  if (hasAdminSession()) {
-    return <Navigate to="/admin/kyc" replace />
-  }
-  return children
-}
-
 export default function App() {
   const navigate = useNavigate()
   const [currentUser, setCurrentUser] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState('Semua')
   const [searchQuery, setSearchQuery] = useState('')
   const [toastMessage, setToastMessage] = useState('')
-
-  // Keamanan Navigasi Browser: Bila pengguna menekan tombol Back bawaan desktop browser
-  // mundur hingga ke halaman Login atau Landing page ('/login', '/masuk', '/'),
-  // otomatis bersihkan sesi agar tidak dapat kembali masuk ke area akun tanpa autentikasi ulang.
-  // Navigasi internal di dalam halaman website (seperti tombol back antar-halaman) tetap menjaga sesi aktif.
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname
-      // Hanya bersihkan sesi bila tombol back bawaan browser mundur ke halaman login/landing
-      if (path === '/login' || path === '/masuk' || path === '/') {
-        const token = getUserToken()
-        if (token) {
-          clearUserSession()
-          setCurrentUser(null)
-        }
-      }
-    }
-
-    window.addEventListener('popstate', handlePopState)
-    return () => {
-      window.removeEventListener('popstate', handlePopState)
-    }
-  }, [])
 
   const categories = ['Semua', 'Mesin Kopi', 'Packaging', 'Konveksi', 'Bakery']
 
@@ -224,7 +190,7 @@ export default function App() {
         <Route
           path="/login"
           element={
-            <PublicAuthGuard>
+            <PublicOnlyRoute>
               <AuthPage
                 onLoginSuccess={handleLoginSuccess}
                 onBackToLanding={() => navigate('/')}
@@ -236,7 +202,7 @@ export default function App() {
                   }
                 }}
               />
-            </PublicAuthGuard>
+            </PublicOnlyRoute>
           }
         />
 
@@ -244,7 +210,7 @@ export default function App() {
         <Route
           path="/register/penyewa"
           element={
-            <PublicAuthGuard>
+            <PublicOnlyRoute>
               <RegisterPenyewaAlat
                 onNavigateLogin={() => navigate('/login')}
                 onBackToLogin={() => navigate('/login')}
@@ -252,7 +218,7 @@ export default function App() {
                 onRegisterSuccess={handleRegisterPenyewaFinish}
                 onFinish={handleRegisterPenyewaFinish}
               />
-            </PublicAuthGuard>
+            </PublicOnlyRoute>
           }
         />
 
@@ -260,13 +226,13 @@ export default function App() {
         <Route
           path="/register/pemilik"
           element={
-            <PublicAuthGuard>
+            <PublicOnlyRoute>
               <RegisterPemilikAlat
                 onBackToLogin={() => navigate('/login')}
                 onBackToHome={() => navigate('/')}
                 onFinish={handleRegisterPemilikFinish}
               />
-            </PublicAuthGuard>
+            </PublicOnlyRoute>
           }
         />
 
@@ -451,7 +417,11 @@ export default function App() {
         {/* Admin Login Portal */}
         <Route
           path="/admin/login"
-          element={<AdminAuthWrapper onAdminLoginSuccess={handleLoginSuccess} />}
+          element={
+            <PublicOnlyRoute>
+              <AdminAuthWrapper onAdminLoginSuccess={handleLoginSuccess} />
+            </PublicOnlyRoute>
+          }
         />
 
         {/* Redirects Otomatis dari Rute Lama /portal-internal-hq ke Rute /admin Baru */}

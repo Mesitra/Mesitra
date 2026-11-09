@@ -6,8 +6,24 @@ import { sendNewOrderNotif, sendInspectionNotif } from '../services/notification
 import { calculateSettlement, PLATFORM_FEE_RATE } from '../lib/settlement.js'
 import { ensureDisputeTicket } from '../lib/dispute.js'
 import { requireKyc } from '../middleware/authMiddleware.js'
+import { realtimeService } from '../services/realtimeService.js'
+import { orderLimiter } from '../middleware/rateLimiter.js'
 
 export const ordersRouter = Router()
+ordersRouter.use(orderLimiter)
+
+function emitOrderUpdate(order) {
+  if (!order) return
+  const payload = {
+    orderId: order.id,
+    invoiceNumber: order.invoiceNumber,
+    status: order.status,
+    updatedAt: order.updatedAt
+  }
+  if (order.userId) realtimeService.sendToUser(order.userId, 'order:updated', payload)
+  const ownerId = order.equipment?.ownerId || order.equipment?.owner?.id
+  if (ownerId) realtimeService.sendToUser(ownerId, 'order:updated', payload)
+}
 
 /**
  * Middleware: ambil userId dari JWT token.
@@ -518,6 +534,8 @@ ordersRouter.post('/', requireKyc, async (req, res, next) => {
       equipmentName: equipment.name,
       renterName: order.user?.fullName || 'Penyewa'
     }).catch(() => {})
+
+    realtimeService.sendToUser(equipment.ownerId, 'order:new', order)
 
     return res.status(201).json({ data: order })
   } catch (error) {
