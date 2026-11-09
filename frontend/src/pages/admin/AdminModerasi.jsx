@@ -864,19 +864,12 @@ export default function AdminModerasi({ onLogout }) {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-[220px_1fr]">
               {/* Galeri foto */}
               <div className="space-y-2">
-                <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                  {activePreviewPhoto ? (
-                    <img
-                      src={activePreviewPhoto}
-                      alt={equipmentToPreview.name || 'Foto alat'}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-1.5 text-slate-400">
-                      <ImageOff className="h-6 w-6" />
-                      <span className="text-[10px] font-semibold">Foto tidak tersedia</span>
-                    </div>
-                  )}
+                <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                  <EquipmentPhoto
+                    src={activePreviewPhoto}
+                    alt={equipmentToPreview.name || 'Foto alat'}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
 
                 {previewPhotos.length > 1 ? (
@@ -892,10 +885,11 @@ export default function AdminModerasi({ onLogout }) {
                             : 'border-transparent hover:border-slate-300'
                         }`}
                       >
-                        <img
+                        <EquipmentPhoto
                           src={photo}
                           alt={`Foto alat ${index + 1}`}
                           className="h-full w-full object-cover"
+                          compact
                         />
                       </button>
                     ))}
@@ -1269,19 +1263,12 @@ export default function AdminModerasi({ onLogout }) {
               </h3>
               <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 p-4 sm:grid-cols-[180px_1fr]">
                 <div className="space-y-2">
-                  <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                    {activeDetailPhoto ? (
-                      <img
-                        src={activeDetailPhoto}
-                        alt={detailEquipment.name || 'Foto alat'}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-1.5 text-slate-400">
-                        <ImageOff className="h-6 w-6" />
-                        <span className="text-[10px] font-semibold">Foto tidak tersedia</span>
-                      </div>
-                    )}
+                  <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                    <EquipmentPhoto
+                      src={activeDetailPhoto}
+                      alt={detailEquipment.name || 'Foto alat'}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
 
                   {detailPhotos.length > 1 ? (
@@ -1297,10 +1284,11 @@ export default function AdminModerasi({ onLogout }) {
                               : 'border-transparent hover:border-slate-300'
                           }`}
                         >
-                          <img
+                          <EquipmentPhoto
                             src={photo}
                             alt={`Foto alat ${index + 1}`}
                             className="h-full w-full object-cover"
+                            compact
                           />
                         </button>
                       ))}
@@ -1453,7 +1441,45 @@ export default function AdminModerasi({ onLogout }) {
   )
 }
 
+function EquipmentPhoto({ src, alt, className = '', compact = false }) {
+  const [failedSrc, setFailedSrc] = useState(null)
+  const hasSrc = typeof src === 'string' && src.trim().length > 0
+  const isFailed = hasSrc && failedSrc === src
+
+  if (!hasSrc || isFailed) {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center gap-1 bg-slate-100 text-slate-400 ${className}`}
+      >
+        <ImageOff className={compact ? 'h-3.5 w-3.5' : 'h-6 w-6'} />
+        <span className={`${compact ? 'text-[7px]' : 'text-[10px]'} font-semibold leading-tight`}>
+          Tidak ada foto
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onError={() => setFailedSrc(src)}
+    />
+  )
+}
+
 function ModalShell({ title, subtitle, onClose, children, maxWidthClass = 'max-w-lg' }) {
+  // Cegah halaman di belakang modal ikut ter-scroll selama modal terbuka.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow || 'unset'
+    }
+  }, [])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
       <div
