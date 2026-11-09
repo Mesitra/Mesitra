@@ -7,12 +7,9 @@ import {
   ChevronDown,
   ChevronRight,
   MessageSquare,
-  ArrowDownLeft,
-  ArrowUpRight,
   Rocket,
   ShoppingBag,
-  UserCog,
-  Layers
+  UserCog
 } from 'lucide-react'
 import ModalDompet from '../pesananSaya/ModalDompet'
 import NotificationBell from './NotificationBell'
@@ -24,7 +21,6 @@ import {
   getUserPowerLimit,
   logoutUser
 } from '../../lib/userSession'
-import { hasAdminSession } from '../adminAuth/adminSession'
 
 export default function NavbarPenyewa({
   activeTab = 'jelajahi',
@@ -59,8 +55,6 @@ export default function NavbarPenyewa({
       ? 'jelajahi'
       : ''
   )
-
-  const isChatPage = resolvedActiveTab === 'pesan' || location.pathname === '/pesan' || location.pathname.startsWith('/pesan/')
 
   const handleNavJelajahi = () => {
     if (onNavigateTab) onNavigateTab('jelajahi')
@@ -288,7 +282,7 @@ export default function NavbarPenyewa({
 
           {isMenuOpen && (
             <div className="absolute right-0 top-[46px] z-50 w-[270px] box-border flex flex-col gap-2 p-3 bg-white ring-1 ring-slate-200 rounded-[14px] shadow-xl animate-in fade-in zoom-in-95 duration-100">
-              {/* User Info Header (Clickable ke Profil) */}
+              {/* 1. Header Profil (Nama & Email) */}
               <Link
                 to="/profil"
                 onClick={() => setIsMenuOpen(false)}
@@ -306,31 +300,11 @@ export default function NavbarPenyewa({
 
               <div className="box-border w-full h-px bg-slate-100"></div>
 
-              {/* Quick Jump Menu: Jelajahi & Pesanan */}
-              <div className="grid grid-cols-2 gap-1.5 pb-0.5">
-                <Link
-                  to="/beranda-sewa"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded-lg flex items-center justify-center gap-1.5 text-[11px] no-underline transition-colors"
-                >
-                  <Rocket className="w-3 h-3 text-blue-600" />
-                  <span>Jelajahi</span>
-                </Link>
-                <Link
-                  to="/pesanan-saya"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded-lg flex items-center justify-center gap-1.5 text-[11px] no-underline transition-colors"
-                >
-                  <ShoppingBag className="w-3 h-3 text-blue-600" />
-                  <span>Pesanan</span>
-                </Link>
-              </div>
-
-              {/* Link ke Halaman Penyesuaian Profil */}
+              {/* 2. Tombol "Edit Profil & Usaha" */}
               <Link
                 to="/profil"
                 onClick={() => setIsMenuOpen(false)}
-                className="w-full py-1.5 px-2.5 bg-blue-50/70 hover:bg-blue-100/80 border border-blue-100 text-blue-800 font-bold rounded-xl flex items-center justify-between text-[11px] no-underline transition-colors"
+                className="w-full py-2 px-2.5 bg-blue-50/70 hover:bg-blue-100/80 border border-blue-100 text-blue-800 font-bold rounded-xl flex items-center justify-between text-xs no-underline transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <UserCog className="w-3.5 h-3.5 text-blue-600 shrink-0" />
@@ -339,22 +313,7 @@ export default function NavbarPenyewa({
                 <ChevronRight className="w-3.5 h-3.5 text-blue-500 shrink-0" />
               </Link>
 
-              {/* Sesi Admin HQ Aktif */}
-              {hasAdminSession() && (
-                <Link
-                  to="/admin/kyc"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full py-1.5 px-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-bold rounded-xl flex items-center justify-between text-[11px] no-underline transition-colors shadow-2xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                    <span>Kembali ke MyRent HQ</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                </Link>
-              )}
-
-              {/* Dompet Card Trigger */}
+              {/* 3. Tombol "Dompet & Escrow" */}
               <button
                 type="button"
                 onClick={() => {
@@ -378,46 +337,9 @@ export default function NavbarPenyewa({
                 <ChevronRight className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               </button>
 
-              {/* Quick Actions: Top Up & Tarik Saldo */}
-              <div className="grid grid-cols-2 gap-1.5 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false)
-                    setWalletInitialView('TOPUP')
-                    setIsWalletModalOpen(true)
-                  }}
-                  className="py-1.5 px-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg flex items-center justify-center gap-1 transition-colors text-[11px] cursor-pointer"
-                >
-                  <ArrowDownLeft className="w-3 h-3 text-blue-600" />
-                  <span>Top Up</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false)
-                    setWalletInitialView('WITHDRAW')
-                    setIsWalletModalOpen(true)
-                  }}
-                  className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg flex items-center justify-center gap-1 transition-colors text-[11px] cursor-pointer"
-                >
-                  <ArrowUpRight className="w-3 h-3 text-emerald-600" />
-                  <span>Tarik Saldo</span>
-                </button>
-              </div>
-
-              {/* Link to Dedicated Dompet Page */}
-              <Link
-                to="/dompet"
-                onClick={() => setIsMenuOpen(false)}
-                className="w-full py-1.5 px-2 text-center text-[10.5px] text-slate-500 hover:text-blue-600 hover:underline font-semibold block no-underline transition-colors"
-              >
-                Halaman Dompet Lengkap →
-              </Link>
-
               <div className="box-border w-full h-px bg-slate-100"></div>
 
-              {/* Logout Button */}
+              {/* 4. Tombol "Keluar Akun" (Logout) */}
               <button
                 type="button"
                 onClick={handleLogout}
