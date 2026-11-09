@@ -27,7 +27,8 @@ import {
 const STORAGE_KEY_STEP = 'myrent_register_penyewa_step'
 const STORAGE_KEY_FORM = 'myrent_register_penyewa_form'
 const ROLE = 'PENYEWA'
-const API_REGISTER = 'http://localhost:3000/api/auth/register'
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+const API_REGISTER = `${API_BASE_URL}/api/auth/register`
 
 const STEP_HEADER_TITLES = {
   1: {

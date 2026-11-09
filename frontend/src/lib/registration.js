@@ -8,7 +8,8 @@
  *  4. Pemanggilan endpoint status pengajuan dari backend
  */
 
-export const API_BASE = 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+export const API_BASE = `${API_BASE_URL}/api`
 
 /** Key localStorage draft (checkpoint) per peran. */
 export const DRAFT_KEYS = {

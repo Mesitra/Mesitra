@@ -1,6 +1,7 @@
 import { getUserToken, getSessionUser, setUserSession } from './userSession'
 
-export const API_BASE = 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+export const API_BASE = `${API_BASE_URL}/api`
 
 /**
  * Dispatch event global bila ada perubahan saldo (Top Up / Tarik Saldo)

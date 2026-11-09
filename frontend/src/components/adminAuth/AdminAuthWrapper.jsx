@@ -4,6 +4,8 @@ import AdminLoginStep1 from './AdminLoginStep1'
 import AdminLoginStep2 from './AdminLoginStep2'
 import { setAdminSession } from './adminSession'
 
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+
 export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
   const navigate = useNavigate()
 
@@ -25,7 +27,7 @@ export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
     const passwordValue = credentials?.password ?? password
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -74,7 +76,7 @@ export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/verify-admin-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-admin-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

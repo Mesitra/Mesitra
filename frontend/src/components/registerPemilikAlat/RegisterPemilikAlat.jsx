@@ -23,6 +23,7 @@ const TOTAL_STEPS = 5
 const STORAGE_KEY_STEP = 'myrent_register_pemilik_step'
 const STORAGE_KEY_FORM = 'myrent_register_pemilik_form'
 const ROLE = 'PEMILIK'
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
 
 const INITIAL_PEMILIK_FORM = {
   email: 'pemilik@kopisenja.id',
@@ -222,7 +223,7 @@ export default function RegisterPemilikAlat({ onBackToLogin, onFinish }) {
   const handleFinalRegister = async (finalData) => {
     setIsSubmitting(true)
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

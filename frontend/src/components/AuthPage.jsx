@@ -15,6 +15,8 @@ import { clearPending, writePending } from '../lib/registration'
 import { clearUserSession } from '../lib/userSession'
 import { hasAdminSession } from './adminAuth/adminSession'
 
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+
 export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToLanding }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -89,7 +91,7 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
 
     setIsLoading(true)
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -193,7 +195,11 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
         navigate('/beranda-sewa', { replace: true })
       }
     } catch (err) {
-      setError(err.message || 'Gagal terhubung ke server autentikasi.')
+      if (err.name === 'TypeError' && err.message?.includes('fetch')) {
+        setError(`Gagal menghubungi server (${API_BASE_URL}). Pastikan server backend sedang aktif berjalan.`)
+      } else {
+        setError(err.message || 'Gagal terhubung ke server autentikasi.')
+      }
     } finally {
       setIsLoading(false)
     }
