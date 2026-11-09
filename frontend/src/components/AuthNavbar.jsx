@@ -39,7 +39,7 @@ export default function AuthNavbar({ onBackToHome }) {
           {isAdmin ? (
             <button
               type="button"
-              onClick={() => navigate('/portal-internal-hq/dashboard')}
+              onClick={() => navigate('/admin/kyc')}
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 py-1.5 sm:py-2 px-2.5 sm:px-3.5 rounded-xl border border-slate-800 transition-all cursor-pointer shadow-2xs"
               title="Kembali ke Dashboard MyRent HQ"
             >

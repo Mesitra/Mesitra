@@ -30,11 +30,11 @@ import {
 } from '../../components/adminDashboard/adminApi'
 
 const ADMIN_PATHS = {
-  verifikasi: '/portal-internal-hq/dashboard',
-  pencairan: '/portal-internal-hq/pencairan-dana',
-  mediasi: '/portal-internal-hq/mediasi-sengketa',
-  moderasi: '/portal-internal-hq/moderasi',
-  'manajemen-tim': '/portal-internal-hq/manajemen-tim'
+  verifikasi: '/admin/kyc',
+  pencairan: '/admin/pencairan-dana',
+  mediasi: '/admin/mediasi-sengketa',
+  moderasi: '/admin/moderasi',
+  'manajemen-tim': '/admin/manajemen-tim'
 }
 
 /**

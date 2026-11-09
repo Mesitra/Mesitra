@@ -10,12 +10,12 @@ export default function AdminLayout() {
 
   const menuItems = [
     { path: '/admin/kyc', label: 'Verifikasi Akun', icon: ShieldCheck },
-    { path: '/portal-internal-hq/manajemen-pengguna', label: 'Manajemen Pengguna', icon: Users },
-    { path: '/portal-internal-hq/pencairan-dana', label: 'Pencairan Dana', icon: DollarSign },
-    { path: '/portal-internal-hq/mediasi-sengketa', label: 'Mediasi Sengketa', icon: Scale },
-    { path: '/portal-internal-hq/moderasi', label: 'Moderasi Platform', icon: Shield },
+    { path: '/admin/manajemen-pengguna', label: 'Manajemen Pengguna', icon: Users },
+    { path: '/admin/pencairan-dana', label: 'Pencairan Dana', icon: DollarSign },
+    { path: '/admin/mediasi-sengketa', label: 'Mediasi Sengketa', icon: Scale },
+    { path: '/admin/moderasi', label: 'Moderasi Platform', icon: Shield },
     ...(isSuperadmin
-      ? [{ path: '/portal-internal-hq/manajemen-tim', label: 'Manajemen Tim', icon: Users }]
+      ? [{ path: '/admin/manajemen-tim', label: 'Manajemen Tim', icon: Users }]
       : [])
   ]
 

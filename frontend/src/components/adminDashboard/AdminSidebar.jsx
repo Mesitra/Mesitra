@@ -20,35 +20,35 @@ import { getAdminUser } from '../adminAuth/adminSession'
 const MENU = [
   {
     key: 'verifikasi',
-    path: '/portal-internal-hq/dashboard',
+    path: '/admin/kyc',
     label: 'Verifikasi Akun',
     icon: ShieldCheck,
     badgeKey: 'verifikasi'
   },
   {
     key: 'manajemen-pengguna',
-    path: '/portal-internal-hq/manajemen-pengguna',
+    path: '/admin/manajemen-pengguna',
     label: 'Manajemen Pengguna',
     icon: Users,
     badgeKey: null
   },
   {
     key: 'pencairan',
-    path: '/portal-internal-hq/pencairan-dana',
+    path: '/admin/pencairan-dana',
     label: 'Pencairan Dana',
     icon: DollarSign,
     badgeKey: 'pencairan'
   },
   {
     key: 'mediasi',
-    path: '/portal-internal-hq/mediasi-sengketa',
+    path: '/admin/mediasi-sengketa',
     label: 'Mediasi Sengketa',
     icon: Scale,
     badgeKey: 'mediasi'
   },
   {
     key: 'moderasi',
-    path: '/portal-internal-hq/moderasi',
+    path: '/admin/moderasi',
     label: 'Moderasi Platform',
     icon: Shield,
     badgeKey: 'moderasi'
@@ -76,35 +76,35 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
     const baseMenu = [
       {
         key: 'verifikasi',
-        path: '/portal-internal-hq/dashboard',
+        path: '/admin/kyc',
         label: 'Verifikasi Akun',
         icon: ShieldCheck,
         badgeKey: 'verifikasi'
       },
       {
         key: 'manajemen-pengguna',
-        path: '/portal-internal-hq/manajemen-pengguna',
+        path: '/admin/manajemen-pengguna',
         label: 'Manajemen Pengguna',
         icon: Users,
         badgeKey: null
       },
       {
         key: 'pencairan',
-        path: '/portal-internal-hq/pencairan-dana',
+        path: '/admin/pencairan-dana',
         label: 'Pencairan Dana',
         icon: DollarSign,
         badgeKey: 'pencairan'
       },
       {
         key: 'mediasi',
-        path: '/portal-internal-hq/mediasi-sengketa',
+        path: '/admin/mediasi-sengketa',
         label: 'Mediasi Sengketa',
         icon: Scale,
         badgeKey: 'mediasi'
       },
       {
         key: 'moderasi',
-        path: '/portal-internal-hq/moderasi',
+        path: '/admin/moderasi',
         label: 'Moderasi Platform',
         icon: Shield,
         badgeKey: 'moderasi'
@@ -115,7 +115,7 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
     if (isSuperadmin) {
       baseMenu.push({
         key: 'manajemen-tim',
-        path: '/portal-internal-hq/manajemen-tim',
+        path: '/admin/manajemen-tim',
         label: 'Manajemen Tim',
         icon: UserCog,
         badgeKey: null

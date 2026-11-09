@@ -39,10 +39,10 @@ const TABS = [
 ]
 
 const ADMIN_PATHS = {
-  verifikasi: '/portal-internal-hq/dashboard',
-  pencairan: '/portal-internal-hq/pencairan-dana',
-  mediasi: '/portal-internal-hq/mediasi-sengketa',
-  moderasi: '/portal-internal-hq/moderasi'
+  verifikasi: '/admin/kyc',
+  pencairan: '/admin/pencairan-dana',
+  mediasi: '/admin/mediasi-sengketa',
+  moderasi: '/admin/moderasi'
 }
 
 const STATUS_EQUIPMENT = {

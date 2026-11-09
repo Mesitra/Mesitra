@@ -7,7 +7,7 @@ import { getUserToken } from './userSession'
 import { getAdminToken } from '../components/adminAuth/adminSession'
 
 function authHeaders() {
-  const isPortalAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/portal-internal-hq')
+  const isPortalAdmin = typeof window !== 'undefined' && (window.location.pathname.startsWith('/portal-internal-hq') || window.location.pathname.startsWith('/admin'))
   const token = isPortalAdmin ? (getAdminToken() || getUserToken()) : (getUserToken() || getAdminToken())
   return {
     'Content-Type': 'application/json',

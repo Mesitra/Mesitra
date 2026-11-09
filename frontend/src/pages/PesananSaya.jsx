@@ -142,7 +142,7 @@ export default function PesananSaya() {
       showToast(`Penerimaan unit untuk ${order.invoiceNumber} berhasil dikonfirmasi! Sewa kini aktif.`)
       fetchOrders()
     } catch (err) {
-      alert(err.message || 'Gagal mengonfirmasi penerimaan barang')
+      showToast(err.message || 'Gagal mengonfirmasi penerimaan barang')
     }
   }
 
@@ -163,7 +163,7 @@ export default function PesananSaya() {
     if (!order) return
     const ownerId = order.equipment?.ownerId || order.equipment?.owner?.id
     if (!ownerId) {
-      alert('Informasi pemilik alat tidak ditemukan pada pesanan ini')
+      showToast('Informasi pemilik alat tidak ditemukan pada pesanan ini')
       return
     }
 
@@ -524,6 +524,10 @@ export default function PesananSaya() {
         onChatOwner={(ord) => {
           setIsDisputeOpen(false)
           handleChatOwner(ord)
+        }}
+        onDefenseSubmitted={() => {
+          showToast('Nota sanggahan berhasil dikirim ke Admin MyRent!')
+          fetchOrders()
         }}
       />
 

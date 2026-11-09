@@ -24,7 +24,7 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
   // melihat formulir login akun reguler (Penyewa / Pemilik).
   useEffect(() => {
     if (hasAdminSession()) {
-      navigate('/portal-internal-hq/dashboard', { replace: true })
+      navigate('/admin/kyc', { replace: true })
       return
     }
     clearUserSession()
@@ -237,7 +237,7 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
             </div>
             <button
               type="button"
-              onClick={() => navigate('/portal-internal-hq/dashboard', { replace: true })}
+              onClick={() => navigate('/admin/kyc', { replace: true })}
               className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2"
             >
               <Layers className="w-4 h-4 text-blue-400" />

@@ -31,6 +31,7 @@ import CheckoutStep3 from './components/checkout/CheckoutStep3'
 import OwnerDashboard from './pages/OwnerDashboard'
 import { logoutUser, clearUserSession, getUserToken } from './lib/userSession'
 import { hasAdminSession } from './components/adminAuth/adminSession'
+import NotificationBell from './components/common/NotificationBell'
 import {
   Building2,
   KeyRound,
@@ -112,7 +113,7 @@ const initialRentals = [
  */
 function PublicAuthGuard({ children }) {
   if (hasAdminSession()) {
-    return <Navigate to="/portal-internal-hq/dashboard" replace />
+    return <Navigate to="/admin/kyc" replace />
   }
   return children
 }
@@ -167,7 +168,7 @@ export default function App() {
     const normalizedRole = String(user?.role || '').toUpperCase()
     if (normalizedRole === 'ADMIN') {
       showToast('Selamat datang Super Administrator HQ!')
-      navigate('/portal-internal-hq/dashboard', { replace: true })
+      navigate('/admin/kyc', { replace: true })
       return
     }
     showToast(`Selamat datang! Anda masuk sebagai ${normalizedRole === 'PEMILIK' ? 'Pemilik Alat' : 'Penyewa UMKM'}`)
@@ -447,85 +448,32 @@ export default function App() {
           }
         />
 
-        {/* Portal Rahasia Internal HQ Admin (2-Step Verification) */}
+        {/* Admin Login Portal */}
         <Route
-          path="/portal-internal-hq"
+          path="/admin/login"
           element={<AdminAuthWrapper onAdminLoginSuccess={handleLoginSuccess} />}
         />
-        {/* Semua rute dashboard dilindungi AdminProtectedRoute:
-            tanpa token admin di localStorage pengguna langsung kembali ke portal login. */}
-        <Route
-          path="/portal-internal-hq/dashboard"
-          element={
-            <AdminProtectedRoute>
-              <AdminDashboardPlaceholder />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
-          path="/portal-internal-hq/dashboard/pengajuan/:id"
-          element={
-            <AdminProtectedRoute>
-              <AdminDetailPengajuan />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
-          path="/portal-internal-hq/mediasi-sengketa"
-          element={
-            <AdminProtectedRoute>
-              <AdminSengketa />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
-          path="/portal-internal-hq/pencairan-dana"
-          element={
-            <AdminProtectedRoute>
-              <AdminPencairanDana />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
-          path="/portal-internal-hq/moderasi"
-          element={
-            <AdminProtectedRoute>
-              <AdminModerasi />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
-          path="/portal-internal-hq/manajemen-pengguna"
-          element={
-            <AdminProtectedRoute>
-              <ManajemenPengguna />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
-          path="/portal-internal-hq/manajemen-tim"
-          element={
-            <AdminProtectedRoute>
-              <AdminManajemenTim />
-            </AdminProtectedRoute>
-          }
-        />
-        {/* Route Cepat Admin / Dashboard Admin */}
-        <Route
-          path="/dashboard-admin"
-          element={
-            <AdminProtectedRoute>
-              <Navigate to="/admin/kyc" replace />
-            </AdminProtectedRoute>
-          }
-        />
 
-        {/* Admin Area Baru dengan AdminLayout */}
+        {/* Redirects Otomatis dari Rute Lama /portal-internal-hq ke Rute /admin Baru */}
+        <Route path="/portal-internal-hq" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/portal-internal-hq/dashboard" element={<Navigate to="/admin/kyc" replace />} />
+        <Route path="/portal-internal-hq/dashboard/pengajuan/:id" element={<Navigate to="/admin/kyc" replace />} />
+        <Route path="/portal-internal-hq/mediasi-sengketa" element={<Navigate to="/admin/mediasi-sengketa" replace />} />
+        <Route path="/portal-internal-hq/pencairan-dana" element={<Navigate to="/admin/pencairan-dana" replace />} />
+        <Route path="/portal-internal-hq/moderasi" element={<Navigate to="/admin/moderasi" replace />} />
+        <Route path="/portal-internal-hq/manajemen-pengguna" element={<Navigate to="/admin/manajemen-pengguna" replace />} />
+        <Route path="/portal-internal-hq/manajemen-tim" element={<Navigate to="/admin/manajemen-tim" replace />} />
+        <Route path="/portal-internal-hq/*" element={<Navigate to="/admin/kyc" replace />} />
+        <Route path="/dashboard-admin" element={<Navigate to="/admin/kyc" replace />} />
+
+        {/* Shell Admin Tunggal Berbasis AdminLayout */}
         <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<Navigate to="kyc" replace />} />
             <Route path="kyc" element={<KycDashboard />} />
             <Route path="verifikasi" element={<KycDashboard />} />
+            <Route path="kyc/pengajuan/:id" element={<AdminDetailPengajuan />} />
+            <Route path="dashboard/pengajuan/:id" element={<AdminDetailPengajuan />} />
             <Route path="manajemen-pengguna" element={<ManajemenPengguna />} />
             <Route path="pengguna" element={<ManajemenPengguna />} />
             <Route path="mediasi-sengketa" element={<AdminSengketa />} />
@@ -595,14 +543,7 @@ function DashboardView({
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => showToast('Notifikasi sudah diperbarui')}
-              className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer"
-              title="Notifikasi"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600"></span>
-            </button>
+            <NotificationBell />
 
             <button
               onClick={() => showToast('Form Tambah Alat siap dikembangkan!')}
@@ -639,7 +580,7 @@ function DashboardView({
 
             {hasAdminSession() ? (
               <button
-                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                onClick={() => navigate('/admin/kyc')}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all cursor-pointer shadow-xs"
                 title="Kembali ke Dashboard Admin HQ"
               >

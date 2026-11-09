@@ -69,7 +69,21 @@ test('Chat & Lazy Session API Flow', async (t) => {
   })
 
   await t.test('GET /api/chats/unread-count mengembalikan jumlah pesan belum dibaca', async () => {
-    // Untuk pemilik, ada 1 pesan belum dibaca dari penyewa (pesan ke-3 di seed)
+    // Reset status unread pesan seed dari penyewa agar test selalu deterministik
+    await prisma.message.updateMany({
+      where: {
+        conversation: {
+          OR: [
+            { renterId: PENYEWA_ID, ownerId: PEMILIK_ID },
+            { renterId: PEMILIK_ID, ownerId: PENYEWA_ID }
+          ]
+        },
+        senderId: PENYEWA_ID
+      },
+      data: { isRead: false }
+    })
+
+    // Untuk pemilik, ada pesan belum dibaca dari penyewa
     const res = await fetch(`${baseUrl}/api/chats/unread-count`, {
       headers: { Authorization: `Bearer ${ownerToken}` }
     })

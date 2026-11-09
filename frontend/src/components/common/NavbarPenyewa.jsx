@@ -15,6 +15,7 @@ import {
   Layers
 } from 'lucide-react'
 import ModalDompet from '../pesananSaya/ModalDompet'
+import NotificationBell from './NotificationBell'
 import { getUnreadCount } from '../../lib/chatsApi'
 import { getWalletInfo } from '../../lib/walletApi'
 import {
@@ -261,6 +262,9 @@ export default function NavbarPenyewa({
 
       {/* Right Controls */}
       <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-2 sm:gap-3 justify-start items-center">
+        {/* Lonceng Notifikasi Interaktif */}
+        <NotificationBell />
+
         {/* User Profile Button with Integrated Wallet Indicator */}
         <div ref={menuRef} className="relative box-border w-fit shrink-0 h-fit flex flex-row justify-start items-center">
           <button
@@ -338,7 +342,7 @@ export default function NavbarPenyewa({
               {/* Sesi Admin HQ Aktif */}
               {hasAdminSession() && (
                 <Link
-                  to="/portal-internal-hq/dashboard"
+                  to="/admin/kyc"
                   onClick={() => setIsMenuOpen(false)}
                   className="w-full py-1.5 px-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-bold rounded-xl flex items-center justify-between text-[11px] no-underline transition-colors shadow-2xs"
                 >

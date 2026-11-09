@@ -10,7 +10,7 @@ import { getUserToken } from './userSession'
 import { getAdminToken } from '../components/adminAuth/adminSession'
 
 function authHeaders() {
-  const isPortalAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/portal-internal-hq')
+  const isPortalAdmin = typeof window !== 'undefined' && (window.location.pathname.startsWith('/portal-internal-hq') || window.location.pathname.startsWith('/admin'))
   const token = isPortalAdmin ? (getAdminToken() || getUserToken()) : (getUserToken() || getAdminToken())
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
@@ -293,6 +293,20 @@ export async function submitReview(orderId, { rating, comment }) {
   })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(body?.error?.message || 'Gagal mengirim ulasan')
+  return body?.data
+}
+
+/**
+ * Kirim nota sanggahan dan foto bukti tandingan dari penyewa untuk mediasi sengketa.
+ */
+export async function submitRenterDefense(orderId, { renterDefenseNote, renterCounterPhotos }) {
+  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/initiate-defense`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ renterDefenseNote, renterCounterPhotos })
+  })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(body?.error?.message || body?.message || 'Gagal mengirim sanggahan')
   return body?.data
 }
 

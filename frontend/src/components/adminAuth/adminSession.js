@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react'
  * Dipakai bersama oleh AdminProtectedRoute, sidebar dashboard admin, dan halaman detail pengajuan.
  */
 
-export const ADMIN_LOGIN_PATH = '/portal-internal-hq'
-export const ADMIN_DASHBOARD_PATH = '/portal-internal-hq/dashboard'
+export const ADMIN_LOGIN_PATH = '/admin/login'
+export const ADMIN_DASHBOARD_PATH = '/admin/kyc'
 
 /**
  * Key localStorage khusus sesi admin.

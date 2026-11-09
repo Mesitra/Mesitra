@@ -4,6 +4,7 @@ import { AlertCircle, AlertTriangle, CheckCircle2, Info, X } from 'lucide-react'
 export default function AlertModal({
   isOpen,
   onClose,
+  onConfirm,
   title = 'Pemberitahuan',
   message = '',
   type = 'error', // 'error' | 'warning' | 'info' | 'success'
@@ -88,7 +89,10 @@ export default function AlertModal({
         <div className="w-full flex flex-col gap-2 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              if (onConfirm) onConfirm()
+              else onClose?.()
+            }}
             className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-md active:scale-[0.99] ${currentType.btnBg}`}
           >
             {confirmText}

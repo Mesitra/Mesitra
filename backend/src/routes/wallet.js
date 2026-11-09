@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
 import { config } from '../config.js'
-import { requireAuth } from '../middleware/authMiddleware.js'
+import { requireAuth, requireKyc } from '../middleware/authMiddleware.js'
 
 export const walletRouter = Router()
 
@@ -341,7 +341,7 @@ walletRouter.get('/owner/bank-account', async (req, res, next) => {
  * Melakukan penarikan saldo pemilik ke rekening pencairan utama.
  * Minimal Rp 100.000 dan tidak boleh melebihi availableBalance.
  */
-walletRouter.post('/owner/withdraw', async (req, res, next) => {
+walletRouter.post('/owner/withdraw', requireKyc, async (req, res, next) => {
   try {
     const { amount } = req.body
     const numericAmount = Number(amount)

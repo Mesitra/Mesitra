@@ -53,7 +53,7 @@ export default function KycDocumentModal({ submissionId, onClose }) {
 
   const handleReject = async () => {
     if (!rejectReason.trim()) {
-      alert('Alasan penolakan wajib diisi')
+      showToast('Alasan penolakan wajib diisi')
       return
     }
     setActionLoading(true)
@@ -74,7 +74,7 @@ export default function KycDocumentModal({ submissionId, onClose }) {
 
   const handleRevision = async () => {
     if (!revisionNote.trim()) {
-      alert('Catatan revisi wajib diisi')
+      showToast('Catatan revisi wajib diisi')
       return
     }
     setActionLoading(true)

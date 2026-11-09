@@ -294,7 +294,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                onClick={() => navigate('/admin/kyc')}
                 className="px-4 h-10 rounded-[10px] bg-[#2563EB] text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
               >
                 Kembali ke daftar
@@ -327,7 +327,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
         <header className="lg:hidden flex items-center justify-between gap-3 px-4 py-3 bg-white border-b border-slate-200">
           <button
             type="button"
-            onClick={() => navigate('/portal-internal-hq/dashboard')}
+            onClick={() => navigate('/admin/kyc')}
             className="flex items-center gap-2 text-[13px] font-extrabold text-blue-600 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -348,7 +348,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                onClick={() => navigate('/admin/kyc')}
                 aria-label="Kembali ke daftar pengajuan"
                 className="w-9 h-9 shrink-0 rounded-[9px] bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               >
@@ -370,7 +370,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
                 disabled={!navigasiSebelumnya}
                 onClick={() =>
                   navigate(
-                    `/portal-internal-hq/dashboard/pengajuan/${
+                    `/admin/pengajuan/${
                       navigasiSebelumnya?.submissionCode || navigasiSebelumnya?.id
                     }`
                   )
@@ -385,7 +385,7 @@ export default function AdminDetailPengajuan({ onLogout }) {
                 disabled={!navigasiBerikutnya}
                 onClick={() =>
                   navigate(
-                    `/portal-internal-hq/dashboard/pengajuan/${
+                    `/admin/pengajuan/${
                       navigasiBerikutnya?.submissionCode || navigasiBerikutnya?.id
                     }`
                   )

@@ -116,50 +116,51 @@ test('Auth API Flow', async (t) => {
     assert.equal(data.user.role, 'PENYEWA')
   })
 
-  await t.test('POST /api/auth/login untuk role ADMIN mengembalikan OTP_REQUIRED tanpa JWT token', async () => {
+  await t.test('POST /api/auth/login untuk role ADMIN (SUPERADMIN) langsung mengembalikan JWT token', async () => {
     const res = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'admin@myrent.com',
-        password: 'Admin#Sewa2026'
+        password: 'admin123'
       })
     })
     assert.equal(res.status, 200)
     const data = await res.json()
-    assert.equal(data.step, 'OTP_REQUIRED')
-    assert.equal(data.token, undefined)
-    assert.equal(data.email, 'admin@myrent.com')
-  })
-
-  await t.test('POST /api/auth/verify-admin-otp menolak OTP yang salah', async () => {
-    const res = await fetch(`${baseUrl}/api/auth/verify-admin-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'admin@myrent.com',
-        otp: '000000'
-      })
-    })
-    assert.equal(res.status, 400)
-    const data = await res.json()
-    assert.equal(data.error?.code, 'INVALID_OTP')
-  })
-
-  await t.test('POST /api/auth/verify-admin-otp menerima OTP 123456 dan mengembalikan token JWT', async () => {
-    const res = await fetch(`${baseUrl}/api/auth/verify-admin-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'admin@myrent.com',
-        otp: '123456'
-      })
-    })
-    assert.equal(res.status, 200)
-    const data = await res.json()
-    assert.ok(data.token)
+    assert.ok(data.token, 'Superadmin harus langsung mendapatkan token JWT')
     assert.equal(data.user.email, 'admin@myrent.com')
     assert.equal(data.user.role, 'ADMIN')
+    assert.equal(data.user.adminRole, 'SUPERADMIN')
+  })
+
+  await t.test('POST /api/auth/login menolak password admin yang salah dengan 401', async () => {
+    const res = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'admin@myrent.com',
+        password: 'wrongpassword'
+      })
+    })
+    assert.equal(res.status, 401)
+    const data = await res.json()
+    assert.equal(data.error?.code, 'INVALID_CREDENTIALS')
+  })
+
+  await t.test('POST /api/auth/login untuk SUPERADMIN menyertakan payload profil lengkap', async () => {
+    const res = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'admin@myrent.com',
+        password: 'admin123'
+      })
+    })
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(data.user.role, 'ADMIN')
+    assert.equal(data.user.adminRole, 'SUPERADMIN')
+    assert.ok(data.user.adminUserId)
   })
 
   await t.test('GET /api/auth/profile mengembalikan data profil lengkap termasuk kycData', async () => {

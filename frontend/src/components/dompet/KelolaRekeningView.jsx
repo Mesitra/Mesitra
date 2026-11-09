@@ -17,6 +17,7 @@ import {
   updateWithdrawalAccount,
   deleteWithdrawalAccount
 } from '../../lib/walletApi'
+import AlertModal from '../common/AlertModal'
 
 const BANK_OPTIONS = [
   'Bank BCA',
@@ -50,6 +51,7 @@ export default function KelolaRekeningView({
 
   const [loading, setLoading] = useState(false)
   const [actionLoadingId, setActionLoadingId] = useState(null)
+  const [accountToDelete, setAccountToDelete] = useState(null)
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
 
@@ -130,9 +132,11 @@ export default function KelolaRekeningView({
     }
   }
 
-  const handleDelete = async (accId) => {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus rekening penarikan ini?')) return
+  const handleDelete = (acc) => {
+    setAccountToDelete(acc)
+  }
 
+  const executeDelete = async (accId) => {
     setActionLoadingId(accId)
     setError(null)
     try {
@@ -143,6 +147,7 @@ export default function KelolaRekeningView({
       setError(err.message || 'Gagal menghapus rekening')
     } finally {
       setActionLoadingId(null)
+      setAccountToDelete(null)
     }
   }
 
@@ -357,7 +362,7 @@ export default function KelolaRekeningView({
                           type="button"
                           title="Hapus Rekening"
                           disabled={isLoading}
-                          onClick={() => handleDelete(acc.id)}
+                          onClick={() => handleDelete(acc)}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-40"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -389,6 +394,23 @@ export default function KelolaRekeningView({
           )}
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus Rekening */}
+      <AlertModal
+        isOpen={Boolean(accountToDelete)}
+        onClose={() => setAccountToDelete(null)}
+        type="warning"
+        title="Hapus Rekening Penarikan?"
+        message={`Apakah Anda yakin ingin menghapus rekening ${accountToDelete?.bankName || ''} (${accountToDelete?.accountNumber || ''}) dari daftar rekening penarikan Anda?`}
+        confirmText="Ya, Hapus Rekening"
+        onConfirm={() => {
+          if (accountToDelete) executeDelete(accountToDelete.id)
+        }}
+        secondaryAction={{
+          label: 'Batal',
+          onClick: () => setAccountToDelete(null)
+        }}
+      />
     </div>
   )
 }

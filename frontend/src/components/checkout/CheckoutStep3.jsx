@@ -320,7 +320,7 @@ export default function CheckoutStep3() {
           'Maaf saldo dompet anda tidak cukup, tolong isi saldo dompet terlebih dahulu atau gunakan metode pembayaran lainnya'
         )
       } else {
-        alert(err.message || 'Gagal memproses pembayaran')
+        setError(err.message || 'Gagal memproses pembayaran')
       }
     }
   }, [mockState, orderId, paymentMethod, navigate, order, walletBalance])

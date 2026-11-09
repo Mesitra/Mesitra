@@ -27,7 +27,7 @@ before(async () => {
 
   const owner = await prisma.user.upsert({
     where: { email: TEST_OWNER_EMAIL },
-    update: {},
+    update: { verificationStatus: 'DISETUJUI' },
     create: {
       email: TEST_OWNER_EMAIL,
       password: 'Password123!',
@@ -227,7 +227,7 @@ test('Owner Wallet API & Finansial Flow', async (t) => {
     assert.equal(body.error.code, 'INSUFFICIENT_BALANCE')
   })
 
-  await t.test('POST /api/wallet/owner/withdraw berhasil mencairkan dana dan mencatat mutasi KELUAR', async () => {
+  await t.test('POST /api/wallet/owner/withdraw berhasil mencairkan dana dan mencatat mutasi awal berstatus MENUNGGU', async () => {
     const withdrawAmount = 200000
     const res = await fetch(`${baseUrl}/api/wallet/owner/withdraw`, {
       method: 'POST',
@@ -241,18 +241,16 @@ test('Owner Wallet API & Finansial Flow', async (t) => {
     const body = await res.json()
     assert.equal(body.newBalance, initialBalance - withdrawAmount)
     assert.ok(body.transaction)
+    assert.equal(body.transaction.status, 'MENUNGGU')
+    assert.equal(body.withdrawalRequest?.status, 'MENUNGGU')
     assert.ok(body.transaction.description.includes('Pencairan ke BCA'))
 
-    // Verifikasi mutasi bertambah di GET /api/wallet/owner/me
+    // Verifikasi saldo available berkurang di GET /api/wallet/owner/me
     const checkRes = await fetch(`${baseUrl}/api/wallet/owner/me`, {
       headers: { Authorization: `Bearer ${ownerToken}` }
     })
     const checkBody = await checkRes.json()
     assert.equal(checkBody.availableBalance, initialBalance - withdrawAmount)
-    const latestWd = checkBody.mutations.find((m) => m.id === `MUT-WD-${body.transaction.id}`)
-    assert.ok(latestWd)
-    assert.equal(latestWd.category, 'KELUAR')
-    assert.equal(latestWd.amount, -withdrawAmount)
   })
 
   await t.test('PUT /api/wallet/owner/bank-account berhasil mengubah data rekening pencairan', async () => {

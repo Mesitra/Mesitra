@@ -54,7 +54,7 @@ export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
       if (data.token && data.user) {
         if (String(data.user.role).toUpperCase() === 'ADMIN') {
           setAdminSession(data.token, data.user)
-          navigate('/portal-internal-hq/dashboard')
+          navigate('/admin/kyc')
         } else {
           localStorage.setItem('token', data.token)
           localStorage.setItem('user', JSON.stringify(data.user))
@@ -101,8 +101,8 @@ export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
         onAdminLoginSuccess(data.user)
       }
 
-      // Arahkan ke rute dashboard admin sementara
-      navigate('/portal-internal-hq/dashboard')
+      // Arahkan ke rute dashboard admin
+      navigate('/admin/kyc')
     } catch (err) {
       setError(err.message || 'Verifikasi OTP gagal. Silakan coba lagi.')
     } finally {

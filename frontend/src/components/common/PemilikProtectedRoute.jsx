@@ -30,7 +30,7 @@ export default function PemilikProtectedRoute({ children }) {
 
   if (!isAllowed) {
     if (hasAdminSession()) {
-      return <Navigate to="/portal-internal-hq/dashboard" replace />
+      return <Navigate to="/admin/kyc" replace />
     }
     return <Navigate to={LOGIN_PATH} replace state={{ from: location.pathname }} />
   }

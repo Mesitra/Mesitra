@@ -198,7 +198,7 @@ export default function LandingPage({
             <div className="hidden sm:flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                onClick={() => navigate('/admin/kyc')}
                 className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold px-4 sm:px-5 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer border border-slate-800"
                 title="Kembali ke Dashboard Admin HQ"
               >
@@ -234,7 +234,7 @@ export default function LandingPage({
             <div className="flex sm:hidden items-center gap-2">
               <button
                 type="button"
-                onClick={() => navigate('/portal-internal-hq/dashboard')}
+                onClick={() => navigate('/admin/kyc')}
                 className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer border border-slate-800"
               >
                 <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
@@ -325,7 +325,7 @@ export default function LandingPage({
                   type="button"
                   onClick={() => {
                     setMobileMenuOpen(false)
-                    navigate('/portal-internal-hq/dashboard')
+                    navigate('/admin/kyc')
                   }}
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-center rounded-xl text-sm font-bold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
@@ -383,7 +383,7 @@ export default function LandingPage({
               {isAdmin ? (
                 <button
                   type="button"
-                  onClick={() => navigate('/portal-internal-hq/dashboard')}
+                  onClick={() => navigate('/admin/kyc')}
                   className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl shadow-md shadow-slate-900/20 hover:shadow-lg transition-all cursor-pointer border border-slate-800"
                 >
                   <Layers className="w-4 h-4 text-blue-400" />
@@ -975,7 +975,7 @@ export default function LandingPage({
                 <li>
                   {isAdmin ? (
                     <button
-                      onClick={() => navigate('/portal-internal-hq/dashboard')}
+                      onClick={() => navigate('/admin/kyc')}
                       className="text-blue-600 font-bold hover:underline transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                       <Layers className="w-3.5 h-3.5" />

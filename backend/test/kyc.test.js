@@ -109,12 +109,12 @@ test('Alur verifikasi KYC', async (t) => {
     assert.equal(body.error.code, 'EMAIL_ALREADY_EXISTS')
   })
 
-  // ── Token admin ──────────────────────────────────────────────────────────
-  const otp = await json('/api/auth/verify-admin-otp', {
+  // ── Token admin (Superadmin Login) ───────────────────────────────────────
+  const adminLogin = await json('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email: 'admin@myrent.com', otp: '123456' })
+    body: JSON.stringify({ email: 'admin@myrent.com', password: 'admin123' })
   })
-  const adminToken = otp.body.token
+  const adminToken = adminLogin.body.token
   const adminHeaders = { Authorization: `Bearer ${adminToken}` }
 
   await t.test('GET /api/admin/submissions menolak akses tanpa token admin', async () => {

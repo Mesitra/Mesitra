@@ -1007,8 +1007,32 @@ ordersRouter.patch('/:id/extend', async (req, res, next) => {
       })
     }
 
+    const currentEndDate = new Date(order.endDate)
+    const newEndDate = new Date(currentEndDate.getTime() + Number(additionalDays) * 86400000)
+
+    // Validasi overlap: Cek apakah perpanjangan tanggal menabrak pesanan aktif lain
+    const conflicting = await prisma.order.findFirst({
+      where: {
+        id: { not: order.id },
+        equipmentId: order.equipmentId,
+        status: {
+          in: ['MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKIRIM', 'SEWA_AKTIF', 'INSPEKSI']
+        },
+        startDate: { lte: newEndDate },
+        endDate: { gte: currentEndDate }
+      }
+    })
+
+    if (conflicting) {
+      return res.status(400).json({
+        error: {
+          code: 'EXTENSION_OVERLAP',
+          message: 'Perpanjangan sewa tidak dapat dilakukan karena unit telah dipesan oleh pengguna lain pada periode tersebut'
+        }
+      })
+    }
+
     const additionalCost = order.equipment.pricePerDay * Number(additionalDays)
-    const newEndDate = new Date(order.endDate.getTime() + Number(additionalDays) * 86400000)
 
     const updated = await prisma.order.update({
       where: { id: order.id },
