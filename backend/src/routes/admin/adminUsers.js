@@ -379,6 +379,103 @@ adminUsersRouter.patch('/submissions/:id/reject', async (req, res, next) => {
 })
 
 /**
+ * GET /users/public
+ * Mengambil seluruh user dengan role publik: PENYEWA dan PEMILIK (mengecualikan role admin).
+ * Mendukung filter query: role, status (verificationStatus), search, isSuspended.
+ */
+adminUsersRouter.get('/users/public', async (req, res, next) => {
+  try {
+    const { role, status, search, isSuspended } = req.query ?? {}
+
+    const where = {
+      role: { in: ['PENYEWA', 'PEMILIK'] }
+    }
+
+    if (role && ['PENYEWA', 'PEMILIK'].includes(String(role).toUpperCase())) {
+      where.role = String(role).toUpperCase()
+    }
+
+    if (status) {
+      where.verificationStatus = String(status).toUpperCase()
+    }
+
+    if (isSuspended !== undefined && isSuspended !== '') {
+      where.isSuspended = String(isSuspended) === 'true'
+    }
+
+    if (search && String(search).trim()) {
+      const q = String(search).trim()
+      where.OR = [
+        { fullName: { contains: q } },
+        { email: { contains: q } },
+        { phone: { contains: q } },
+        { submissionCode: { contains: q } }
+      ]
+    }
+
+    const users = await prisma.user.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        role: true,
+        submissionCode: true,
+        verificationStatus: true,
+        isSuspended: true,
+        suspendedReason: true,
+        suspendedAt: true,
+        suspendedById: true,
+        walletBalance: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            orders: true,
+            equipments: true
+          }
+        }
+      }
+    })
+
+    const formattedUsers = users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      phone: user.phone,
+      role: user.role,
+      submissionCode: user.submissionCode,
+      verificationStatus: user.verificationStatus,
+      isSuspended: Boolean(user.isSuspended),
+      suspendedReason: user.suspendedReason ?? null,
+      suspendedAt: user.suspendedAt ?? null,
+      suspendedById: user.suspendedById ?? null,
+      walletBalance: user.walletBalance ?? 0,
+      totalOrders: user._count?.orders ?? 0,
+      totalEquipments: user._count?.equipments ?? 0,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }))
+
+    return res.json({
+      message: 'Daftar pengguna publik berhasil dimuat',
+      total: formattedUsers.length,
+      users: formattedUsers
+    })
+  } catch (error) {
+    return next(error)
+  }
+})
+
+// Alias GET /users -> mengarahkan ke daftar user publik
+adminUsersRouter.get('/users', async (req, res, next) => {
+  req.url = '/users/public'
+  return adminUsersRouter.handle(req, res, next)
+})
+
+/**
  * PATCH /users/:id/suspend
  * Menangguhkan akun pengguna (isSuspended = true).
  * Body: { reason: string }

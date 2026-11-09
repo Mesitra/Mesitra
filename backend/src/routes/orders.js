@@ -5,6 +5,7 @@ import { config } from '../config.js'
 import { sendNewOrderNotif, sendInspectionNotif } from '../services/notificationService.js'
 import { calculateSettlement, PLATFORM_FEE_RATE } from '../lib/settlement.js'
 import { ensureDisputeTicket } from '../lib/dispute.js'
+import { requireKyc } from '../middleware/authMiddleware.js'
 
 export const ordersRouter = Router()
 
@@ -376,7 +377,8 @@ ordersRouter.post('/validate-promo', async (req, res, next) => {
 // ─── POST /api/orders ─────────────────────────────────────────────────────────
 // Buat pesanan baru dari Checkout Step 2.
 // Pesanan dibuat dengan status MENUNGGU_PEMBAYARAN agar step 3 bisa dilanjutkan.
-ordersRouter.post('/', async (req, res, next) => {
+// Wajib melewati verifikasi KYC (requireKyc).
+ordersRouter.post('/', requireKyc, async (req, res, next) => {
   try {
     const {
       equipmentId, startDate, endDate, rentalDays,

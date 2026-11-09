@@ -47,6 +47,7 @@ export async function requireAuth(req, res, next) {
         email: true,
         fullName: true,
         role: true,
+        verificationStatus: true,
         isSuspended: true,
         suspendedReason: true,
         suspendedAt: true
@@ -118,5 +119,62 @@ export async function requireAdmin(req, res, next) {
 
     return next()
   })
+}
+
+/**
+ * Middleware penjaga status KYC (Backend KYC Guard).
+ * Memastikan akun pengguna telah terverifikasi (verificationStatus === 'VERIFIED' atau 'DISETUJUI').
+ * Mencegah bypass KYC dari endpoint krusial publik (seperti POST /api/orders dan POST /api/equipments).
+ * Return error 403 "Akun Anda belum diverifikasi" jika gagal.
+ */
+export async function requireKyc(req, res, next) {
+  try {
+    // Jika req.user belum dimuat atau verificationStatus belum ada di req.user
+    if (!req.user || req.user.verificationStatus === undefined) {
+      const userId = req.userId || req.user?.id
+      if (!userId) {
+        return res.status(401).json({
+          error: { code: 'UNAUTHORIZED', message: 'Token otentikasi wajib disertakan' }
+        })
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          role: true,
+          verificationStatus: true,
+          isSuspended: true
+        }
+      })
+      if (!user) {
+        return res.status(401).json({
+          error: { code: 'USER_NOT_FOUND', message: 'Pengguna tidak ditemukan' }
+        })
+      }
+      req.user = req.user ? { ...req.user, ...user } : user
+    }
+
+    const verificationStatus = String(req.user.verificationStatus || '').toUpperCase()
+    const isVerified =
+      verificationStatus === 'VERIFIED' ||
+      verificationStatus === 'DISETUJUI' ||
+      req.user.role === 'ADMIN'
+
+    if (!isVerified) {
+      return res.status(403).json({
+        error: {
+          code: 'KYC_NOT_VERIFIED',
+          message: 'Akun Anda belum diverifikasi'
+        },
+        message: 'Akun Anda belum diverifikasi'
+      })
+    }
+
+    return next()
+  } catch (error) {
+    return next(error)
+  }
 }
 

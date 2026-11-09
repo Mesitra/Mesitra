@@ -10,6 +10,7 @@ export default function AdminLayout() {
 
   const menuItems = [
     { path: '/admin/kyc', label: 'Verifikasi Akun', icon: ShieldCheck },
+    { path: '/portal-internal-hq/manajemen-pengguna', label: 'Manajemen Pengguna', icon: Users },
     { path: '/portal-internal-hq/pencairan-dana', label: 'Pencairan Dana', icon: DollarSign },
     { path: '/portal-internal-hq/mediasi-sengketa', label: 'Mediasi Sengketa', icon: Scale },
     ...(isSuperadmin
@@ -19,10 +20,12 @@ export default function AdminLayout() {
 
   const BREADCRUMB_MAP = {
     '/admin/kyc': 'Verifikasi Akun',
+    '/admin/manajemen-pengguna': 'Manajemen Pengguna',
     '/admin/mediasi-sengketa': 'Mediasi Sengketa',
     '/admin/pencairan-dana': 'Pencairan Dana',
     '/admin/manajemen-tim': 'Manajemen Tim',
     '/portal-internal-hq/dashboard': 'Verifikasi Akun',
+    '/portal-internal-hq/manajemen-pengguna': 'Manajemen Pengguna',
     '/portal-internal-hq/pencairan-dana': 'Pencairan Dana',
     '/portal-internal-hq/mediasi-sengketa': 'Mediasi Sengketa',
     '/portal-internal-hq/manajemen-tim': 'Manajemen Tim'

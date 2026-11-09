@@ -20,6 +20,7 @@ import AdminSengketa from './pages/admin/AdminSengketa'
 import AdminModerasi from './pages/admin/AdminModerasi'
 import AdminPencairanDana from './components/adminDashboard/AdminPencairanDana'
 import AdminManajemenTim from './pages/admin/AdminManajemenTim'
+import ManajemenPengguna from './pages/admin/ManajemenPengguna'
 import AdminRoute from './components/auth/AdminRoute'
 import AdminLayout from './layouts/AdminLayout'
 import KycDashboard from './pages/admin/KycDashboard'
@@ -494,6 +495,14 @@ export default function App() {
           }
         />
         <Route
+          path="/portal-internal-hq/manajemen-pengguna"
+          element={
+            <AdminProtectedRoute>
+              <ManajemenPengguna />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
           path="/portal-internal-hq/manajemen-tim"
           element={
             <AdminProtectedRoute>
@@ -516,6 +525,8 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<Navigate to="kyc" replace />} />
             <Route path="kyc" element={<KycDashboard />} />
+            <Route path="manajemen-pengguna" element={<ManajemenPengguna />} />
+            <Route path="pengguna" element={<ManajemenPengguna />} />
             <Route path="mediasi-sengketa" element={<AdminSengketa />} />
             <Route path="pencairan-dana" element={<AdminPencairanDana />} />
             <Route path="manajemen-tim" element={<AdminManajemenTim />} />

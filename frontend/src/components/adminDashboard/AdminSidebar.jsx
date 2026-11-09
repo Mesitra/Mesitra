@@ -7,7 +7,8 @@ import {
   Layers,
   DollarSign,
   Scale,
-  Users
+  Users,
+  UserCog
 } from 'lucide-react'
 import { getAdminUser } from '../adminAuth/adminSession'
 
@@ -23,6 +24,13 @@ const MENU = [
     label: 'Verifikasi Akun',
     icon: ShieldCheck,
     badgeKey: 'verifikasi'
+  },
+  {
+    key: 'manajemen-pengguna',
+    path: '/portal-internal-hq/manajemen-pengguna',
+    label: 'Manajemen Pengguna',
+    icon: Users,
+    badgeKey: null
   },
   {
     key: 'pencairan',
@@ -74,6 +82,13 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
         badgeKey: 'verifikasi'
       },
       {
+        key: 'manajemen-pengguna',
+        path: '/portal-internal-hq/manajemen-pengguna',
+        label: 'Manajemen Pengguna',
+        icon: Users,
+        badgeKey: null
+      },
+      {
         key: 'pencairan',
         path: '/portal-internal-hq/pencairan-dana',
         label: 'Pencairan Dana',
@@ -102,7 +117,7 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
         key: 'manajemen-tim',
         path: '/portal-internal-hq/manajemen-tim',
         label: 'Manajemen Tim',
-        icon: Users,
+        icon: UserCog,
         badgeKey: null
       })
     }
@@ -123,6 +138,8 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
     }
     if (location.pathname === item.path) return true
     if (item.key === 'verifikasi' && location.pathname.startsWith('/portal-internal-hq/dashboard')) return true
+    if (item.key === 'manajemen-pengguna' && (location.pathname.startsWith('/portal-internal-hq/manajemen-pengguna') || location.pathname.startsWith('/admin/manajemen-pengguna') || location.pathname.startsWith('/admin/pengguna'))) return true
+    if (item.key === 'manajemen-tim' && (location.pathname.startsWith('/portal-internal-hq/manajemen-tim') || location.pathname.startsWith('/admin/manajemen-tim'))) return true
     return false
   }
 

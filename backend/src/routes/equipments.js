@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
 import { ApiError } from '../lib/errors.js'
 import { config } from '../config.js'
+import { requireKyc } from '../middleware/authMiddleware.js'
 
 export const equipmentsRouter = Router()
 
@@ -488,8 +489,9 @@ equipmentsRouter.get('/me', requireOwnerAuth, async (req, res, next) => {
  * POST /api/equipments
  *
  * Tambah alat baru oleh pemilik (autentikasi JWT).
+ * Wajib melewati verifikasi KYC (requireKyc).
  */
-equipmentsRouter.post('/', requireOwnerAuth, async (req, res, next) => {
+equipmentsRouter.post('/', requireOwnerAuth, requireKyc, async (req, res, next) => {
   try {
     const ownerId = req.user.id
 

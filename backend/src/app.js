@@ -32,6 +32,7 @@ const ENDPOINTS = [
   'PATCH /api/admin/submissions/:id/approve',
   'PATCH /api/admin/submissions/:id/revision',
   'PATCH /api/admin/submissions/:id/reject',
+  'GET /api/admin/users/public',
   'PATCH /api/admin/users/:id/suspend',
   'PATCH /api/admin/users/:id/unsuspend',
   'GET /api/admin/withdrawals',

@@ -248,3 +248,40 @@ export async function resetStaffPin(id) {
   return data
 }
 
+// ── Public Users (Manajemen Pengguna Publik) ───────────────────────────────
+
+/** Daftar seluruh pengguna publik (Penyewa & Pemilik). */
+export async function fetchPublicUsers(params = {}) {
+  const query = new URLSearchParams()
+  if (params.role && params.role !== 'SEMUA') query.set('role', params.role)
+  if (params.status && params.status !== 'SEMUA') query.set('status', params.status)
+  if (params.isSuspended !== undefined && params.isSuspended !== '') {
+    query.set('isSuspended', String(params.isSuspended))
+  }
+  if (params.search) query.set('search', params.search)
+  const qs = query.toString()
+  const data = await adminRequest(`/users/public${qs ? `?${qs}` : ''}`)
+  return {
+    users: data.users ?? [],
+    total: data.total ?? 0
+  }
+}
+
+/** Tangguhkan (suspend) akun pengguna publik. */
+export async function suspendUser(id, reason = '') {
+  const data = await adminRequest(`/users/${encodeURIComponent(id)}/suspend`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason })
+  })
+  return data
+}
+
+/** Cabut penangguhan (unsuspend / aktifkan kembali) akun pengguna publik. */
+export async function unsuspendUser(id) {
+  const data = await adminRequest(`/users/${encodeURIComponent(id)}/unsuspend`, {
+    method: 'PATCH'
+  })
+  return data
+}
+
+
