@@ -17,6 +17,7 @@ import AdminDashboardPlaceholder from './components/adminAuth/AdminDashboardPlac
 import AdminDetailPengajuan from './components/adminDashboard/AdminDetailPengajuan'
 import AdminProtectedRoute from './components/adminAuth/AdminProtectedRoute'
 import AdminSengketa from './pages/admin/AdminSengketa'
+import AdminModerasi from './pages/admin/AdminModerasi'
 import AdminPencairanDana from './components/adminDashboard/AdminPencairanDana'
 import AdminRoute from './components/auth/AdminRoute'
 import AdminLayout from './layouts/AdminLayout'
@@ -480,6 +481,14 @@ export default function App() {
           element={
             <AdminProtectedRoute>
               <AdminPencairanDana />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal-internal-hq/moderasi"
+          element={
+            <AdminProtectedRoute>
+              <AdminModerasi />
             </AdminProtectedRoute>
           }
         />

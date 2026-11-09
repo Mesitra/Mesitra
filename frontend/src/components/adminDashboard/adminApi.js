@@ -147,3 +147,64 @@ export async function resolveDispute(id, payload) {
   })
   return data.dispute ?? null
 }
+
+// ── Moderation (Moderasi Katalog & Ulasan) ────────────────────────────────
+
+/** Daftar katalog alat untuk pengawasan admin. */
+export async function fetchAdminEquipments(params = {}) {
+  const query = new URLSearchParams()
+  if (params.status) query.set('status', params.status)
+  if (params.isTakedown !== undefined) query.set('isTakedown', String(params.isTakedown))
+  if (params.search) query.set('search', params.search)
+  const qs = query.toString()
+  const data = await adminRequest(`/equipments${qs ? `?${qs}` : ''}`)
+  return {
+    equipments: data.equipments ?? [],
+    total: data.total ?? 0
+  }
+}
+
+/** Takedown alat (menyembunyikan dari katalog publik). */
+export async function takedownEquipment(id, takedownReason) {
+  const data = await adminRequest(`/equipments/${encodeURIComponent(id)}/takedown`, {
+    method: 'PATCH',
+    body: JSON.stringify({ takedownReason })
+  })
+  return data.equipment ?? null
+}
+
+/** Pulihkan alat yang sebelumnya di-takedown. */
+export async function restoreEquipment(id) {
+  const data = await adminRequest(`/equipments/${encodeURIComponent(id)}/restore`, {
+    method: 'PATCH',
+    body: JSON.stringify({})
+  })
+  return data.equipment ?? null
+}
+
+/** Daftar ulasan pengguna untuk audit moderasi. */
+export async function fetchAdminReviews(params = {}) {
+  const query = new URLSearchParams()
+  if (params.isDeleted !== undefined) query.set('isDeleted', String(params.isDeleted))
+  if (params.isFlagged !== undefined) query.set('isFlagged', String(params.isFlagged))
+  if (params.rating) query.set('rating', String(params.rating))
+  if (params.search) query.set('search', params.search)
+  const qs = query.toString()
+  const data = await adminRequest(`/reviews${qs ? `?${qs}` : ''}`)
+  return {
+    reviews: data.reviews ?? [],
+    total: data.total ?? 0
+  }
+}
+
+/**
+ * Hapus (soft-delete) ulasan toksik.
+ * Backend memakai PATCH /reviews/:id/delete agar audit trail tetap terjaga.
+ */
+export async function deleteReview(id, moderationNote = '') {
+  const data = await adminRequest(`/reviews/${encodeURIComponent(id)}/delete`, {
+    method: 'PATCH',
+    body: JSON.stringify({ moderationNote })
+  })
+  return data.review ?? null
+}

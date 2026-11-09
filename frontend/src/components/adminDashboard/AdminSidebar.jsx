@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ShieldCheck,
+  Shield,
   LogOut,
   Layers,
   DollarSign,
@@ -35,6 +36,13 @@ const MENU = [
     label: 'Mediasi Sengketa',
     icon: Scale,
     badgeKey: 'mediasi'
+  },
+  {
+    key: 'moderasi',
+    path: '/portal-internal-hq/moderasi',
+    label: 'Moderasi Platform',
+    icon: Shield,
+    badgeKey: 'moderasi'
   }
 ]
 

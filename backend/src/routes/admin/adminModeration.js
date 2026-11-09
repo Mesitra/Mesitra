@@ -42,7 +42,26 @@ adminModerationRouter.get('/equipments', async (req, res, next) => {
 
     const equipments = await prisma.equipment.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        ownerId: true,
+        name: true,
+        category: true,
+        // Wajib tersedia untuk modal preview katalog admin.
+        description: true,
+        images: true,
+        pricePerDay: true,
+        deposit: true,
+        powerWatt: true,
+        weightKg: true,
+        condition: true,
+        location: true,
+        status: true,
+        isTakedownByAdmin: true,
+        takedownReason: true,
+        takedownAt: true,
+        createdAt: true,
+        updatedAt: true,
         owner: {
           select: {
             id: true,
@@ -242,9 +261,37 @@ adminModerationRouter.get('/reviews', async (req, res, next) => {
     const reviews = await prisma.review.findMany({
       where,
       include: {
-        user: { select: { id: true, fullName: true, email: true } },
-        equipment: { select: { id: true, name: true, ownerId: true } },
-        order: { select: { id: true, invoiceNumber: true } }
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            role: true,
+            verificationStatus: true,
+            createdAt: true
+          }
+        },
+        equipment: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            images: true,
+            pricePerDay: true,
+            ownerId: true,
+            owner: { select: { id: true, fullName: true, email: true } }
+          }
+        },
+        order: {
+          select: {
+            id: true,
+            invoiceNumber: true,
+            startDate: true,
+            endDate: true,
+            rentalDays: true
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     })
