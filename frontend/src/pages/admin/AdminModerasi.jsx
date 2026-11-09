@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Shield,
   Search,
@@ -142,6 +142,8 @@ const shortId = (id) => (id ? `${id.slice(0, 8)}…` : '—')
 
 export default function AdminModerasi({ onLogout }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const isInsideAdminLayout = location.pathname.startsWith('/admin')
 
   const [activeTab, setActiveTab] = useState('katalog')
   const [keyword, setKeyword] = useState('')
@@ -424,53 +426,8 @@ export default function AdminModerasi({ onLogout }) {
   const activePreviewPhotoIndex = previewPhotos[equipmentPhotoIndex] ? equipmentPhotoIndex : 0
   const activePreviewPhoto = previewPhotos[activePreviewPhotoIndex] || ''
 
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-row items-stretch">
-      <AdminSidebar
-        activeKey="moderasi"
-        onNavigate={(key) => {
-          const path = ADMIN_PATHS[key]
-          if (path) navigate(path)
-        }}
-        onLogout={handleLogout}
-      />
-
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* Mobile Header */}
-        <header className="lg:hidden flex items-center justify-between gap-3 px-4 py-3 bg-white border-b border-slate-200">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-[15px] font-extrabold text-slate-900 cursor-pointer"
-          >
-            <Shield className="w-5 h-5 text-blue-600" />
-            MyRent HQ
-          </button>
-          <div className="flex items-center gap-2">
-            <select
-              value="moderasi"
-              onChange={(e) => {
-                const path = ADMIN_PATHS[e.target.value]
-                if (path) navigate(path)
-              }}
-              className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800"
-            >
-              <option value="verifikasi">Verifikasi Akun</option>
-              <option value="pencairan">Pencairan Dana</option>
-              <option value="mediasi">Mediasi Sengketa</option>
-              <option value="moderasi">Moderasi Platform</option>
-            </select>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-700 cursor-pointer"
-            >
-              Keluar
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1 w-full max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 flex flex-col gap-6">
+  const mainContent = (
+    <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 flex flex-col gap-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Portal Admin</span>
@@ -483,7 +440,7 @@ export default function AdminModerasi({ onLogout }) {
             <div className="flex flex-col gap-1.5">
               <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-[11px] font-bold text-blue-700">
                 <Shield className="w-3.5 h-3.5" />
-                Pusat Moderasi
+                Pusat Moderasi Platform
               </div>
               <h1 className="text-[28px] font-extrabold tracking-[-0.6px] leading-tight text-slate-900">
                 Moderasi Platform
@@ -493,9 +450,9 @@ export default function AdminModerasi({ onLogout }) {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 w-full lg:w-[380px]">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full sm:w-[260px] md:w-[280px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="search"
                   value={keyword}
@@ -503,9 +460,9 @@ export default function AdminModerasi({ onLogout }) {
                   placeholder={
                     activeTab === 'katalog'
                       ? 'Cari nama alat, ID, atau pemilik...'
-                      : 'Cari order, penulis, alat, atau isi ulasan...'
+                      : 'Cari order, penulis, alat, ulasan...'
                   }
-                  className="w-full h-11 pl-11 pr-4 rounded-[10px] bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
                 />
               </div>
               <button
@@ -513,43 +470,45 @@ export default function AdminModerasi({ onLogout }) {
                 onClick={loadData}
                 disabled={isLoading}
                 title="Muat ulang data"
-                className="shrink-0 h-11 w-11 rounded-[10px] bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer disabled:opacity-60"
+                className="shrink-0 h-11 w-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-colors cursor-pointer disabled:opacity-60"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex flex-wrap items-center gap-1 p-1 w-fit bg-white rounded-xl border border-slate-200">
-            {TABS.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.key
-              const count = item.key === 'katalog' ? equipments.length : reviews.length
+          {/* Tabs Filter (Pill rounded) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              {TABS.map((item) => {
+                const Icon = item.icon
+                const isActive = activeTab === item.key
+                const count = item.key === 'katalog' ? equipments.length : reviews.length
 
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => handleTabChange(item.key)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-[9px] text-sm font-semibold transition-colors cursor-pointer ${
-                    isActive
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-blue-300' : 'text-slate-400'}`} />
-                  {item.label}
-                  <span
-                    className={`tabular-nums text-xs px-2 py-0.5 rounded-full ${
-                      isActive ? 'bg-slate-800 text-blue-300' : 'bg-slate-100 text-slate-600'
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => handleTabChange(item.key)}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    {count}
-                  </span>
-                </button>
-              )
-            })}
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    <span>{item.label}</span>
+                    <span
+                      className={`tabular-nums text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        isActive ? 'bg-blue-700/60 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Notifikasi sukses */}
@@ -584,21 +543,21 @@ export default function AdminModerasi({ onLogout }) {
           ) : null}
 
           {/* Table Container */}
-          <div className="w-full bg-white rounded-[14px] border border-slate-200 overflow-hidden shadow-sm">
+          <div className="w-full bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
             {isLoading ? (
-              <div className="flex flex-col items-center gap-3 py-16 text-center">
-                <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
-                <p className="text-sm font-semibold text-slate-600">
+              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs font-medium text-slate-500">
                   Memuat {activeTab === 'katalog' ? 'katalog alat' : 'ulasan pengguna'}...
                 </p>
               </div>
             ) : (
               <>
-                {activeTab === 'katalog' && filteredEquipments.length > 0 ? (
+                {activeTab === 'katalog' ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[980px] text-left">
-                      <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
-                        <tr className="text-xs font-bold tracking-wider uppercase">
+                    <table className="w-full min-w-[980px] text-left border-collapse">
+                      <thead className="bg-slate-50/75 text-slate-500 border-b border-slate-200">
+                        <tr className="text-[11px] font-bold tracking-wider uppercase">
                           <th className="py-3.5 px-6">ID Alat</th>
                           <th className="py-3.5 px-6">Nama</th>
                           <th className="py-3.5 px-6">Pemilik</th>
@@ -607,8 +566,27 @@ export default function AdminModerasi({ onLogout }) {
                           <th className="py-3.5 px-6 text-right">Aksi</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {filteredEquipments.map((row) => (
+                      <tbody className="divide-y divide-slate-100 text-sm">
+                        {filteredEquipments.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="py-16 text-center">
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-1">
+                                  <Store className="w-6 h-6" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-800">
+                                  {keyword ? 'Tidak ada alat yang cocok' : 'Belum ada alat di katalog'}
+                                </p>
+                                <p className="text-xs text-slate-500 max-w-sm">
+                                  {keyword
+                                    ? `Tidak ditemukan alat dengan kata kunci "${keyword}". Coba kata kunci lain.`
+                                    : 'Alat yang diunggah pemilik akan muncul di sini untuk diawasi oleh admin.'}
+                                </p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredEquipments.map((row) => (
                           <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
                             <td className="py-4 px-6 align-top">
                               <span
@@ -701,17 +679,17 @@ export default function AdminModerasi({ onLogout }) {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        )))}
                       </tbody>
                     </table>
                   </div>
                 ) : null}
 
-                {activeTab === 'ulasan' && filteredReviews.length > 0 ? (
+                {activeTab === 'ulasan' ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1040px] text-left">
-                      <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
-                        <tr className="text-xs font-bold tracking-wider uppercase">
+                    <table className="w-full min-w-[1040px] text-left border-collapse">
+                      <thead className="bg-slate-50/75 text-slate-500 border-b border-slate-200">
+                        <tr className="text-[11px] font-bold tracking-wider uppercase">
                           <th className="py-3.5 px-6">Order ID</th>
                           <th className="py-3.5 px-6">Penulis</th>
                           <th className="py-3.5 px-6">Alat</th>
@@ -720,8 +698,27 @@ export default function AdminModerasi({ onLogout }) {
                           <th className="py-3.5 px-6 text-right">Aksi</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {filteredReviews.map((row) => (
+                      <tbody className="divide-y divide-slate-100 text-sm">
+                        {filteredReviews.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="py-16 text-center">
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-1">
+                                  <MessageSquare className="w-6 h-6" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-800">
+                                  {keyword ? 'Tidak ada ulasan yang cocok' : 'Belum ada ulasan pengguna'}
+                                </p>
+                                <p className="text-xs text-slate-500 max-w-sm">
+                                  {keyword
+                                    ? `Tidak ditemukan ulasan dengan kata kunci "${keyword}". Coba kata kunci lain.`
+                                    : 'Ulasan dari penyewa setelah menyelesaikan pesanan akan muncul di sini.'}
+                                </p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredReviews.map((row) => (
                           <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
                             <td className="py-4 px-6 align-top">
                               <span
@@ -819,38 +816,66 @@ export default function AdminModerasi({ onLogout }) {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        )))}
                       </tbody>
                     </table>
-                  </div>
-                ) : null}
-
-                {(activeTab === 'katalog' ? filteredEquipments.length : filteredReviews.length) === 0 ? (
-                  <div className="flex flex-col items-center gap-2 py-16 text-center">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                      <Inbox className="w-6 h-6 text-slate-400" />
-                    </div>
-                    <p className="text-base font-bold text-slate-800">
-                      {keyword
-                        ? 'Tidak ada data yang cocok'
-                        : activeTab === 'katalog'
-                          ? 'Belum ada alat di katalog'
-                          : 'Belum ada ulasan pengguna'}
-                    </p>
-                    <p className="text-xs text-slate-400 max-w-sm">
-                      {keyword
-                        ? 'Coba ubah kata kunci pencarian Anda.'
-                        : activeTab === 'katalog'
-                          ? 'Alat yang diunggah pemilik akan muncul di sini untuk diawasi oleh admin.'
-                          : 'Ulasan dari penyewa setelah menyelesaikan pesanan akan muncul di sini.'}
-                    </p>
                   </div>
                 ) : null}
               </>
             )}
           </div>
         </main>
-      </div>
+  )
+
+  return (
+    <>
+      {isInsideAdminLayout ? (
+        <div className="w-full">{mainContent}</div>
+      ) : (
+        <div className="min-h-screen bg-slate-50 flex">
+          <AdminSidebar activeKey="moderasi" onLogout={handleLogout} />
+
+          <div className="flex-1 min-w-0 flex flex-col">
+            {/* Mobile Header Navigasi */}
+            <header className="lg:hidden flex items-center justify-between gap-3 px-4 py-3 bg-white border-b border-slate-200">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2 text-[15px] font-extrabold text-slate-900 cursor-pointer"
+              >
+                <Shield className="w-5 h-5 text-blue-600" />
+                MyRent HQ
+              </button>
+              <div className="flex items-center gap-2">
+                <select
+                  value="moderasi"
+                  onChange={(e) => {
+                    const path = ADMIN_PATHS[e.target.value]
+                    if (path) navigate(path)
+                  }}
+                  className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800"
+                >
+                  <option value="verifikasi">Verifikasi Akun</option>
+                  <option value="manajemen-pengguna">Manajemen Pengguna</option>
+                  <option value="pencairan">Pencairan Dana</option>
+                  <option value="mediasi">Mediasi Sengketa</option>
+                  <option value="moderasi">Moderasi Platform</option>
+                  <option value="manajemen-tim">Manajemen Tim</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-700 cursor-pointer"
+                >
+                  Keluar
+                </button>
+              </div>
+            </header>
+
+            {mainContent}
+          </div>
+        </div>
+      )}
 
       {/* Modal Preview Alat */}
       {equipmentToPreview ? (
@@ -1437,7 +1462,7 @@ export default function AdminModerasi({ onLogout }) {
           </div>
         </ModalShell>
       ) : null}
-    </div>
+    </>
   )
 }
 

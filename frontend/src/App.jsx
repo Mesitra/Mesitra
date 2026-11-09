@@ -525,10 +525,12 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<Navigate to="kyc" replace />} />
             <Route path="kyc" element={<KycDashboard />} />
+            <Route path="verifikasi" element={<KycDashboard />} />
             <Route path="manajemen-pengguna" element={<ManajemenPengguna />} />
             <Route path="pengguna" element={<ManajemenPengguna />} />
             <Route path="mediasi-sengketa" element={<AdminSengketa />} />
             <Route path="pencairan-dana" element={<AdminPencairanDana />} />
+            <Route path="moderasi" element={<AdminModerasi />} />
             <Route path="manajemen-tim" element={<AdminManajemenTim />} />
           </Route>
         </Route>
