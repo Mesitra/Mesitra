@@ -6,7 +6,7 @@ const app = createApp()
 const port = Number(process.env.PORT || config.port || 3000)
 const host = '0.0.0.0'
 
-app.listen(port, host, () => {
+const mainServer = app.listen(port, host, () => {
   console.log(`MyRent API berjalan di http://${host}:${port} (${config.nodeEnv})`)
   console.log(`Dokumentasi OpenAPI: http://${host}:${port}/openapi.yaml`)
   
@@ -17,3 +17,24 @@ app.listen(port, host, () => {
     console.warn('[Jobs] Warning starting background jobs:', err?.message)
   }
 })
+
+mainServer.on('error', (err) => {
+  console.error('[Server] Main server error:', err)
+})
+
+// Mencegah 502 Port Mismatch di Railway Cloud:
+// Memastikan port 3000 dan 8080 sama-sama aktif mendengarkan request dari Railway Proxy
+const fallbackPorts = [3000, 8080].filter(p => p !== port)
+for (const p of fallbackPorts) {
+  try {
+    const fallbackServer = app.listen(p, host, () => {
+      console.log(`MyRent API juga mendengarkan di http://${host}:${p} (Railway Proxy Multi-Port)`)
+    })
+    fallbackServer.on('error', (err) => {
+      // Abaikan jika port sudah terpakai
+      console.warn(`[Server] Port ${p} note:`, err?.message)
+    })
+  } catch (err) {
+    console.warn(`[Server] Could not bind fallback port ${p}:`, err?.message)
+  }
+}
