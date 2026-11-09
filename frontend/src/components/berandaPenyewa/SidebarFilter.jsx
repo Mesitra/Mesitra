@@ -237,7 +237,7 @@ export default function SidebarFilter({
     dateRange.start && dateRange.end ? diffDays(dateRange.start, dateRange.end) + 1 : 0
 
   return (
-    <aside className={`box-border w-full shrink-0 h-fit lg:max-h-[calc(100vh-175px)] lg:overflow-y-auto scrollbar-thin flex flex-col gap-4 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
+    <aside className={`box-border w-full shrink-0 h-fit lg:max-h-[calc(100vh-188px)] lg:overflow-y-auto lg:overflow-x-hidden scrollbar-thin flex flex-col gap-4 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}>
       {/* Head */}
       <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
         <div className="flex items-center gap-2">
