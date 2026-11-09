@@ -7,6 +7,7 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
+    "build": "prisma generate",
     "start": "node src/index.js",
     "test": "node --test --test-concurrency=1 test/",
     "seed": "node prisma/seed.js"
@@ -23,9 +24,8 @@
     "cors": "^2.8.6",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.3",
-    "node-cron": "^4.6.0"
-  },
-  "devDependencies": {
+    "node-cron": "^4.6.0",
     "prisma": "^6.19.3"
-  }
+  },
+  "devDependencies": {}
 }
