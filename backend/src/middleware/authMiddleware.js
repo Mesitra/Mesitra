@@ -83,6 +83,7 @@ export async function requireAuth(req, res, next) {
 /**
  * Middleware penjaga khusus Admin (Admin Guard).
  * Memanggil requireAuth terlebih dahulu, lalu memvalidasi apakah user memiliki role ADMIN.
+ * Juga extract adminRole dan adminUserId dari JWT token untuk SUPERADMIN/STAFF.
  */
 export async function requireAdmin(req, res, next) {
   return requireAuth(req, res, (err) => {
@@ -97,7 +98,24 @@ export async function requireAdmin(req, res, next) {
       })
     }
 
-    req.admin = req.user
+    // Extract adminRole dari JWT token (jika ada)
+    const authHeader = req.headers.authorization
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice('Bearer '.length).trim()
+      try {
+        const decoded = jwt.verify(token, config.jwtSecret)
+        req.admin = {
+          ...req.user,
+          adminRole: decoded.adminRole || null,
+          adminUserId: decoded.adminUserId || null
+        }
+      } catch {
+        req.admin = req.user
+      }
+    } else {
+      req.admin = req.user
+    }
+
     return next()
   })
 }

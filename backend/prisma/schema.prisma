@@ -16,6 +16,11 @@ enum Role {
   ADMIN
 }
 
+enum AdminRole {
+  SUPERADMIN
+  STAFF
+}
+
 /**
  * Status verifikasi KYC yang dipakai Portal Verifikasi Admin.
  * - MENUNGGU          : pengajuan baru dikirim, belum ditinjau admin
@@ -515,4 +520,21 @@ model AdminAuditLog {
   @@index([adminId])
   @@index([action])
   @@index([targetType, targetId])
+}
+
+model AdminUser {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  name            String
+  role            AdminRole @default(STAFF)
+  securityPinHash String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdById     String?
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
 }

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { requireAdmin } from '../middleware/adminAuth.js'
 import { adminUsersRouter } from './admin/adminUsers.js'
+import { adminStaffRouter } from './admin/adminStaff.js'
 import { adminFinanceRouter } from './admin/adminFinance.js'
 import { adminDisputesRouter } from './admin/adminDisputes.js'
 import { adminModerationRouter } from './admin/adminModeration.js'
@@ -12,6 +13,9 @@ adminRouter.use(requireAdmin)
 
 // Pilar 1: KYC, Submissions & Manajemen User (Suspensi / Unsuspensi)
 adminRouter.use(adminUsersRouter)
+
+// Pilar 1b: Manajemen Tim Admin (SUPERADMIN only)
+adminRouter.use('/staff', adminStaffRouter)
 
 // Pilar 2: Finansial & Pencairan Dana (Withdrawals)
 adminRouter.use(adminFinanceRouter)

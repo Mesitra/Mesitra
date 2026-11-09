@@ -508,13 +508,72 @@ authRouter.post('/login', async (req, res, next) => {
       })
     }
 
-    // Khusus role ADMIN: Tidak langsung memberikan JWT token, wajib 2-Step OTP
+    // Khusus role ADMIN: Cek AdminUser table untuk multi-role support
     if (user.role === 'ADMIN') {
-      return res.json({
-        message: 'Kredensial valid. Verifikasi 2 langkah diperlukan.',
-        step: 'OTP_REQUIRED',
-        email: user.email
+      // Cari di AdminUser table
+      const adminUser = await prisma.adminUser.findUnique({
+        where: { email: cleanEmail }
       })
+
+      if (!adminUser || !adminUser.isActive) {
+        return res.status(403).json({
+          error: {
+            code: 'ADMIN_NOT_FOUND',
+            message: 'Akun admin tidak ditemukan atau tidak aktif'
+          }
+        })
+      }
+
+      // Verifikasi password AdminUser
+      const isAdminPasswordValid = await bcrypt.compare(password, adminUser.passwordHash)
+      if (!isAdminPasswordValid) {
+        return res.status(401).json({
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: 'Email atau kata sandi tidak valid'
+          }
+        })
+      }
+
+      // SUPERADMIN: langsung issue JWT
+      if (adminUser.role === 'SUPERADMIN') {
+        const token = jwt.sign(
+          { userId: user.id, role: user.role, email: user.email, adminRole: 'SUPERADMIN', adminUserId: adminUser.id },
+          config.jwtSecret,
+          { expiresIn: config.jwtExpiresIn }
+        )
+
+        return res.json({
+          message: 'Login superadmin berhasil',
+          token,
+          user: {
+            ...presentUser(user),
+            adminRole: 'SUPERADMIN',
+            adminUserId: adminUser.id
+          }
+        })
+      }
+
+      // STAFF: cek apakah sudah set PIN
+      if (adminUser.role === 'STAFF') {
+        if (!adminUser.securityPinHash) {
+          // Staff belum set PIN, perlu setup PIN dulu
+          return res.json({
+            message: 'PIN keamanan belum diatur. Silakan atur PIN 6 digit Anda.',
+            step: 'SETUP_PIN_REQUIRED',
+            email: adminUser.email,
+            adminUserId: adminUser.id
+          })
+        }
+
+        // Staff sudah punya PIN, minta verifikasi PIN
+        return res.json({
+          message: 'Kredensial valid. Masukkan PIN keamanan 6 digit Anda.',
+          step: 'PIN_REQUIRED',
+          email: adminUser.email,
+          adminUserId: adminUser.id
+        })
+      }
     }
 
     // Generate JWT token untuk role selain ADMIN (PENYEWA, PEMILIK)
@@ -535,60 +594,126 @@ authRouter.post('/login', async (req, res, next) => {
 })
 
 /**
- * POST /api/auth/verify-admin-otp
- * Verifikasi 2-Step OTP 6-Digit khusus Admin
+ * POST /api/auth/admin/setup-pin
+ * Staff pertama kali setup PIN 6 digit
  */
-authRouter.post('/verify-admin-otp', async (req, res, next) => {
+authRouter.post('/admin/setup-pin', async (req, res, next) => {
   try {
-    const { email, otp } = req.body
+    const { email, pin } = req.body
 
     const cleanEmail = email ? String(email).trim().toLowerCase() : ''
-    const cleanOtp = otp ? String(otp).trim() : ''
+    const cleanPin = pin ? String(pin).trim() : ''
 
-    if (!cleanEmail || !cleanOtp) {
+    if (!cleanEmail || !cleanPin) {
       return res.status(400).json({
-        error: {
-          code: 'MISSING_FIELDS',
-          message: 'Email dan kode OTP wajib diisi'
-        }
+        error: { code: 'MISSING_FIELDS', message: 'Email dan PIN wajib diisi' }
       })
     }
 
-    // Cari user di database
+    if (cleanPin.length !== 6 || !/^\d{6}$/.test(cleanPin)) {
+      return res.status(400).json({
+        error: { code: 'INVALID_PIN', message: 'PIN harus 6 digit angka' }
+      })
+    }
+
+    const adminUser = await prisma.adminUser.findUnique({
+      where: { email: cleanEmail }
+    })
+
+    if (!adminUser || adminUser.role !== 'STAFF') {
+      return res.status(403).json({
+        error: { code: 'ACCESS_DENIED', message: 'Akun staff tidak ditemukan' }
+      })
+    }
+
+    if (adminUser.securityPinHash) {
+      return res.status(400).json({
+        error: { code: 'PIN_ALREADY_SET', message: 'PIN sudah diatur sebelumnya' }
+      })
+    }
+
+    // Hash PIN dan simpan
+    const pinHash = await bcrypt.hash(cleanPin, 10)
+    await prisma.adminUser.update({
+      where: { id: adminUser.id },
+      data: { securityPinHash: pinHash }
+    })
+
+    return res.json({
+      message: 'PIN berhasil diatur. Silakan login kembali.'
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
+ * POST /api/auth/admin/verify-pin
+ * Staff verifikasi PIN untuk mendapatkan JWT token
+ */
+authRouter.post('/admin/verify-pin', async (req, res, next) => {
+  try {
+    const { email, pin } = req.body
+
+    const cleanEmail = email ? String(email).trim().toLowerCase() : ''
+    const cleanPin = pin ? String(pin).trim() : ''
+
+    if (!cleanEmail || !cleanPin) {
+      return res.status(400).json({
+        error: { code: 'MISSING_FIELDS', message: 'Email dan PIN wajib diisi' }
+      })
+    }
+
+    const adminUser = await prisma.adminUser.findUnique({
+      where: { email: cleanEmail }
+    })
+
+    if (!adminUser || !adminUser.isActive) {
+      return res.status(403).json({
+        error: { code: 'ACCESS_DENIED', message: 'Akun tidak ditemukan atau tidak aktif' }
+      })
+    }
+
+    if (!adminUser.securityPinHash) {
+      return res.status(400).json({
+        error: { code: 'PIN_NOT_SET', message: 'PIN belum diatur' }
+      })
+    }
+
+    // Verifikasi PIN
+    const isPinValid = await bcrypt.compare(cleanPin, adminUser.securityPinHash)
+    if (!isPinValid) {
+      return res.status(400).json({
+        error: { code: 'INVALID_PIN', message: 'PIN tidak valid' }
+      })
+    }
+
+    // Cari user ADMIN terkait
     const user = await prisma.user.findUnique({
       where: { email: cleanEmail }
     })
 
     if (!user || user.role !== 'ADMIN') {
       return res.status(403).json({
-        error: {
-          code: 'ACCESS_DENIED',
-          message: 'Akun tidak ditemukan atau tidak memiliki hak akses admin'
-        }
+        error: { code: 'ACCESS_DENIED', message: 'User admin tidak ditemukan' }
       })
     }
 
-    // Validasi kode OTP (MVP: hardcoded '123456')
-    if (cleanOtp !== '123456') {
-      return res.status(400).json({
-        error: {
-          code: 'INVALID_OTP',
-          message: 'Kode verifikasi tidak valid. Masukkan 6 digit yang benar.'
-        }
-      })
-    }
-
-    // Generate JWT token untuk Admin setelah OTP terverifikasi
+    // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, role: user.role, email: user.email },
+      { userId: user.id, role: user.role, email: user.email, adminRole: adminUser.role, adminUserId: adminUser.id },
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
     )
 
     return res.json({
-      message: 'Verifikasi admin berhasil',
+      message: 'Verifikasi PIN berhasil',
       token,
-      user: presentUser(user)
+      user: {
+        ...presentUser(user),
+        adminRole: adminUser.role,
+        adminUserId: adminUser.id
+      }
     })
   } catch (error) {
     next(error)
