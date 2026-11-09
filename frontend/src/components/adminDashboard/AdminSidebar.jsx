@@ -6,7 +6,8 @@ import {
   LogOut,
   Layers,
   DollarSign,
-  Scale
+  Scale,
+  Users
 } from 'lucide-react'
 import { getAdminUser } from '../adminAuth/adminSession'
 
@@ -45,20 +46,15 @@ const MENU = [
     badgeKey: 'moderasi'
   }
 ]
-
-/**
- * @param {object} props
- * @param {string} props.activeKey - menu yang sedang aktif
- * @param {function} props.onNavigate - callback saat menu diklik
- * @param {object} props.counts - jumlah antrean per menu
- * @param {function} props.onLogout - aksi keluar sesi
- */
 export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLogout }) {
   const navigate = useNavigate()
   const location = useLocation()
   const adminUser = getAdminUser()
   const namaAdmin = adminUser?.fullName || adminUser?.name || 'Rani Admin'
   const emailAdmin = adminUser?.email || 'admin@myrent.com'
+  const adminRole = adminUser?.adminRole || null
+  const isSuperadmin = adminRole === 'SUPERADMIN'
+  
   const inisial = (namaAdmin || 'RA')
     .split(' ')
     .filter(Boolean)
@@ -66,6 +62,53 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
     .map((part) => part[0])
     .join('')
     .toUpperCase()
+
+  // Build menu dynamically - tambah Manajemen Tim jika SUPERADMIN
+  const menu = React.useMemo(() => {
+    const baseMenu = [
+      {
+        key: 'verifikasi',
+        path: '/portal-internal-hq/dashboard',
+        label: 'Verifikasi Akun',
+        icon: ShieldCheck,
+        badgeKey: 'verifikasi'
+      },
+      {
+        key: 'pencairan',
+        path: '/portal-internal-hq/pencairan-dana',
+        label: 'Pencairan Dana',
+        icon: DollarSign,
+        badgeKey: 'pencairan'
+      },
+      {
+        key: 'mediasi',
+        path: '/portal-internal-hq/mediasi-sengketa',
+        label: 'Mediasi Sengketa',
+        icon: Scale,
+        badgeKey: 'mediasi'
+      },
+      {
+        key: 'moderasi',
+        path: '/portal-internal-hq/moderasi',
+        label: 'Moderasi Platform',
+        icon: Shield,
+        badgeKey: 'moderasi'
+      }
+    ]
+
+    // Tambah menu Manajemen Tim hanya untuk SUPERADMIN
+    if (isSuperadmin) {
+      baseMenu.push({
+        key: 'manajemen-tim',
+        path: '/portal-internal-hq/manajemen-tim',
+        label: 'Manajemen Tim',
+        icon: Users,
+        badgeKey: null
+      })
+    }
+
+    return baseMenu
+  }, [isSuperadmin])
 
   const handleItemClick = (item) => {
     if (onNavigate) {
@@ -98,7 +141,7 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
 
       {/* Menu */}
       <nav className="flex flex-col gap-1">
-        {MENU.map((item) => {
+        {menu.map((item) => {
           const Icon = item.icon
           const isActive = isItemActive(item)
           const badge = item.badgeKey ? counts[item.badgeKey] : null

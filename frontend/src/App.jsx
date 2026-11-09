@@ -19,6 +19,7 @@ import AdminProtectedRoute from './components/adminAuth/AdminProtectedRoute'
 import AdminSengketa from './pages/admin/AdminSengketa'
 import AdminModerasi from './pages/admin/AdminModerasi'
 import AdminPencairanDana from './components/adminDashboard/AdminPencairanDana'
+import AdminManajemenTim from './pages/admin/AdminManajemenTim'
 import AdminRoute from './components/auth/AdminRoute'
 import AdminLayout from './layouts/AdminLayout'
 import KycDashboard from './pages/admin/KycDashboard'
@@ -489,6 +490,14 @@ export default function App() {
           element={
             <AdminProtectedRoute>
               <AdminModerasi />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal-internal-hq/manajemen-tim"
+          element={
+            <AdminProtectedRoute>
+              <AdminManajemenTim />
             </AdminProtectedRoute>
           }
         />
