@@ -134,9 +134,9 @@ adminFinanceRouter.patch('/withdrawals/:id/approve', async (req, res, next) => {
     const adminId = req.admin?.id || req.userId
     const now = new Date()
 
-    const [updatedWithdrawal] = await prisma.$transaction([
+    const [updatedWithdrawal, linkedTx] = await prisma.$transaction(async (tx) => {
       // 1. Update status WithdrawalRequest menjadi SELESAI
-      prisma.withdrawalRequest.update({
+      const wr = await tx.withdrawalRequest.update({
         where: { id: withdrawal.id },
         data: {
           status: 'SELESAI',
@@ -149,9 +149,21 @@ adminFinanceRouter.patch('/withdrawals/:id/approve', async (req, res, next) => {
         include: {
           user: { select: WITHDRAWAL_USER_SELECT }
         }
-      }),
-      // 2. Catat audit trail aksi admin
-      prisma.adminAuditLog.create({
+      })
+
+      // 2. Set linked WalletTransaction to BERHASIL
+      const wtx = await tx.walletTransaction.updateMany({
+        where: {
+          userId: withdrawal.userId,
+          type: 'WITHDRAW',
+          reference: withdrawal.withdrawalCode,
+          status: 'MENUNGGU'
+        },
+        data: { status: 'BERHASIL' }
+      })
+
+      // 3. Catat audit trail aksi admin
+      await tx.adminAuditLog.create({
         data: {
           adminId,
           action: 'APPROVE_WITHDRAWAL',
@@ -171,7 +183,9 @@ adminFinanceRouter.patch('/withdrawals/:id/approve', async (req, res, next) => {
           userAgent: req.get('user-agent') || null
         }
       })
-    ])
+
+      return [wr, wtx]
+    })
 
     return res.json({
       message: `Pencairan dana ${updatedWithdrawal.withdrawalCode} sebesar Rp ${updatedWithdrawal.amount.toLocaleString('id-ID')} disetujui`,
@@ -228,9 +242,9 @@ adminFinanceRouter.patch('/withdrawals/:id/reject', async (req, res, next) => {
     const adminId = req.admin?.id || req.userId
     const now = new Date()
 
-    const [updatedWithdrawal, updatedUser] = await prisma.$transaction([
+    const [updatedWithdrawal, updatedUser, restoredTx] = await prisma.$transaction(async (tx) => {
       // 1. Update status WithdrawalRequest menjadi DITOLAK
-      prisma.withdrawalRequest.update({
+      const wr = await tx.withdrawalRequest.update({
         where: { id: withdrawal.id },
         data: {
           status: 'DITOLAK',
@@ -241,9 +255,10 @@ adminFinanceRouter.patch('/withdrawals/:id/reject', async (req, res, next) => {
         include: {
           user: { select: WITHDRAWAL_USER_SELECT }
         }
-      }),
+      })
+
       // 2. Rollback saldo: Tambahkan kembali amount ke walletBalance user
-      prisma.user.update({
+      const u = await tx.user.update({
         where: { id: withdrawal.userId },
         data: {
           walletBalance: {
@@ -251,21 +266,43 @@ adminFinanceRouter.patch('/withdrawals/:id/reject', async (req, res, next) => {
           }
         },
         select: WITHDRAWAL_USER_SELECT
-      }),
-      // 3. Catat mutasi wallet GAGAL / pengembalian dana
-      prisma.walletTransaction.create({
-        data: {
+      })
+
+      // 3. Update or create GAGAL WalletTransaction
+      const existingTx = await tx.walletTransaction.findFirst({
+        where: {
           userId: withdrawal.userId,
           type: 'WITHDRAW',
-          amount: withdrawal.amount,
-          description: `Pencairan dana ${withdrawal.withdrawalCode} ditolak: ${reasonText} (Saldo dikembalikan)`,
-          status: 'GAGAL',
           reference: withdrawal.withdrawalCode,
-          paymentMethod: withdrawal.bankName
+          status: 'MENUNGGU'
         }
-      }),
+      })
+
+      let failedTx
+      if (existingTx) {
+        failedTx = await tx.walletTransaction.update({
+          where: { id: existingTx.id },
+          data: {
+            status: 'GAGAL',
+            description: `Pencairan dana ${withdrawal.withdrawalCode} ditolak: ${reasonText} (Saldo dikembalikan)`
+          }
+        })
+      } else {
+        failedTx = await tx.walletTransaction.create({
+          data: {
+            userId: withdrawal.userId,
+            type: 'WITHDRAW',
+            amount: withdrawal.amount,
+            description: `Pencairan dana ${withdrawal.withdrawalCode} ditolak: ${reasonText} (Saldo dikembalikan)`,
+            status: 'GAGAL',
+            reference: withdrawal.withdrawalCode,
+            paymentMethod: withdrawal.bankName
+          }
+        })
+      }
+
       // 4. Catat jejak audit admin
-      prisma.adminAuditLog.create({
+      await tx.adminAuditLog.create({
         data: {
           adminId,
           action: 'REJECT_WITHDRAWAL',
@@ -282,7 +319,9 @@ adminFinanceRouter.patch('/withdrawals/:id/reject', async (req, res, next) => {
           userAgent: req.get('user-agent') || null
         }
       })
-    ])
+
+      return [wr, u, failedTx]
+    })
 
     return res.json({
       message: `Pencairan dana ${updatedWithdrawal.withdrawalCode} ditolak. Saldo Rp ${updatedWithdrawal.amount.toLocaleString('id-ID')} telah dikembalikan ke dompet pengguna.`,

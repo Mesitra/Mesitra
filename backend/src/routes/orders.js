@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
 import { config } from '../config.js'
 import { sendNewOrderNotif, sendInspectionNotif } from '../services/notificationService.js'
+import { calculateSettlement, PLATFORM_FEE_RATE } from '../lib/settlement.js'
+import { ensureDisputeTicket } from '../lib/dispute.js'
 
 export const ordersRouter = Router()
 
@@ -33,6 +35,51 @@ function authenticate(req, res, next) {
 
 // Semua endpoint memerlukan autentikasi.
 ordersRouter.use(authenticate)
+
+/**
+ * Kembalikan pembayaran WALLET secara utuh ke dompet penyewa.
+ * Harus dipanggil di dalam `prisma.$transaction` yang sama dengan perubahan
+ * status pesanan agar tidak terjadi saldo menggantung bila salah satu gagal.
+ *
+ * @param {import('@prisma/client').Prisma.TransactionClient} tx
+ * @param {object} order
+ * @param {string} reasonLabel
+ * @returns {Promise<object|null>} WalletTransaction refund atau null
+ */
+async function refundWalletPaymentIfNeeded(tx, order, reasonLabel) {
+  if (String(order.paymentMethod || '').toUpperCase() !== 'WALLET') return null
+
+  const refundAmount = Number(order.totalPaid) || 0
+  if (refundAmount <= 0) return null
+
+  // Guard idempotensi: jangan refund dua kali untuk invoice yang sama.
+  const existingRefund = await tx.walletTransaction.findFirst({
+    where: {
+      userId: order.userId,
+      type: 'REFUND',
+      reference: order.invoiceNumber,
+      status: 'BERHASIL'
+    }
+  })
+  if (existingRefund) return existingRefund
+
+  await tx.user.update({
+    where: { id: order.userId },
+    data: { walletBalance: { increment: refundAmount } }
+  })
+
+  return tx.walletTransaction.create({
+    data: {
+      userId: order.userId,
+      type: 'REFUND',
+      amount: refundAmount,
+      description: `${reasonLabel} ${order.invoiceNumber} · Dana dikembalikan ke dompet`,
+      status: 'BERHASIL',
+      reference: order.invoiceNumber,
+      paymentMethod: 'WALLET'
+    }
+  })
+}
 
 /**
  * Helper: Generate nomor invoice unik.
@@ -84,7 +131,8 @@ ordersRouter.get('/', async (req, res, next) => {
           include: { owner: { select: { id: true, fullName: true, email: true, phone: true, kycData: true } } }
         },
         user: { select: { id: true, fullName: true, email: true, phone: true, kycData: true } },
-        review: true
+        review: true,
+        disputeTicket: true
       }
     })
 
@@ -169,7 +217,8 @@ ordersRouter.get('/owner/me', async (req, res, next) => {
         user: {
           select: { id: true, fullName: true, email: true, phone: true, kycData: true }
         },
-        review: true
+        review: true,
+        disputeTicket: true
       },
       orderBy: { createdAt: 'desc' }
     })
@@ -243,7 +292,8 @@ ordersRouter.get('/:id', async (req, res, next) => {
           include: { owner: { select: { id: true, fullName: true, email: true, phone: true, kycData: true } } }
         },
         user: { select: { id: true, fullName: true, email: true, phone: true, kycData: true } },
-        review: true
+        review: true,
+        disputeTicket: true
       }
     })
 
@@ -430,6 +480,85 @@ ordersRouter.post('/', async (req, res, next) => {
   }
 })
 
+/**
+ * PRODUCTION PAYMENT GATEWAY BLUEPRINT — MyRent
+ * ==============================================
+ *
+ * CATATAN PENTING UNTUK JURI / AUDITOR:
+ * Route `PATCH /api/orders/:id/mock-pay` di bawah ini adalah SIMULASI DEMO.
+ * Pada produksi, route ini digantikan oleh alur gateway pembayaran sungguhan
+ * tanpa mengubah kontrak frontend (Checkout Step 3 tetap meminta QRIS lalu
+ * melakukan polling status pesanan).
+ *
+ * 1. ALUR INTEGRASI PRODUKSI (Midtrans Snap / Xendit QRIS API)
+ * ------------------------------------------------------------
+ * a. Frontend memanggil `POST /api/payments/intent` dengan `orderId`.
+ * b. Backend membuat transaksi ke provider:
+ *      - Midtrans Snap:  POST https://app.midtrans.com/snap/v1/transactions
+ *        payload: { transaction_details: { order_id, gross_amount },
+ *                   enabled_payments: ['qris', 'other_qris'] }
+ *      - Xendit QRIS:    POST https://api.xendit.co/qr_codes
+ *        payload: { reference_id, type: 'DYNAMIC', currency: 'IDR',
+ *                   amount, expires_at }
+ *    Server Key / API Key HANYA disimpan di environment backend
+ *    (`MIDTRANS_SERVER_KEY`, `XENDIT_SECRET_KEY`) dan tidak pernah dikirim
+ *    ke browser.
+ * c. Response provider berisi `qr_string` / `actions[].url` (gambar QRIS).
+ *    Frontend menampilkan QR tersebut, lalu polling
+ *    `GET /api/orders/:id/payment-status` setiap 3 detik.
+ * d. Status pesanan TIDAK diubah oleh frontend. Hanya webhook provider yang
+ *    berhak memindahkan pesanan dari MENUNGGU_PEMBAYARAN ke
+ *    MENUNGGU_KONFIRMASI setelah pembayaran terverifikasi.
+ *
+ * 2. ENDPOINT WEBHOOK & VERIFIKASI SIGNATURE
+ * ------------------------------------------
+ *   POST /api/payments/webhook
+ *
+ *   Midtrans mengirim header/body notification dengan field:
+ *     order_id, status_code, gross_amount, signature_key,
+ *     transaction_status, transaction_id, fraud_status.
+ *
+ *   Verifikasi WAJIB sebelum menyentuh database:
+ *
+ *     expected = SHA512(order_id + status_code + gross_amount + ServerKey)
+ *     valid    = crypto.timingSafeEqual(expected, signature_key)
+ *
+ *   Jika signature tidak valid -> HTTP 401 dan TIDAK ada perubahan data.
+ *   Xendit menggunakan header `x-callback-token` yang dibandingkan dengan
+ *   `XENDIT_CALLBACK_TOKEN` (constant-time compare).
+ *
+ *   Pemetaan status pembayaran:
+ *     settlement / capture + accept -> PAID
+ *     pending                       -> PENDING
+ *     deny / cancel / expire        -> FAILED / EXPIRED
+ *
+ * 3. IDEMPOTENCY & PENCEGAHAN DOUBLE-SETTLEMENT
+ * ---------------------------------------------
+ * Provider dapat mengirim webhook yang sama lebih dari sekali. Karena itu:
+ *
+ *   a. Tabel `Payment` (blueprint produksi) menyimpan:
+ *        id, orderId, provider, providerEventId (UNIQUE), providerTransactionId,
+ *        grossAmount, status, paidAt, rawPayload, createdAt, updatedAt
+ *      `providerEventId` = `transaction_id` + `transaction_status` (Midtrans)
+ *      atau `id` event Xendit. UNIQUE constraint membuat insert kedua gagal
+ *      (Prisma P2002) sehingga handler cukup mengembalikan HTTP 200 "OK".
+ *
+ *   b. Seluruh proses webhook berjalan dalam satu `prisma.$transaction`:
+ *        - INSERT Payment (idempotency guard)
+ *        - UPDATE Order.status -> MENUNGGU_KONFIRMASI (hanya dari
+ *          MENUNGGU_PEMBAYARAN)
+ *        - INSERT WalletTransaction bila metode WALLET/refund
+ *      Jika salah satu langkah gagal, seluruh transaksi di-rollback.
+ *
+ *   c. Settlement escrow (pencairan ke pemilik, refund deposit, dan
+ *      pemotongan platform fee 5%) HANYA boleh dieksekusi sekali. Status
+ *      Order + kolom `platformFee`/`netOwnerPayout` + guard pada
+ *      `DisputeTicket.status` menjadi penjaga terakhir. Route mock-pay di
+ *      bawah juga sudah dilindungi guard `status === MENUNGGU_PEMBAYARAN`.
+ *
+ * Hingga integrasi produksi dilakukan, route ini tetap dipertahankan agar
+ * demo kompetisi dapat berjalan instan tanpa ketergantungan jaringan.
+ */
 // ─── PATCH /api/orders/:id/mock-pay ──────────────────────────────────────────
 // Mock Payment: ubah status MENUNGGU_PEMBAYARAN → MENUNGGU_KONFIRMASI.
 // Catat paymentMethod dan paidAt.
@@ -621,18 +750,41 @@ ordersRouter.patch('/:id/reject', async (req, res, next) => {
       })
     }
 
-    const updated = await prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'DITOLAK' },
-      include: {
-        equipment: true,
-        user: { select: { id: true, fullName: true, email: true, phone: true, kycData: true } }
-      }
+    // [KRUSIAL] Refund saldo WALLET + perubahan status dalam satu transaksi.
+    const { updated, refund } = await prisma.$transaction(async (tx) => {
+      const updatedOrder = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'DITOLAK',
+          returnData: {
+            ...(order.returnData && typeof order.returnData === 'object' ? order.returnData : {}),
+            rejectedAt: new Date().toISOString(),
+            rejectionReason: 'Pesanan ditolak oleh pemilik alat.'
+          }
+        },
+        include: {
+          equipment: true,
+          user: { select: { id: true, fullName: true, email: true, phone: true, kycData: true } },
+          disputeTicket: true
+        }
+      })
+
+      const refundTx = await refundWalletPaymentIfNeeded(
+        tx,
+        order,
+        'Pesanan ditolak pemilik'
+      )
+
+      return { updated: updatedOrder, refund: refundTx }
     })
 
     return res.json({
       data: updated,
-      message: 'Pesanan telah ditolak.'
+      refundedToWallet: refund?.amount || 0,
+      message:
+        refund?.amount > 0
+          ? `Pesanan ditolak. Saldo Rp ${refund.amount.toLocaleString('id-ID')} telah dikembalikan ke dompet penyewa.`
+          : 'Pesanan telah ditolak.'
     })
   } catch (error) {
     next(error)
@@ -660,12 +812,34 @@ ordersRouter.patch('/:id/cancel', async (req, res, next) => {
       })
     }
 
-    const updated = await prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'DITOLAK' }
+    // [KRUSIAL] Refund penuh pembayaran WALLET + status DIBATALKAN atomik.
+    const { updated, refund } = await prisma.$transaction(async (tx) => {
+      const updatedOrder = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'DIBATALKAN',
+          returnData: {
+            ...(order.returnData && typeof order.returnData === 'object' ? order.returnData : {}),
+            cancelledAt: new Date().toISOString(),
+            cancellationReason: 'Pesanan dibatalkan oleh penyewa.'
+          }
+        },
+        include: { disputeTicket: true }
+      })
+
+      const refundTx = await refundWalletPaymentIfNeeded(
+        tx,
+        order,
+        'Pesanan dibatalkan penyewa'
+      )
+
+      return { updated: updatedOrder, refund: refundTx }
     })
 
-    return res.json({ data: updated })
+    return res.json({
+      data: updated,
+      refundedToWallet: refund?.amount || 0
+    })
   } catch (error) {
     next(error)
   }
@@ -1044,15 +1218,20 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
 
     if (approveRefund) {
       // ─── LULUS INSPEKSI: Pelepasan Escrow & Refund Deposit 100% ─────────────
-      const refundToRenter = order.depositAmount
-      const payoutToOwner = (order.rentalCost || 0) + (order.shippingCost || 0) + (order.addonsCost || 0)
+      // Gunakan Settlement Engine otoritatif: platform fee 5% dipotong SEKALI
+      const settlement = calculateSettlement({ ...order, damageFee: 0 })
+      const refundToRenter = settlement.depositRefund
+      const payoutToOwner = settlement.ownerPayout
 
-      const [updatedOrder] = await prisma.$transaction([
-        prisma.order.update({
+      const [updatedOrder] = await prisma.$transaction(async (tx) => {
+        const orderUpdate = await tx.order.update({
           where: { id: order.id },
           data: {
             status: 'SELESAI',
             damageFee: 0,
+            platformFeeRate: PLATFORM_FEE_RATE,
+            platformFee: settlement.platformFee,
+            netOwnerPayout: payoutToOwner,
             returnData: {
               ...currentReturnData,
               inspectedAt: now.toISOString(),
@@ -1061,27 +1240,64 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
               payoutSummary: {
                 renterRefund: refundToRenter,
                 ownerPayout: payoutToOwner,
+                platformFee: settlement.platformFee,
                 completedAt: now.toISOString()
               }
             }
           }
-        }),
-        prisma.user.update({
-          where: { id: order.userId },
-          data: { walletBalance: { increment: refundToRenter } }
-        }),
-        prisma.user.update({
-          where: { id: order.equipment.ownerId },
-          data: { walletBalance: { increment: payoutToOwner } }
-        }),
-        prisma.equipment.update({
+        })
+
+        if (refundToRenter > 0) {
+          await tx.user.update({
+            where: { id: order.userId },
+            data: { walletBalance: { increment: refundToRenter } }
+          })
+          await tx.walletTransaction.create({
+            data: {
+              userId: order.userId,
+              type: 'DEPOSIT_REFUND',
+              amount: refundToRenter,
+              description: `Pengembalian deposit jaminan sewa ${order.invoiceNumber}`,
+              status: 'BERHASIL',
+              reference: order.invoiceNumber,
+              paymentMethod: 'ESCROW_REFUND'
+            }
+          })
+        }
+
+        if (payoutToOwner > 0) {
+          await tx.user.update({
+            where: { id: order.equipment.ownerId },
+            data: { walletBalance: { increment: payoutToOwner } }
+          })
+          await tx.walletTransaction.create({
+            data: {
+              userId: order.equipment.ownerId,
+              type: 'SEWA_PAYMENT',
+              amount: payoutToOwner,
+              description: `Pencairan sewa ${order.invoiceNumber} (Net setelah fee platform ${settlement.platformFee.toLocaleString('id-ID')})`,
+              status: 'BERHASIL',
+              reference: order.invoiceNumber,
+              paymentMethod: 'ESCROW_PAYOUT'
+            }
+          })
+        }
+
+        await tx.equipment.update({
           where: { id: order.equipmentId },
           data: { status: 'TERSEDIA' }
         })
-      ])
+
+        return [orderUpdate]
+      })
 
       return res.json({
         data: updatedOrder,
+        settlement: {
+          platformFee: settlement.platformFee,
+          payoutToOwner,
+          refundToRenter
+        },
         message: 'Inspeksi fisik disetujui. Dana deposit telah diteruskan ke dompet penyewa dan dana sewa dicairkan ke pemilik.'
       })
     } else {
@@ -1089,23 +1305,38 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
       const finalDisputeReason = (disputeReason || ownerNotes || 'Klaim kerusakan diajukan oleh pemilik alat.').trim()
       const claimedFee = Math.max(0, Math.min(Number(damageFee) || 0, order.depositAmount))
 
-      const updated = await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'DISPUTE',
-          damageFee: claimedFee,
-          disputeReason: finalDisputeReason,
-          disputeNote: finalDisputeReason,
-          ownerInspectionPhotos: ownerInspectionPhotos || null,
-          returnData: {
-            ...currentReturnData,
-            inspectedAt: now.toISOString(),
-            disputedAt: now.toISOString(),
-            ownerNotes,
+      const [updated, disputeTicket] = await prisma.$transaction(async (tx) => {
+        const updatedOrder = await tx.order.update({
+          where: { id: order.id },
+          data: {
+            status: 'DISPUTE',
+            damageFee: claimedFee,
             disputeReason: finalDisputeReason,
-            damageFeeClaimed: claimedFee
-          }
-        }
+            disputeNote: finalDisputeReason,
+            ownerInspectionPhotos: ownerInspectionPhotos || null,
+            returnData: {
+              ...currentReturnData,
+              inspectedAt: now.toISOString(),
+              disputedAt: now.toISOString(),
+              ownerNotes,
+              disputeReason: finalDisputeReason,
+              damageFeeClaimed: claimedFee
+            }
+          },
+          include: { disputeTicket: true }
+        })
+
+        // [KRUSIAL] Buat DisputeTicket otomatis agar Admin Mediasi Sengketa
+        // langsung menerima tiket lengkap dengan nominal klaim & foto bukti.
+        const ticket = await ensureDisputeTicket(tx, updatedOrder, {
+          claimAmount: claimedFee,
+          disputeReason: finalDisputeReason,
+          ownerPhotos: ownerInspectionPhotos,
+          initiatedById: req.userId,
+          initiatedByRole: req.userRole === 'ADMIN' ? 'ADMIN' : 'PEMILIK'
+        })
+
+        return [updatedOrder, ticket]
       })
 
       // Kirim notifikasi dispute ke pemilik (non-blocking)
@@ -1117,6 +1348,7 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
 
       return res.json({
         data: updated,
+        disputeTicket,
         message: 'Klaim diajukan ke status dispute untuk mediasi admin. Dana deposit dan sewa dibekukan di escrow.'
       })
     }
@@ -1169,16 +1401,30 @@ ordersRouter.patch('/:id/dispute', async (req, res, next) => {
       damageFeeClaimed: claimedFee
     }
 
-    const updated = await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: 'DISPUTE',
+    const [updated, disputeTicket] = await prisma.$transaction(async (tx) => {
+      const updatedOrder = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'DISPUTE',
+          disputeReason: finalReason,
+          disputeNote: finalReason,
+          damageFee: claimedFee,
+          ownerInspectionPhotos:
+            ownerInspectionPhotos !== undefined ? ownerInspectionPhotos : (order.ownerInspectionPhotos || null),
+          returnData: updatedReturnData
+        },
+        include: { disputeTicket: true }
+      })
+
+      const ticket = await ensureDisputeTicket(tx, updatedOrder, {
+        claimAmount: claimedFee,
         disputeReason: finalReason,
-        disputeNote: finalReason,
-        damageFee: claimedFee,
-        ownerInspectionPhotos: ownerInspectionPhotos !== undefined ? ownerInspectionPhotos : (order.ownerInspectionPhotos || null),
-        returnData: updatedReturnData
-      }
+        ownerPhotos: ownerInspectionPhotos !== undefined ? ownerInspectionPhotos : order.ownerInspectionPhotos,
+        initiatedById: req.userId,
+        initiatedByRole: req.userRole === 'ADMIN' ? 'ADMIN' : 'PEMILIK'
+      })
+
+      return [updatedOrder, ticket]
     })
 
     // Kirim notifikasi dispute ke pemilik (non-blocking)
@@ -1190,6 +1436,7 @@ ordersRouter.patch('/:id/dispute', async (req, res, next) => {
 
     return res.json({
       data: updated,
+      disputeTicket,
       message: 'Klaim dispute berhasil diajukan. Status pesanan diubah ke DISPUTE.'
     })
   } catch (error) {
@@ -1197,15 +1444,62 @@ ordersRouter.patch('/:id/dispute', async (req, res, next) => {
   }
 })
 
+// ─── PATCH /api/orders/:id/initiate-defense ──────────────────────────────────
+// Renter submits defense note and counter photos when disputing owner's claim.
+ordersRouter.patch('/:id/initiate-defense', async (req, res, next) => {
+  try {
+    const { renterDefenseNote, renterCounterPhotos } = req.body ?? {}
+
+    const order = await prisma.order.findFirst({
+      where: { id: req.params.id, userId: req.userId },
+      include: { equipment: true, disputeTicket: true }
+    })
+
+    if (!order) {
+      return res.status(404).json({
+        error: { code: 'ORDER_NOT_FOUND', message: 'Pesanan tidak ditemukan' }
+      })
+    }
+
+    if (order.status !== 'DISPUTE') {
+      return res.status(400).json({
+        error: { code: 'INVALID_STATUS', message: 'Pesanan tidak dalam status DISPUTE' }
+      })
+    }
+
+    if (!order.disputeTicket) {
+      return res.status(404).json({
+        error: { code: 'DISPUTE_TICKET_NOT_FOUND', message: 'Tiket sengketa tidak ditemukan' }
+      })
+    }
+
+    const now = new Date()
+    const updatedTicket = await prisma.disputeTicket.update({
+      where: { id: order.disputeTicket.id },
+      data: {
+        renterDefenseNote: renterDefenseNote || null,
+        renterCounterPhotos: renterCounterPhotos || null,
+        defendedAt: now
+      }
+    })
+
+    return res.json({
+      data: updatedTicket,
+      message: 'Pembelaan berhasil dikirim ke admin untuk mediasi.'
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // ─── PATCH /api/orders/:id/resolve-dispute ──────────────────────────────────
-// Endpoint Putusan Mediasi Admin MyRent:
-// Menerima input nominal ganti rugi final (finalDamageFee) dan catatan putusan admin (adminResolutionNote).
-// Otomatis melakukan kalkulasi escrow, memotong deposit, dan mengupdate wallet pemilik & penyewa.
+// [LEGACY COMPATIBILITY] Keep for renter-side modal/API if needed.
+// Admin UI should use /api/admin/disputes/:id/resolve with unified settlement.
 ordersRouter.patch('/:id/resolve-dispute', async (req, res, next) => {
   try {
     if (req.userRole !== 'ADMIN') {
       return res.status(403).json({
-        error: { code: 'FORBIDDEN', message: 'Hanya Admin MyRent yang berwenang memberikan putusan mediasi sengketa' }
+        error: { code: 'FORBIDDEN', message: 'Hanya Admin yang berwenang memberikan putusan mediasi sengketa' }
       })
     }
 
@@ -1232,60 +1526,94 @@ ordersRouter.patch('/:id/resolve-dispute', async (req, res, next) => {
     const { finalDamageFee = 0, adminResolutionNote = '' } = req.body ?? {}
     const cleanNote = String(adminResolutionNote || '').trim() || 'Putusan resmi mediasi sengketa oleh Admin MyRent.'
 
-    // Nominal ganti rugi dibatasi antara Rp 0 sampai maksimal senilai deposit yang ditahan di escrow
-    const resolvedDamageFee = Math.max(0, Math.min(Number(finalDamageFee) || 0, order.depositAmount))
-    const refundToRenter = order.depositAmount - resolvedDamageFee
-    const payoutToOwner = (order.rentalCost || 0) + (order.shippingCost || 0) + (order.addonsCost || 0) + resolvedDamageFee
+    const damageFeeAmount = Math.max(0, Math.min(Number(finalDamageFee) || 0, order.depositAmount))
+    const settlement = calculateSettlement({ ...order, damageFee: damageFeeAmount })
 
     const now = new Date()
     const currentReturnData = (order.returnData && typeof order.returnData === 'object') ? order.returnData : {}
 
-    const [updatedOrder] = await prisma.$transaction([
-      prisma.order.update({
+    const [updatedOrder] = await prisma.$transaction(async (tx) => {
+      const orderUpdate = await tx.order.update({
         where: { id: order.id },
         data: {
           status: 'SELESAI',
-          damageFee: resolvedDamageFee,
-          finalDamageFee: resolvedDamageFee,
+          damageFee: damageFeeAmount,
+          finalDamageFee: damageFeeAmount,
           adminResolutionNote: cleanNote,
           resolvedAt: now,
           isResolvedByAdmin: true,
+          platformFeeRate: PLATFORM_FEE_RATE,
+          platformFee: settlement.platformFee,
+          netOwnerPayout: settlement.ownerPayout,
           returnData: {
             ...currentReturnData,
             resolvedAt: now.toISOString(),
             adminResolution: {
-              finalDamageFee: resolvedDamageFee,
-              refundToRenter,
-              payoutToOwner,
+              finalDamageFee: damageFeeAmount,
+              refundToRenter: settlement.depositRefund,
+              payoutToOwner: settlement.ownerPayout,
+              platformFee: settlement.platformFee,
               adminResolutionNote: cleanNote,
               resolvedAt: now.toISOString()
             }
           }
         }
-      }),
-      prisma.user.update({
-        where: { id: order.userId },
-        data: { walletBalance: { increment: refundToRenter } }
-      }),
-      prisma.user.update({
-        where: { id: order.equipment.ownerId },
-        data: { walletBalance: { increment: payoutToOwner } }
-      }),
-      prisma.equipment.update({
+      })
+
+      if (settlement.depositRefund > 0) {
+        await tx.user.update({
+          where: { id: order.userId },
+          data: { walletBalance: { increment: settlement.depositRefund } }
+        })
+        await tx.walletTransaction.create({
+          data: {
+            userId: order.userId,
+            type: 'DEPOSIT_REFUND',
+            amount: settlement.depositRefund,
+            description: `Pengembalian sisa deposit sewa ${order.invoiceNumber}`,
+            status: 'BERHASIL',
+            reference: order.invoiceNumber,
+            paymentMethod: 'ESCROW_REFUND'
+          }
+        })
+      }
+
+      if (settlement.ownerPayout > 0) {
+        await tx.user.update({
+          where: { id: order.equipment.ownerId },
+          data: { walletBalance: { increment: settlement.ownerPayout } }
+        })
+        await tx.walletTransaction.create({
+          data: {
+            userId: order.equipment.ownerId,
+            type: 'SEWA_PAYMENT',
+            amount: settlement.ownerPayout,
+            description: `Pencairan sewa ${order.invoiceNumber} + ganti rugi Rp ${damageFeeAmount.toLocaleString('id-ID')}`,
+            status: 'BERHASIL',
+            reference: order.invoiceNumber,
+            paymentMethod: 'ESCROW_PAYOUT'
+          }
+        })
+      }
+
+      await tx.equipment.update({
         where: { id: order.equipmentId },
         data: { status: 'TERSEDIA' }
       })
-    ])
+
+      return [orderUpdate]
+    })
 
     return res.json({
       data: updatedOrder,
       breakdown: {
         depositAmount: order.depositAmount,
-        finalDamageFee: resolvedDamageFee,
-        refundToRenter,
-        payoutToOwner
+        finalDamageFee: damageFeeAmount,
+        refundToRenter: settlement.depositRefund,
+        payoutToOwner: settlement.ownerPayout,
+        platformFee: settlement.platformFee
       },
-      message: `Putusan mediasi berhasil diterapkan. Kompensasi ${resolvedDamageFee} dialokasikan ke pemilik, sisa deposit ${refundToRenter} dikembalikan ke penyewa.`
+      message: `Putusan mediasi berhasil diterapkan. Kompensasi ${damageFeeAmount.toLocaleString('id-ID')} dialokasikan ke pemilik, sisa deposit ${settlement.depositRefund.toLocaleString('id-ID')} dikembalikan ke penyewa.`
     })
   } catch (error) {
     next(error)

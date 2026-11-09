@@ -73,8 +73,8 @@ model User {
   suspendedById   String?
 
   // Audit Trail Verifikasi KYC
-  verifiedAt      DateTime?
-  verifiedById    String?
+  verifiedAt   DateTime?
+  verifiedById String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,8 +94,8 @@ model User {
   disputeTickets     DisputeTicket[]     @relation("RenterDisputeTickets")
   adminAuditLogs     AdminAuditLog[]     @relation("AdminActionLogs")
 
-  tenantProfile  TenantProfile?
-  notifications  Notification[]
+  tenantProfile TenantProfile?
+  notifications Notification[]
 }
 
 model Equipment {
@@ -132,13 +132,13 @@ model Equipment {
   isDeleted             Boolean         @default(false)
 
   // Kontrol Takedown Admin
-  isTakedownByAdmin     Boolean         @default(false)
-  takedownReason        String?         @db.Text
-  takedownAt            DateTime?
-  moderatedById         String?
+  isTakedownByAdmin Boolean   @default(false)
+  takedownReason    String?   @db.Text
+  takedownAt        DateTime?
+  moderatedById     String?
 
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   owner   User     @relation(fields: [ownerId], references: [id])
   orders  Order[]
@@ -159,7 +159,8 @@ model Equipment {
  * - INSPEKSI            : penyewa sudah submit BAST akhir, menunggu inspeksi pemilik
  * - SELESAI             : sewa selesai, deposit dikembalikan
  * - DISPUTE             : ada klaim / sengketa
- * - DITOLAK             : pesanan ditolak
+ * - DITOLAK             : pesanan ditolak oleh pemilik
+ * - DIBATALKAN          : pesanan dibatalkan oleh penyewa
  */
 enum OrderStatus {
   MENUNGGU_PEMBAYARAN
@@ -170,6 +171,7 @@ enum OrderStatus {
   SELESAI
   DISPUTE
   DITOLAK
+  DIBATALKAN
 }
 
 model Order {
@@ -228,9 +230,9 @@ model Order {
   isResolvedByAdmin   Boolean   @default(false)
 
   // Pencatatan Resmi Ledger Potongan Platform 5%
-  platformFeeRate     Float     @default(0.05)
-  platformFee         Int       @default(0)
-  netOwnerPayout      Int       @default(0)
+  platformFeeRate Float @default(0.05)
+  platformFee     Int   @default(0)
+  netOwnerPayout  Int   @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -246,14 +248,14 @@ model Order {
 }
 
 model Review {
-  id             String    @id @default(uuid())
-  orderId        String    @unique
-  equipmentId    String
-  userId         String
-  rating         Int
-  comment        String    @db.Text
-  ownerReply     String?   @db.Text
-  repliedAt      DateTime?
+  id          String    @id @default(uuid())
+  orderId     String    @unique
+  equipmentId String
+  userId      String
+  rating      Int
+  comment     String    @db.Text
+  ownerReply  String?   @db.Text
+  repliedAt   DateTime?
 
   // Moderasi Konten Ulasan
   isDeleted      Boolean   @default(false)
@@ -262,8 +264,8 @@ model Review {
   moderatedById  String?
   moderationNote String?   @db.Text
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
@@ -331,6 +333,7 @@ enum WalletTransactionType {
   SEWA_PAYMENT
   DEPOSIT_HOLD
   DEPOSIT_REFUND
+  REFUND
 }
 
 enum WalletTransactionStatus {
@@ -474,6 +477,10 @@ model DisputeTicket {
   ownerPhotos         Json?
   renterDefenseNote   String?       @db.Text
   renterCounterPhotos Json?
+  // Metadata pihak yang menginisiasi sengketa: 'PEMILIK' | 'PENYEWA' | 'ADMIN'
+  initiatedById       String?
+  initiatedByRole     String?
+  defendedAt          DateTime?
   status              DisputeStatus @default(OPEN)
   finalDamageFee      Int?
   refundToRenter      Int?
@@ -489,6 +496,7 @@ model DisputeTicket {
 
   @@index([status])
   @@index([ownerId])
+  @@index([renterId])
 }
 
 model AdminAuditLog {

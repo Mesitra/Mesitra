@@ -58,14 +58,21 @@ export async function calculateOwnerWallet(ownerId) {
     orderBy: { createdAt: 'desc' }
   })
 
-  // Ambil seluruh mutasi penarikan dana (WITHDRAWAL) yang sukses
+  // Ambil seluruh mutasi penarikan dana (WITHDRAW)
   const withdrawals = await prisma.walletTransaction.findMany({
     where: {
       userId: ownerId,
-      type: 'WITHDRAW',
-      status: 'BERHASIL'
+      type: 'WITHDRAW'
     },
     orderBy: { createdAt: 'desc' }
+  })
+
+  // Ambil penarikan yang masih pending
+  const pendingWithdrawals = await prisma.withdrawalRequest.findMany({
+    where: {
+      userId: ownerId,
+      status: { in: ['MENUNGGU', 'DIPROSES'] }
+    }
   })
 
   const completedOrders = orders.filter((o) => o.status === 'SELESAI')
@@ -75,31 +82,43 @@ export async function calculateOwnerWallet(ownerId) {
 
   const now = new Date()
 
-  // 1. Akumulasi Pendapatan Bersih Pesanan SELESAI
+  // 1. Akumulasi Pendapatan Bersih Pesanan SELESAI (gunakan netOwnerPayout jika ada)
   let totalCompletedNet = 0
   completedOrders.forEach((order) => {
-    const rental = order.rentalCost || 0
-    const shipping = order.shippingCost || 0
-    const addons = order.addonsCost || 0
-    const damage = order.damageFee || 0
-    const platformFee = Math.round(rental * 0.05) // Biaya layanan platform 5% dari biaya sewa
-    totalCompletedNet += rental + shipping + addons + damage - platformFee
+    if (order.netOwnerPayout > 0) {
+      // Sudah ada netOwnerPayout dari settlement
+      totalCompletedNet += order.netOwnerPayout
+    } else {
+      // Fallback: hitung manual (legacy orders)
+      const rental = order.rentalCost || 0
+      const shipping = order.shippingCost || 0
+      const addons = order.addonsCost || 0
+      const damage = order.damageFee || 0
+      const platformFee = order.platformFee > 0 ? order.platformFee : Math.round(rental * 0.05)
+      totalCompletedNet += rental + shipping + addons + damage - platformFee
+    }
   })
 
-  const totalWithdrawn = withdrawals.reduce((sum, w) => sum + (w.amount || 0), 0)
-  const availableBalance = Math.max(0, totalCompletedNet - totalWithdrawn)
+  const totalWithdrawn = withdrawals
+    .filter((w) => w.status === 'BERHASIL')
+    .reduce((sum, w) => sum + (w.amount || 0), 0)
+  const totalPending = pendingWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0)
+  const availableBalance = Math.max(0, totalCompletedNet - totalWithdrawn - totalPending)
 
-  // 2. Pertumbuhan Bulan Berjalan (monthlyGrowth)
+  // 2. Pertumbuhan Bulan Berjalan (monthlyGrowth) - gunakan netOwnerPayout
   const currentMonthCompleted = completedOrders.filter((o) => {
     const d = new Date(o.updatedAt || o.endDate || o.createdAt)
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
   })
   const monthlyGrowthAmount = currentMonthCompleted.reduce((sum, o) => {
+    if (o.netOwnerPayout > 0) {
+      return sum + o.netOwnerPayout
+    }
     const rental = o.rentalCost || 0
     const shipping = o.shippingCost || 0
     const addons = o.addonsCost || 0
     const damage = o.damageFee || 0
-    const platformFee = Math.round(rental * 0.05)
+    const platformFee = o.platformFee > 0 ? o.platformFee : Math.round(rental * 0.05)
     return sum + (rental + shipping + addons + damage - platformFee)
   }, 0)
 
@@ -171,12 +190,10 @@ export async function calculateOwnerWallet(ownerId) {
   const mutations = []
 
   completedOrders.forEach((order) => {
-    const rental = order.rentalCost || 0
-    const shipping = order.shippingCost || 0
-    const addons = order.addonsCost || 0
-    const damage = order.damageFee || 0
-    const platformFee = Math.round(rental * 0.05)
-    const netAmount = rental + shipping + addons + damage - platformFee
+    const platformFee = order.platformFee > 0 ? order.platformFee : Math.round((order.rentalCost || 0) * 0.05)
+    const netAmount = order.netOwnerPayout > 0
+      ? order.netOwnerPayout
+      : (order.rentalCost || 0) + (order.shippingCost || 0) + (order.addonsCost || 0) + (order.damageFee || 0) - platformFee
 
     const orderDate = new Date(order.updatedAt || order.endDate)
     const day = orderDate.getDate().toString().padStart(2, '0')
@@ -195,8 +212,8 @@ export async function calculateOwnerWallet(ownerId) {
       amount: netAmount
     })
 
-    // KELUAR: Potongan biaya layanan platform
-    if (platformFee > 0) {
+    // KELUAR: Potongan biaya layanan platform (jangan tampilkan dua kali)
+    if (platformFee > 0 && !order.netOwnerPayout) {
       mutations.push({
         id: `MUT-FEE-${order.id}`,
         date: formattedDate,
@@ -208,39 +225,27 @@ export async function calculateOwnerWallet(ownerId) {
         amount: -platformFee
       })
     }
+  })
 
-    // KELUAR: Pengembalian deposit jaminan ke penyewa
-    if (order.depositAmount > 0) {
+  // KELUAR: Penarikan Dana (Withdrawals - hanya yang BERHASIL)
+  withdrawals
+    .filter((w) => w.status === 'BERHASIL')
+    .forEach((tx) => {
+      const txDate = new Date(tx.createdAt)
+      const day = txDate.getDate().toString().padStart(2, '0')
+      const formattedDate = `${day} ${monthShorts[txDate.getMonth()]}`
+
       mutations.push({
-        id: `MUT-DEP-${order.id}`,
+        id: `MUT-WD-${tx.id}`,
         date: formattedDate,
-        rawDate: orderDate.toISOString(),
-        description: `Deposit dikembalikan · ${order.invoiceNumber}`,
+        rawDate: txDate.toISOString(),
+        description: tx.description,
         category: 'KELUAR',
         badgeStatus: 'Selesai',
         subStatus: 'Sukses',
-        amount: -order.depositAmount
+        amount: -tx.amount
       })
-    }
-  })
-
-  // KELUAR: Penarikan Dana (Withdrawals)
-  withdrawals.forEach((tx) => {
-    const txDate = new Date(tx.createdAt)
-    const day = txDate.getDate().toString().padStart(2, '0')
-    const formattedDate = `${day} ${monthShorts[txDate.getMonth()]}`
-
-    mutations.push({
-      id: `MUT-WD-${tx.id}`,
-      date: formattedDate,
-      rawDate: txDate.toISOString(),
-      description: tx.description,
-      category: 'KELUAR',
-      badgeStatus: 'Selesai',
-      subStatus: 'Sukses',
-      amount: -tx.amount
     })
-  })
 
   // ESCROW: Dana Sewa + Deposit yang Sedang Ditahan pada Pesanan Aktif
   activeOrders.forEach((order) => {
@@ -380,7 +385,7 @@ walletRouter.post('/owner/withdraw', async (req, res, next) => {
           type: 'WITHDRAW',
           amount: numericAmount,
           description,
-          status: 'BERHASIL',
+          status: 'MENUNGGU',
           reference,
           paymentMethod: bankName
         }

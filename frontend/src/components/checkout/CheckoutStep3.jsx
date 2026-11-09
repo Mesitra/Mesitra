@@ -8,6 +8,62 @@
  *  - Countdown 15 menit untuk masa berlaku QRIS
  *  - Simulasi Mock Payment: animasi verifikasi → PATCH /mock-pay → redirect ke Pesanan Saya
  *  - Tombol "Saya sudah transfer, cek status" juga memicu mock payment
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * PRODUCTION PAYMENT GATEWAY BLUEPRINT — MyRent
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Komponen ini adalah DEMO SIMULASI. Pada produksi, diganti dengan integrasi
+ * gateway pembayaran resmi (Midtrans Snap / Xendit QRIS API) tanpa mengubah
+ * kontrak UI — Step 3 tetap meminta QRIS lalu melakukan polling status pesanan.
+ *
+ * ALUR PRODUKSI:
+ * 1. Frontend memanggil POST /api/payments/intent dengan { orderId }.
+ * 2. Backend membuat transaksi ke provider:
+ *      - Midtrans Snap:  POST https://app.midtrans.com/snap/v1/transactions
+ *        payload: { transaction_details: { order_id, gross_amount },
+ *                   enabled_payments: ['qris', 'other_qris'] }
+ *      - Xendit QRIS:    POST https://api.xendit.co/qr_codes
+ *        payload: { reference_id, type: 'DYNAMIC', currency: 'IDR',
+ *                   amount, expires_at }
+ *    Server Key / API Key HANYA disimpan di environment backend
+ *    (MIDTRANS_SERVER_KEY, XENDIT_SECRET_KEY) dan tidak pernah dikirim ke browser.
+ * 3. Response provider berisi qr_string / actions[].url (gambar QRIS).
+ *    Frontend menampilkan QR tersebut, lalu polling GET /api/orders/:id/payment-status
+ *    setiap 3 detik.
+ * 4. Status pesanan TIDAK diubah oleh frontend. Hanya webhook provider yang
+ *    berhak memindahkan pesanan dari MENUNGGU_PEMBAYARAN ke MENUNGGU_KONFIRMASI
+ *    setelah pembayaran terverifikasi.
+ *
+ * WEBHOOK & SIGNATURE VERIFICATION:
+ *   POST /api/payments/webhook
+ *   Midtrans mengirim: order_id, status_code, gross_amount, signature_key,
+ *                      transaction_status, transaction_id, fraud_status.
+ *   Verifikasi wajib: expected = SHA512(order_id + status_code + gross_amount + ServerKey)
+ *                     valid = crypto.timingSafeEqual(expected, signature_key)
+ *   Xendit menggunakan header x-callback-token (constant-time compare).
+ *
+ * IDEMPOTENCY & DOUBLE-SETTLEMENT PREVENTION:
+ *   Provider dapat mengirim webhook yang sama lebih dari sekali. Karena itu:
+ *   - Tabel Payment (blueprint produksi) menyimpan:
+ *       id, orderId, provider, providerEventId (UNIQUE), providerTransactionId,
+ *       grossAmount, status, paidAt, rawPayload, createdAt, updatedAt
+ *     providerEventId = transaction_id + transaction_status (Midtrans) atau id event Xendit.
+ *     UNIQUE constraint membuat insert kedua gagal (Prisma P2002) sehingga handler
+ *     cukup mengembalikan HTTP 200 "OK".
+ *   - Seluruh proses webhook berjalan dalam satu prisma.$transaction:
+ *       - INSERT Payment (idempotency guard)
+ *       - UPDATE Order.status -> MENUNGGU_KONFIRMASI (hanya dari MENUNGGU_PEMBAYARAN)
+ *       - INSERT WalletTransaction bila metode WALLET/refund
+ *     Jika salah satu langkah gagal, seluruh transaksi di-rollback.
+ *   - Settlement escrow (pencairan ke pemilik, refund deposit, dan pemotongan
+ *     platform fee 5%) HANYA boleh dieksekusi sekali. Status Order + kolom
+ *     platformFee/netOwnerPayout + guard pada DisputeTicket.status menjadi penjaga
+ *     terakhir. Route mock-pay di backend juga sudah dilindungi guard
+ *     status === MENUNGGU_PEMBAYARAN.
+ *
+ * Hingga integrasi produksi dilakukan, route mock-pay tetap dipertahankan agar
+ * demo kompetisi dapat berjalan instan tanpa ketergantungan jaringan.
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react'

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { prisma } from '../../lib/prisma.js'
 import { requireAdmin } from '../../middleware/adminAuth.js'
+import { calculateSettlement, PLATFORM_FEE_RATE } from '../../lib/settlement.js'
 
 export const adminDisputesRouter = Router()
 
@@ -261,7 +262,8 @@ adminDisputesRouter.patch('/disputes/:id/resolve', async (req, res, next) => {
       })
     }
 
-    if (order.status !== 'DISPUTE' && dispute.status.startsWith('RESOLVED_')) {
+    // Guard: Prevent double settlement
+    if (order.status !== 'DISPUTE' || dispute.status.startsWith('RESOLVED_')) {
       return res.status(400).json({
         error: {
           code: 'ALREADY_RESOLVED',
@@ -270,7 +272,7 @@ adminDisputesRouter.patch('/disputes/:id/resolve', async (req, res, next) => {
       })
     }
 
-    // Kalkulasi Finansial
+    // Kalkulasi Finansial menggunakan Settlement Engine
     const depositAmount = order.depositAmount || 0
     let damageFeeAmount = 0
 
@@ -284,11 +286,10 @@ adminDisputesRouter.patch('/disputes/:id/resolve', async (req, res, next) => {
       damageFeeAmount = Math.max(0, Math.min(Number(finalDamageFee) || 0, depositAmount))
     }
 
-    const refundToRenter = Math.max(0, depositAmount - damageFeeAmount)
-    const platformFee = Math.round((order.rentalCost || 0) * 0.05)
-    const netRentalIncome = Math.max(0, (order.rentalCost || 0) - platformFee)
-    const shippingAndAddons = (order.shippingCost || 0) + (order.addonsCost || 0)
-    const payoutToOwner = netRentalIncome + shippingAndAddons + damageFeeAmount
+    const settlement = calculateSettlement({ ...order, damageFee: damageFeeAmount })
+    const refundToRenter = settlement.depositRefund
+    const payoutToOwner = settlement.ownerPayout
+    const platformFee = settlement.platformFee
 
     const cleanNote = typeof adminArbitrageNote === 'string' && adminArbitrageNote.trim().length > 0
       ? adminArbitrageNote.trim()
@@ -313,7 +314,7 @@ adminDisputesRouter.patch('/disputes/:id/resolve', async (req, res, next) => {
         }
       })
 
-      // 2. Update Order
+      // 2. Update Order dengan settlement data
       const oRes = await tx.order.update({
         where: { id: order.id },
         data: {
@@ -323,7 +324,7 @@ adminDisputesRouter.patch('/disputes/:id/resolve', async (req, res, next) => {
           adminResolutionNote: cleanNote,
           resolvedAt: now,
           isResolvedByAdmin: true,
-          platformFeeRate: 0.05,
+          platformFeeRate: PLATFORM_FEE_RATE,
           platformFee,
           netOwnerPayout: payoutToOwner,
           returnData: {
@@ -355,7 +356,7 @@ adminDisputesRouter.patch('/disputes/:id/resolve', async (req, res, next) => {
             userId: order.equipment.ownerId,
             type: 'SEWA_PAYMENT',
             amount: payoutToOwner,
-            description: `Pencairan sewa ${order.invoiceNumber} (Sewa Net: Rp ${netRentalIncome.toLocaleString('id-ID')}${damageFeeAmount > 0 ? ` + Ganti rugi: Rp ${damageFeeAmount.toLocaleString('id-ID')}` : ''})`,
+            description: `Pencairan sewa ${order.invoiceNumber} (Net setelah fee platform ${platformFee.toLocaleString('id-ID')}${damageFeeAmount > 0 ? ` + Ganti rugi ${damageFeeAmount.toLocaleString('id-ID')}` : ''})`,
             status: 'BERHASIL',
             reference: order.invoiceNumber,
             paymentMethod: 'ESCROW_PAYOUT'
