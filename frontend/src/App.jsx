@@ -518,6 +518,7 @@ export default function App() {
             <Route path="kyc" element={<KycDashboard />} />
             <Route path="mediasi-sengketa" element={<AdminSengketa />} />
             <Route path="pencairan-dana" element={<AdminPencairanDana />} />
+            <Route path="manajemen-tim" element={<AdminManajemenTim />} />
           </Route>
         </Route>
 

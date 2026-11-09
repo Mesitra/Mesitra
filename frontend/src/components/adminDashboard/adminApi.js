@@ -208,3 +208,43 @@ export async function deleteReview(id, moderationNote = '') {
   })
   return data.review ?? null
 }
+
+/** Daftar akun admin & staff tim (superadmin only). */
+export async function fetchStaffUsers() {
+  const data = await adminRequest('/staff')
+  return data.users ?? []
+}
+
+/** Buat akun staff baru (superadmin only). */
+export async function createStaffUser(payload) {
+  const data = await adminRequest('/staff', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+  return data
+}
+
+/** Nonaktifkan akun staff (superadmin only). */
+export async function deactivateStaffUser(id) {
+  const data = await adminRequest(`/staff/${encodeURIComponent(id)}/deactivate`, {
+    method: 'PATCH'
+  })
+  return data
+}
+
+/** Aktifkan kembali akun staff (superadmin only). */
+export async function activateStaffUser(id) {
+  const data = await adminRequest(`/staff/${encodeURIComponent(id)}/activate`, {
+    method: 'PATCH'
+  })
+  return data
+}
+
+/** Reset security PIN staff (superadmin only). */
+export async function resetStaffPin(id) {
+  const data = await adminRequest(`/staff/${encodeURIComponent(id)}/reset-pin`, {
+    method: 'PATCH'
+  })
+  return data
+}
+

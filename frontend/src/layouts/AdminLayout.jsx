@@ -1,25 +1,31 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { ShieldCheck, LogOut, DollarSign, Scale } from 'lucide-react'
+import { ShieldCheck, LogOut, DollarSign, Scale, Users } from 'lucide-react'
 import { logoutAdmin, getAdminUser } from '../components/adminAuth/adminSession'
 
 export default function AdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const adminUser = getAdminUser()
+  const isSuperadmin = adminUser?.adminRole === 'SUPERADMIN' || adminUser?.role === 'SUPERADMIN'
 
   const menuItems = [
     { path: '/admin/kyc', label: 'Verifikasi Akun', icon: ShieldCheck },
     { path: '/portal-internal-hq/pencairan-dana', label: 'Pencairan Dana', icon: DollarSign },
-    { path: '/portal-internal-hq/mediasi-sengketa', label: 'Mediasi Sengketa', icon: Scale }
+    { path: '/portal-internal-hq/mediasi-sengketa', label: 'Mediasi Sengketa', icon: Scale },
+    ...(isSuperadmin
+      ? [{ path: '/portal-internal-hq/manajemen-tim', label: 'Manajemen Tim', icon: Users }]
+      : [])
   ]
 
   const BREADCRUMB_MAP = {
     '/admin/kyc': 'Verifikasi Akun',
     '/admin/mediasi-sengketa': 'Mediasi Sengketa',
     '/admin/pencairan-dana': 'Pencairan Dana',
+    '/admin/manajemen-tim': 'Manajemen Tim',
     '/portal-internal-hq/dashboard': 'Verifikasi Akun',
     '/portal-internal-hq/pencairan-dana': 'Pencairan Dana',
-    '/portal-internal-hq/mediasi-sengketa': 'Mediasi Sengketa'
+    '/portal-internal-hq/mediasi-sengketa': 'Mediasi Sengketa',
+    '/portal-internal-hq/manajemen-tim': 'Manajemen Tim'
   }
 
   const activeMenu = menuItems.find(m => location.pathname.startsWith(m.path))
