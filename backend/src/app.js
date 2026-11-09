@@ -88,18 +88,35 @@ export function createApp() {
   app.disable('x-powered-by')
   app.use(requestId)
   app.use(requestLogger)
-  app.use(
-    cors({
-      origin: function (origin, callback) {
-        // Izinkan semua origin selama masa development
-        callback(null, true);
-      },
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-      optionsSuccessStatus: 200 // Beberapa browser lama butuh ini
-    })
-  )
+  const corsOptions = {
+    origin: function (origin, callback) {
+      // Izinkan request tanpa origin (seperti curl, mobile app, cron)
+      if (!origin) return callback(null, true)
+      // Izinkan Vercel production, Railway, dan local dev
+      if (
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.railway.app') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
+        return callback(null, true)
+      }
+      return callback(null, true)
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'x-test-rate-limit'
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200
+  }
+
+  app.use(cors(corsOptions))
   // Batas body 12mb supaya unggahan foto (data URL base64) tetap diterima utuh.
   app.use(express.json({ limit: '12mb' }))
 

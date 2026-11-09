@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "build": "prisma generate",
+    "postinstall": "prisma generate",
     "start": "node src/index.js",
     "test": "node --test --test-concurrency=1 test/",
     "seed": "node prisma/seed.js"
