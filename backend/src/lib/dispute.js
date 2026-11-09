@@ -22,7 +22,7 @@ export function generateTicketNumber() {
  * Upserts ticket to prevent duplicates (orderId is unique constraint).
  * 
  * @param {import('@prisma/client').Prisma.TransactionClient} tx - Prisma transaction client
- * @param {object} order - Order record with equipment relation
+ * @param {object} order - Order record with equipment relation (must include equipment.ownerId)
  * @param {object} params - { claimAmount, disputeReason, ownerPhotos, initiatedById, initiatedByRole }
  * @returns {Promise<object>} DisputeTicket record
  */
@@ -44,13 +44,19 @@ export async function ensureDisputeTicket(tx, order, params) {
     return existing
   }
 
+  // Ensure we have equipment.ownerId
+  const ownerId = order.equipment?.ownerId || order.equipmentId
+  if (!ownerId) {
+    throw new Error('Cannot create dispute ticket: equipment.ownerId is missing. Ensure order includes equipment relation.')
+  }
+
   // Create new ticket
   return tx.disputeTicket.create({
     data: {
       ticketNumber: generateTicketNumber(),
       orderId: order.id,
       renterId: order.userId,
-      ownerId: order.equipment.ownerId,
+      ownerId,
       claimAmount,
       disputeReason,
       ownerPhotos,

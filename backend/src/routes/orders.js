@@ -399,6 +399,49 @@ ordersRouter.post('/', async (req, res, next) => {
       })
     }
 
+    // [KRUSIAL] Validasi overlap tanggal untuk mencegah double-booking.
+    // Cek apakah ada pesanan aktif yang bentrok dengan tanggal yang direquest.
+    const requestedStart = new Date(startDate)
+    const requestedEnd = new Date(endDate)
+
+    const overlappingOrders = await prisma.order.findMany({
+      where: {
+        equipmentId,
+        status: {
+          in: ['MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKIRIM', 'SEWA_AKTIF', 'INSPEKSI']
+        },
+        OR: [
+          // Pesanan aktif yang startDate-nya di tengah-tengah periode request
+          { startDate: { gte: requestedStart, lte: requestedEnd } },
+          // Pesanan aktif yang endDate-nya di tengah-tengah periode request
+          { endDate: { gte: requestedStart, lte: requestedEnd } },
+          // Pesanan aktif yang melingkupi seluruh periode request
+          {
+            AND: [
+              { startDate: { lte: requestedStart } },
+              { endDate: { gte: requestedEnd } }
+            ]
+          }
+        ]
+      },
+      select: { id: true, invoiceNumber: true, startDate: true, endDate: true, status: true }
+    })
+
+    if (overlappingOrders.length > 0) {
+      return res.status(400).json({
+        error: {
+          code: 'EQUIPMENT_NOT_AVAILABLE',
+          message: 'Alat tidak tersedia pada tanggal yang Anda pilih. Pilih tanggal lain atau alat berbeda.',
+          conflictingOrders: overlappingOrders.map((o) => ({
+            invoiceNumber: o.invoiceNumber,
+            startDate: o.startDate,
+            endDate: o.endDate,
+            status: o.status
+          }))
+        }
+      })
+    }
+
     // Validasi metode serah terima yang diizinkan pemilik alat
     const rawDelivery = Array.isArray(equipment.deliveryMethods) ? equipment.deliveryMethods : []
     const allowedDeliveryMethods = (rawDelivery.length > 0 ? rawDelivery : ['PICKUP', 'COURIER']).map((m) =>
@@ -1413,7 +1456,10 @@ ordersRouter.patch('/:id/dispute', async (req, res, next) => {
             ownerInspectionPhotos !== undefined ? ownerInspectionPhotos : (order.ownerInspectionPhotos || null),
           returnData: updatedReturnData
         },
-        include: { disputeTicket: true }
+        include: { 
+          disputeTicket: true,
+          equipment: { select: { ownerId: true } }
+        }
       })
 
       const ticket = await ensureDisputeTicket(tx, updatedOrder, {
