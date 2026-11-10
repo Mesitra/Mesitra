@@ -329,7 +329,7 @@ export default function PesananCard({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3.5 border-t border-slate-100">
         <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-          <span>Dana ditahan aman di escrow SewaAlat</span>
+          <span>Dana ditahan aman di escrow Mesitra</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">

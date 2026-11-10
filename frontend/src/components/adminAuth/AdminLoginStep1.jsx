@@ -87,7 +87,7 @@ export default function AdminLoginStep1({
               Masuk sebagai admin
             </h1>
             <p className="text-[13px] leading-5 text-slate-600 font-normal text-left">
-              Gunakan email Gmail resmi yang terdaftar pada undangan admin SewaAlat.
+              Gunakan email Gmail resmi yang terdaftar pada undangan admin Mesitra.
             </p>
           </div>
 

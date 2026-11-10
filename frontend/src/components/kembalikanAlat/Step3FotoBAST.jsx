@@ -199,7 +199,7 @@ export default function Step3FotoBAST({ order, returnData, onChange }) {
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    const fullName = user?.fullName || 'Penyewa SewaAlat'
+    const fullName = user?.fullName || 'Penyewa Mesitra'
     const nameParts = fullName.split(' ')
     const displayName = nameParts.length > 1
       ? `${nameParts[0]} ${nameParts[1][0]}.`

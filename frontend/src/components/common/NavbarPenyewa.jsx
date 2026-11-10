@@ -173,7 +173,7 @@ export default function NavbarPenyewa({
           to="/beranda-sewa"
           className="text-lg text-blue-600 font-extrabold tracking-tight text-left whitespace-nowrap cursor-pointer hover:opacity-90 transition-opacity bg-transparent border-0 p-0 no-underline"
         >
-          SewaAlat
+          Mesitra
         </Link>
 
       {/* NavLinks */}

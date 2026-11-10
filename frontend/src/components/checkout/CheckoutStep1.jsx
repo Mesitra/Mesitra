@@ -259,7 +259,7 @@ export default function CheckoutStep1({ wizardData, updateWizard, onNext }) {
               onClick={() => navigate('/beranda-sewa')}
               className="text-[18px] text-blue-600 font-extrabold tracking-[-0.3px] cursor-pointer"
             >
-              SewaAlat
+              Mesitra
             </button>
             <div className="hidden sm:block w-px h-[18px] bg-slate-200" />
             <span className="hidden sm:inline text-[13px] font-semibold text-slate-900">

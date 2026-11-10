@@ -7,7 +7,7 @@ export default function ModalHubungiPemilik({ isOpen, onClose, order }) {
   const owner = order.equipment?.owner || {}
   const ownerName = owner.fullName || 'Pemilik Alat'
   const ownerPhone = owner.phone || '0812-3456-7890'
-  const ownerEmail = owner.email || 'pemilik@sewaalat.id'
+  const ownerEmail = owner.email || 'pemilik@mesitra.id'
   const ownerAddress = order.equipment?.location || 'Gudang Sewa, Tebet, Jakarta Selatan'
 
   return (

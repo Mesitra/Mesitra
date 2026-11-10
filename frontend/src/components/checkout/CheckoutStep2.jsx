@@ -266,7 +266,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
         <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-[68px] flex items-center justify-between">
           <div className="flex items-center gap-3.5">
             <button onClick={() => navigate('/beranda-sewa')} className="text-[18px] text-blue-600 font-extrabold tracking-[-0.3px] cursor-pointer">
-              SewaAlat
+              Mesitra
             </button>
             <div className="w-px h-[18px] bg-slate-200" />
             <span className="text-[13px] font-semibold text-slate-900">Checkout · Kontrak Digital</span>

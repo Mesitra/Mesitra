@@ -308,7 +308,7 @@ export default function AdminLoginStep2({
                 Jangan bagikan kode ini
               </div>
               <div className="text-xs leading-[17px] text-amber-800 font-normal">
-                Tim SewaAlat tidak pernah meminta kode verifikasi Anda. Jika Anda tidak merasa login,
+                Tim Mesitra tidak pernah meminta kode verifikasi Anda. Jika Anda tidak merasa login,
                 hentikan dan segera ubah kredensial akun.
               </div>
             </div>

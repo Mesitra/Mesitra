@@ -313,7 +313,7 @@ export default function Step4RefundDeposit({ order, returnData }) {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 m-0">
-                  Dana deposit sebesar <strong className="text-slate-800">Rp {formatRupiah(estimatedRefund)}</strong> yang ditahan di escrow SewaAlat akan langsung diteruskan ke Dompet Anda setelah verifikasi disetujui.
+                  Dana deposit sebesar <strong className="text-slate-800">Rp {formatRupiah(estimatedRefund)}</strong> yang ditahan di escrow Mesitra akan langsung diteruskan ke Dompet Anda setelah verifikasi disetujui.
                 </p>
               </div>
             </div>

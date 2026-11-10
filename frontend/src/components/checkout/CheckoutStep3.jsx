@@ -363,7 +363,7 @@ export default function CheckoutStep3() {
       </div>
       <div className="text-center space-y-2">
         <h2 className="text-xl font-bold">Memverifikasi Pembayaran...</h2>
-        <p className="text-blue-200 text-sm">Menghubungkan ke SewaAlat Escrow</p>
+        <p className="text-blue-200 text-sm">Menghubungkan ke Mesitra Escrow</p>
         <div className="flex items-center justify-center gap-1.5 text-xs text-blue-300">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -393,7 +393,7 @@ export default function CheckoutStep3() {
       <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 h-[68px] flex items-center justify-between">
           <div className="flex items-center gap-3.5">
-            <span className="text-[18px] text-blue-600 font-extrabold tracking-[-0.3px]">SewaAlat</span>
+            <span className="text-[18px] text-blue-600 font-extrabold tracking-[-0.3px]">Mesitra</span>
             <div className="w-px h-[18px] bg-slate-200" />
             <span className="text-[13px] font-semibold text-slate-900">Checkout · Pembayaran Escrow</span>
           </div>
