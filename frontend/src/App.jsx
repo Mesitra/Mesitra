@@ -132,9 +132,20 @@ export default function App() {
   const handleLoginSuccess = (user) => {
     setCurrentUser(user)
     const normalizedRole = String(user?.role || '').toUpperCase()
-    if (normalizedRole === 'ADMIN') {
-      showToast('Selamat datang Super Administrator HQ!')
-      navigate('/admin/kyc', { replace: true })
+    const normalizedAdminRole = String(user?.adminRole || '').toUpperCase()
+    if (
+      normalizedRole === 'ADMIN' ||
+      normalizedRole === 'SUPERADMIN' ||
+      normalizedRole === 'SUPER_ADMIN' ||
+      normalizedAdminRole === 'SUPERADMIN' ||
+      normalizedAdminRole === 'STAFF'
+    ) {
+      showToast(
+        normalizedAdminRole === 'STAFF'
+          ? 'Selamat datang Admin HQ!'
+          : 'Selamat datang Super Administrator HQ!'
+      )
+      navigate('/admin', { replace: true })
       return
     }
     showToast(`Selamat datang! Anda masuk sebagai ${normalizedRole === 'PEMILIK' ? 'Pemilik Alat' : 'Penyewa UMKM'}`)

@@ -1,44 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
   UserCheck,
-  Timer,
+  ShieldCheck,
   ArrowRight,
   TriangleAlert,
   AlertCircle,
   ArrowLeft,
-  KeyRound
+  CheckCircle2
 } from 'lucide-react'
 
 export default function AdminLoginStep2({
+  mode = 'PIN_REQUIRED',
   email,
-  onVerifyOtp,
+  onSubmitPin,
   onBackToStep1,
   isLoading,
   error,
-  setError
+  setError,
+  notice
 }) {
+  const isSetupMode = mode === 'SETUP_PIN_REQUIRED'
   const [digits, setDigits] = useState(['', '', '', '', '', ''])
   const [focusedIndex, setFocusedIndex] = useState(0)
-  const [secondsLeft, setSecondsLeft] = useState(300) // 5 minutes timer
-  const [attemptsUsed, setAttemptsUsed] = useState(1)
+  const [attemptsUsed, setAttemptsUsed] = useState(0)
 
   const inputRefs = useRef([])
-
-  // Format countdown mm:ss
-  const formatTime = (secs) => {
-    const m = Math.floor(secs / 60)
-    const s = secs % 60
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  }
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (secondsLeft <= 0) return
-    const timer = setInterval(() => {
-      setSecondsLeft((prev) => Math.max(0, prev - 1))
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [secondsLeft])
 
   // Auto focus first input
   useEffect(() => {
@@ -46,6 +32,14 @@ export default function AdminLoginStep2({
       inputRefs.current[0].focus()
     }
   }, [])
+
+  const submitPinCode = (pinCode) => {
+    if (isLoading || pinCode.length !== 6) return
+    if (!isSetupMode) {
+      setAttemptsUsed((prev) => Math.min(5, prev + 1))
+    }
+    onSubmitPin(pinCode)
+  }
 
   const handleChange = (index, value) => {
     if (error && setError) setError('')
@@ -66,8 +60,8 @@ export default function AdminLoginStep2({
         inputRefs.current[nextFocus].focus()
       }
 
-      if (sanitized.length >= 6) {
-        onVerifyOtp(sanitized.slice(0, 6))
+      if (!isSetupMode && sanitized.length >= 6) {
+        submitPinCode(sanitized.slice(0, 6))
       }
       return
     }
@@ -84,10 +78,10 @@ export default function AdminLoginStep2({
       }
     }
 
-    // Jika sudah 6 digit terisi semua, auto submit
-    const fullOtp = newDigits.join('')
-    if (fullOtp.length === 6) {
-      onVerifyOtp(fullOtp)
+    // Jika mode verifikasi PIN dan 6 digit sudah terisi semua, auto submit
+    const fullPin = newDigits.join('')
+    if (!isSetupMode && fullPin.length === 6) {
+      submitPinCode(fullPin)
     }
   }
 
@@ -109,24 +103,15 @@ export default function AdminLoginStep2({
 
   const handleManualSubmit = (e) => {
     e.preventDefault()
-    const otpCode = digits.join('')
-    if (otpCode.length !== 6) {
-      if (setError) setError('Masukkan seluruh 6 digit kode verifikasi')
+    const pinCode = digits.join('')
+    if (pinCode.length !== 6) {
+      if (setError) setError('Masukkan seluruh 6 digit PIN keamanan')
       return
     }
-    setAttemptsUsed((prev) => Math.min(5, prev + 1))
-    onVerifyOtp(otpCode)
+    submitPinCode(pinCode)
   }
 
-  const fillDemoOtp = () => {
-    const demo = ['1', '2', '3', '4', '5', '6']
-    setDigits(demo)
-    setFocusedIndex(5)
-    if (setError) setError('')
-    onVerifyOtp('123456')
-  }
-
-  // Get current client device and time context
+  // Get current client time context
   const [currentHour] = useState(() => {
     try {
       return new Date().toLocaleTimeString('id-ID', {
@@ -164,26 +149,27 @@ export default function AdminLoginStep2({
           {/* Header */}
           <div className="w-full flex flex-col gap-1">
             <h1 className="text-2xl leading-tight text-slate-900 font-extrabold tracking-tight text-left">
-              Verifikasi kode admin
+              {isSetupMode ? 'Atur PIN keamanan admin' : 'Verifikasi PIN admin'}
             </h1>
             <p className="text-[13px] leading-5 text-slate-600 font-normal text-left">
-              Masukkan 6 digit kode verifikasi yang Anda buat sendiri di Pengaturan › Keamanan untuk
-              menyelesaikan login.
+              {isSetupMode
+                ? 'Akun staff Anda belum memiliki PIN keamanan. Buat 6 digit PIN angka untuk mengakses portal admin.'
+                : 'Masukkan 6 digit PIN keamanan akun staff Anda untuk menyelesaikan login.'}
             </p>
           </div>
 
           {/* Konteks Sesi */}
           <div className="box-border w-full p-[10px_12px] flex flex-row justify-between items-center bg-slate-50 rounded-[10px] border border-slate-100">
-            <div className="flex flex-row items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-slate-200/80 flex items-center justify-center text-slate-700">
+            <div className="flex flex-row items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-slate-200/80 flex items-center justify-center text-slate-700 shrink-0">
                 <UserCheck className="w-3.5 h-3.5" />
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-xs text-slate-900 font-bold">
-                  {email || 'admin@myrent.com'}
+              <div className="flex flex-col text-left min-w-0">
+                <span className="text-xs text-slate-900 font-bold truncate">
+                  {email || 'Akun Staff Admin'}
                 </span>
                 <span className="text-xs text-slate-500 font-normal">
-                  Chrome · Jakarta, ID · {currentHour} WIB
+                  Sesi Login · {currentHour} WIB
                 </span>
               </div>
             </div>
@@ -191,11 +177,19 @@ export default function AdminLoginStep2({
             <button
               type="button"
               onClick={onBackToStep1}
-              className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+              className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 cursor-pointer shrink-0 ml-2"
             >
               Ganti akun
             </button>
           </div>
+
+          {/* Success Notice */}
+          {notice && (
+            <div className="w-full flex items-start gap-2.5 p-3 bg-emerald-50 border border-emerald-200 rounded-[10px] text-emerald-800 text-xs animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+              <div className="flex-1 font-medium">{notice}</div>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -205,7 +199,7 @@ export default function AdminLoginStep2({
             </div>
           )}
 
-          {/* 6-Digit OTP Box Area */}
+          {/* 6-Digit PIN Box Area */}
           <div className="box-border w-full flex flex-col gap-2.5">
             <div className="box-border w-full flex flex-row gap-2 justify-start items-center">
               {digits.map((digit, idx) => {
@@ -234,6 +228,7 @@ export default function AdminLoginStep2({
                       pattern="[0-9]*"
                       maxLength={6}
                       value={digit}
+                      autoComplete="off"
                       onFocus={() => setFocusedIndex(idx)}
                       onChange={(e) => handleChange(idx, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(idx, e)}
@@ -242,7 +237,7 @@ export default function AdminLoginStep2({
 
                     {digit ? (
                       <span className="text-2xl text-slate-900 font-mono font-bold tabular-nums">
-                        {digit}
+                        {isSetupMode ? digit : '•'}
                       </span>
                     ) : isCurrent ? (
                       <div className="w-0.5 h-[22px] bg-blue-600 animate-pulse"></div>
@@ -256,46 +251,35 @@ export default function AdminLoginStep2({
               })}
             </div>
 
-            {/* Meta Information: Timer & Attempts */}
+            {/* Meta Information */}
             <div className="box-border w-full flex flex-row justify-between items-center text-[11px] pt-1">
               <div className="flex flex-row items-center gap-[5px] text-slate-500">
-                <Timer className="w-[13px] h-[13px]" />
-                <span className="font-normal font-mono tabular-nums">
-                  {secondsLeft > 0
-                    ? `Kode kedaluwarsa dalam ${formatTime(secondsLeft)}`
-                    : 'Kode telah kedaluwarsa'}
-                </span>
+                <ShieldCheck className="w-[13px] h-[13px]" />
+                <span>6 digit PIN angka rahasia</span>
               </div>
 
-              <div className="text-amber-700 font-medium tabular-nums">
-                {attemptsUsed} dari 5 percobaan
-              </div>
+              {!isSetupMode && attemptsUsed > 0 && (
+                <div className="text-amber-700 font-medium tabular-nums">
+                  {attemptsUsed} dari 5 percobaan
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Quick MVP Demo Helper */}
-          <div className="w-full flex items-center justify-between p-2.5 bg-blue-50/70 border border-blue-100 rounded-[10px] text-xs text-blue-800">
-            <span className="flex items-center gap-1.5 font-medium">
-              <KeyRound className="w-3.5 h-3.5 text-blue-600" />
-              Kode Demo MVP: <strong className="font-mono font-bold tabular-nums text-blue-900 tracking-wider">123456</strong>
-            </span>
-            <button
-              type="button"
-              onClick={fillDemoOtp}
-              className="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline cursor-pointer"
-            >
-              Gunakan Kode
-            </button>
-          </div>
-
-          {/* Button Verifikasi & Masuk */}
+          {/* Button Submit PIN */}
           <button
             type="submit"
             disabled={isLoading || digits.join('').length !== 6}
             className="box-border w-full h-[46px] flex flex-row gap-2 justify-center items-center bg-slate-900 hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50 text-white rounded-[10px] transition-all cursor-pointer shadow-xs"
           >
             <span className="text-[13px] font-bold">
-              {isLoading ? 'Memverifikasi kode...' : 'Verifikasi & masuk'}
+              {isLoading
+                ? isSetupMode
+                  ? 'Menyimpan PIN...'
+                  : 'Memverifikasi PIN...'
+                : isSetupMode
+                ? 'Simpan PIN & lanjutkan'
+                : 'Verifikasi & masuk'}
             </span>
             <ArrowRight className="w-[15px] h-[15px] text-white" />
           </button>
@@ -305,10 +289,10 @@ export default function AdminLoginStep2({
             <TriangleAlert className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
             <div className="flex-1 flex flex-col gap-[3px] text-left">
               <div className="text-[11px] text-amber-700 font-bold">
-                Jangan bagikan kode ini
+                Jangan bagikan PIN ini
               </div>
               <div className="text-xs leading-[17px] text-amber-800 font-normal">
-                Tim Mesitra tidak pernah meminta kode verifikasi Anda. Jika Anda tidak merasa login,
+                Tim Mesitra tidak pernah meminta PIN keamanan Anda. Jika Anda tidak merasa login,
                 hentikan dan segera ubah kredensial akun.
               </div>
             </div>

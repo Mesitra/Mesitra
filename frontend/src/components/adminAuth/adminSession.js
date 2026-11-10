@@ -74,7 +74,14 @@ export function setAdminSession(token, user) {
  */
 export function isAdminRole(user) {
   const role = String(user?.role || '').toUpperCase()
-  return role === 'ADMIN' || role === 'SUPER_ADMIN'
+  const adminRole = String(user?.adminRole || '').toUpperCase()
+  return (
+    role === 'ADMIN' ||
+    role === 'SUPERADMIN' ||
+    role === 'SUPER_ADMIN' ||
+    adminRole === 'SUPERADMIN' ||
+    adminRole === 'STAFF'
+  )
 }
 
 /**

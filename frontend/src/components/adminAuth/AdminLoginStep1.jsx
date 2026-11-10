@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
 import {
   Mail,
   Lock,
@@ -7,7 +7,6 @@ import {
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
-  KeyRound,
   AlertCircle
 } from 'lucide-react'
 
@@ -27,34 +26,17 @@ export default function AdminLoginStep1({
   const [showPassword, setShowPassword] = useState(false)
   const [infoModal, setInfoModal] = useState(null)
 
-  // Input email & password sengaja dibiarkan tanpa atribut `value`/`defaultValue`
-  // supaya tidak terisi otomatis. Nilainya tetap disinkronkan ke state wrapper
-  // lewat onChange, danreferensi DOM dipakai untuk mengisi kredensial default.
-  const emailRef = useRef(null)
-  const passwordRef = useRef(null)
-
   const isEmailEntered = email && email.trim().length > 0
   const isGmailOrDomain = email && (email.includes('@') && email.length >= 5)
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Ambil nilai langsung dari input supaya yang dikirim sama persis dengan isi form.
-    const emailValue = emailRef.current ? emailRef.current.value : email
-    const passwordValue = passwordRef.current ? passwordRef.current.value : password
 
-    if (!emailValue.trim() || !passwordValue) {
+    if (!email.trim() || !password) {
       if (setError) setError('Harap isi alamat email dan kata sandi')
       return
     }
-    onSubmit(e, { email: emailValue, password: passwordValue })
-  }
-
-  const fillDefaultCredentials = () => {
-    if (emailRef.current) emailRef.current.value = 'admin@myrent.com'
-    if (passwordRef.current) passwordRef.current.value = 'Admin#Sewa2026'
-    setEmail('admin@myrent.com')
-    setPassword('Admin#Sewa2026')
-    if (setError) setError('')
+    onSubmit(e, { email, password })
   }
 
   return (
@@ -120,13 +102,13 @@ export default function AdminLoginStep1({
               <div className="box-border w-full h-[46px] flex flex-row gap-2.5 px-3 items-center bg-white outline outline-1 outline-slate-200 -outline-offset-1 focus-within:outline-2 focus-within:outline-blue-600 rounded-[10px] transition-all">
                 <Mail className="w-[15px] h-[15px] text-slate-400 shrink-0" />
                 <input
-                  ref={emailRef}
                   type="email"
+                  value={email}
                   onChange={(e) => {
                     setEmail(e.target.value)
                     if (error && setError) setError('')
                   }}
-                  placeholder="admin@myrent.com atau rani.admin@gmail.com"
+                  placeholder="nama@mesitra.id atau nama@gmail.com"
                   autoComplete="off"
                   required
                   className="w-full bg-transparent border-none outline-none text-[13px] text-slate-900 font-normal placeholder:text-slate-400"
@@ -137,7 +119,7 @@ export default function AdminLoginStep1({
               </div>
 
               <div className="text-xs text-slate-500 font-normal text-left">
-                Domain wajib @gmail.com atau @myrent.com
+                Gunakan email admin resmi yang terdaftar di sistem
               </div>
             </div>
 
@@ -163,8 +145,8 @@ export default function AdminLoginStep1({
               <div className="box-border w-full h-[46px] flex flex-row gap-2.5 px-3 items-center bg-white outline outline-1 outline-slate-200 -outline-offset-1 focus-within:outline-2 focus-within:outline-blue-600 rounded-[10px] transition-all">
                 <Lock className="w-[15px] h-[15px] text-slate-400 shrink-0" />
                 <input
-                  ref={passwordRef}
                   type={showPassword ? 'text' : 'password'}
+                  value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
                     if (error && setError) setError('')
@@ -188,29 +170,7 @@ export default function AdminLoginStep1({
               </div>
 
               <div className="text-xs text-slate-500 font-normal text-left">
-                Sandi sementara 12 karakter dari email undangan
-              </div>
-            </div>
-
-            {/* Info Sandi Sementara */}
-            <div className="box-border w-full flex flex-row gap-[9px] p-[11px] justify-start items-start bg-amber-50 outline outline-1 outline-amber-200 -outline-offset-1 rounded-[10px]">
-              <KeyRound className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
-              <div className="flex-1 flex flex-col gap-[3px] text-left">
-                <div className="text-[11px] text-amber-700 font-bold">
-                  Kata sandi sementara aktif
-                </div>
-                <div className="text-xs leading-[17px] text-amber-800 font-normal flex flex-wrap items-center justify-between gap-1">
-                  <span>
-                    <strong className="font-mono font-bold tracking-wide">Admin#Sewa2026</strong> — wajib diganti setelah login pertama.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={fillDefaultCredentials}
-                    className="text-[11px] font-bold text-amber-800 underline hover:text-amber-950 cursor-pointer"
-                  >
-                    Gunakan kredensial default
-                  </button>
-                </div>
+                Masukkan kata sandi akun admin yang terdaftar
               </div>
             </div>
 
