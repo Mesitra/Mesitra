@@ -598,7 +598,7 @@ export default function BerandaSewa({
       {/* 2. Main Content */}
       <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 pt-0 pb-6 flex flex-col justify-start items-start">
         {/* Header Halaman (Judul, Jumlah Alat, & Filter/Urutkan) */}
-        <div className="box-border w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-full -mx-6 md:-mx-10 lg:mx-0 px-6 md:px-10 lg:px-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 sticky top-[69px] z-30 bg-white/95 backdrop-blur-sm pt-2.5 pb-3.5 border-b border-slate-100 lg:bg-slate-50 lg:backdrop-blur-none lg:border-none lg:h-auto lg:py-3">
+        <div className="box-border w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-full -mx-6 md:-mx-10 lg:mx-0 px-6 md:px-10 lg:px-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 sticky top-[69px] lg:relative lg:top-auto z-30 bg-white/95 backdrop-blur-sm pt-2.5 pb-3.5 border-b border-slate-100 lg:bg-slate-50 lg:backdrop-blur-none lg:border-none lg:h-auto lg:py-4">
           {/* Sisi Kiri: Teks Judul & Jumlah Alat (Rata Kiri, Sejajar Tepi Kiri Sidebar - HANYA Desktop) */}
           <div className="hidden lg:flex box-border flex-col gap-0.5 justify-center items-start text-left min-w-0">
             <h1 className="text-lg sm:text-xl lg:text-2xl text-slate-900 font-bold text-left tracking-tight m-0 leading-tight">
@@ -765,7 +765,7 @@ export default function BerandaSewa({
         {/* Wrapper Utama: Penjajaran Sidebar dan Grid Produk */}
         <div className="box-border w-full flex flex-col lg:flex-row gap-6 lg:gap-7 justify-start items-start">
           {/* Sisi Kiri: Filter Sidebar (HANYA terlihat di Desktop agar tidak duplikat di mobile) */}
-          <div className="hidden lg:block w-full lg:w-72 xl:w-[320px] lg:flex-shrink-0 shrink-0 lg:sticky lg:top-[153px] lg:z-10 self-start">
+          <div className="hidden lg:block w-full lg:w-72 xl:w-[320px] lg:flex-shrink-0 shrink-0 lg:sticky lg:top-[88px] lg:z-10 self-start">
             <SidebarFilter
               filters={filters}
               onFiltersChange={setFilters}
