@@ -1,4 +1,4 @@
-import { Sparkles, ArrowLeft, Layers } from 'lucide-react'
+import { ArrowLeft, Layers } from 'lucide-react'
 import { hasAdminSession } from './adminAuth/adminSession'
 
 /**
@@ -7,7 +7,7 @@ import { hasAdminSession } from './adminAuth/adminSession'
  * Sesuai panduan:
  * - Menyediakan akses navigasi kembali ke Halaman Login dan Beranda secara bersamaan.
  * - Menggunakan struktur isi dari navbar penyewa (Logo Mesitra, divider, judul role pendaftaran,
- *   tombol cepat Isi Data Demo, tombol Kembali ke Beranda, dan Ke Halaman Login).
+ *   tombol Kembali ke Beranda, dan Ke Halaman Login).
  * - Layout responsif untuk mobile, tablet, dan desktop.
  */
 export default function RegisterTopBar({
@@ -16,7 +16,6 @@ export default function RegisterTopBar({
   onLoginClick,
   onBackToHome,
   onHomeClick,
-  onFillDemoData,
   loginText = 'Masuk di sini',
   rightContent
 }) {
@@ -53,18 +52,6 @@ export default function RegisterTopBar({
         </div>
       ) : (
         <div className="flex items-center gap-2 sm:gap-3">
-          {onFillDemoData && (
-            <button
-              type="button"
-              onClick={onFillDemoData}
-              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer"
-              title="Isi form otomatis untuk peninjauan cepat"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>Isi Data Demo</span>
-            </button>
-          )}
-
           {/* Tombol Kembali ke Beranda */}
           <button
             type="button"

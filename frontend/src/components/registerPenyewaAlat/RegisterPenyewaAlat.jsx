@@ -348,49 +348,6 @@ export default function RegisterPenyewaAlat({
     }, 700)
   }
 
-  // Isi data demo cepat agar pengguna / reviewer mudah menguji 5 tahap
-  const handleFillDemoData = () => {
-    setFormData({
-      fullName: 'Budi Santoso',
-      businessName: 'Kopi Senja Roastery',
-      businessSector: 'Kuliner & Kopi',
-      customSector: '',
-      email: 'budi@kopisenja.id',
-      phone: '081288990011',
-      password: 'Password123!',
-      confirmPassword: 'Password123!',
-      nik: '3174092188450003',
-      ktpName: 'Budi Santoso',
-      birthPlace: 'Jakarta',
-      birthDate: '1991-04-12',
-      ktpFile: { name: 'ktp_budi_santoso.jpg', size: '2.1 MB' },
-      selfieFile: { name: 'selfie_ktp_budi.jpg', size: '1.8 MB' },
-      startYear: '2019',
-      nib: '812044579921',
-      powerCapacity: '1300 W',
-      customPower: '',
-      isManualPower: false,
-      frontPhoto: { name: 'tampak_depan_toko.jpg', size: '3.2 MB' },
-      productionPhoto: { name: 'area_roasting_kopi.jpg', size: '2.7 MB' },
-      businessDesc: 'Roastery kopi kecil dengan 2 barista, produksi 40 kg green bean per minggu dan melayani 60 cangkir/hari.',
-      address: 'Jl. Kemang Selatan VIII No. 12, RT 03/RW 05, Bangka, Mampang Prapatan',
-      city: 'Jakarta Selatan',
-      district: 'Mampang Prapatan',
-      postalCode: '12730',
-      landmark: 'Sebelah minimarket 24 jam',
-      gpsCoords: '-6.2601, 106.8135',
-      bankName: 'BCA — Bank Central Asia',
-      bankAccount: '44718890221',
-      bankAccountHolder: 'Budi Santoso',
-      confirmAccountOwner: true,
-      confirmDeduction: true,
-      agreeTruth: true,
-      agreeTerms: true
-    })
-    setErrors({})
-    showToast('Data simulasi berhasil dimuat ke seluruh langkah!')
-  }
-
   const validateStep = (step) => {
     const newErrors = {}
 
@@ -757,7 +714,6 @@ export default function RegisterPenyewaAlat({
         roleTitle="Daftar sebagai Penyewa UMKM"
         onBackToLogin={handleBack}
         onBackToHome={() => navigate('/')}
-        onFillDemoData={handleFillDemoData}
       />
 
       {/* Body: 2 Kolom (Stepper Kiri + Form Kanan) */}
