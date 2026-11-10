@@ -265,13 +265,13 @@ export default function SidebarFilter({
   const renderFilterSections = () => (
     <>
       {/* Rentang Tanggal Popover Kalender Mini */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
         <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
           Rentang Tanggal
         </div>
 
         {/* Trigger Popover Buttons & Modal */}
-        <div className="relative w-full flex flex-col gap-2" ref={calendarRef}>
+        <div className="relative w-full flex flex-col gap-1.5" ref={calendarRef}>
           {/* 1. Tanggal Sewa (Mulai) */}
           <button
             type="button"
@@ -287,21 +287,21 @@ export default function SidebarFilter({
               }
             }}
             aria-expanded={activePicker === 'start'}
-            className={`box-border w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
+            className={`box-border w-full flex items-center justify-between py-1.5 px-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
               activePicker === 'start'
                 ? 'ring-2 ring-primary bg-white shadow-xs'
                 : 'ring-slate-200'
             }`}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
-                <CalendarIcon className="w-4 h-4" />
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
+                <CalendarIcon className="w-3.5 h-3.5" />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-[10px] leading-tight font-semibold text-slate-400 uppercase tracking-wider">
                   Tanggal Sewa
                 </span>
-                <span className="text-xs font-bold text-slate-800 truncate mt-0.5">
+                <span className="text-xs leading-tight font-bold text-slate-800 truncate">
                   {dateRange.start ? formatShortDate(dateRange.start) : 'Pilih tanggal sewa'}
                 </span>
               </div>
@@ -345,21 +345,21 @@ export default function SidebarFilter({
               }
             }}
             aria-expanded={activePicker === 'end'}
-            className={`box-border w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
+            className={`box-border w-full flex items-center justify-between py-1.5 px-2.5 bg-slate-50 hover:bg-slate-100 ring-1 rounded-xl transition-all cursor-pointer text-left ${
               activePicker === 'end'
                 ? 'ring-2 ring-primary bg-white shadow-xs'
                 : 'ring-slate-200'
             }`}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
-                <CalendarIcon className="w-4 h-4" />
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
+                <CalendarIcon className="w-3.5 h-3.5" />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-[10px] leading-tight font-semibold text-slate-400 uppercase tracking-wider">
                   Tanggal Akhir Sewa
                 </span>
-                <span className="text-xs font-bold text-slate-800 truncate mt-0.5">
+                <span className="text-xs leading-tight font-bold text-slate-800 truncate">
                   {dateRange.end ? formatShortDate(dateRange.end) : 'Pilih tanggal akhir sewa'}
                 </span>
               </div>
@@ -389,7 +389,7 @@ export default function SidebarFilter({
 
           {/* Absolute Div (Dropdown Modal Kalender Mini) */}
           {activePicker && (
-            <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[270px] -left-1 sm:left-0 bg-white rounded-2xl shadow-xl shadow-slate-900/10 ring-1 ring-slate-200 p-3.5 flex flex-col gap-2.5">
+            <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-full max-w-[288px] bg-white rounded-xl shadow-xl shadow-slate-900/10 ring-1 ring-slate-200 p-3 flex flex-col gap-2">
               {/* Header Switcher Tabs: Tanggal Sewa vs Tanggal Akhir Sewa */}
               <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-lg">
                 <button
@@ -460,7 +460,7 @@ export default function SidebarFilter({
               <div className="grid grid-cols-7 gap-1 text-center">
                 {/* Leading blanks */}
                 {Array.from({ length: startOffset }).map((_, i) => (
-                  <div key={`blank-${i}`} className="h-7 w-7" />
+                  <div key={`blank-${i}`} className="h-7 w-full" />
                 ))}
 
                 {/* Day cells */}
@@ -489,7 +489,7 @@ export default function SidebarFilter({
                       key={day}
                       type="button"
                       onClick={() => handleSelectDay(day)}
-                      className={`h-7 w-7 mx-auto flex items-center justify-center text-xs rounded-lg transition-all cursor-pointer border-0 ${cellClasses}`}
+                      className={`h-7 w-full flex items-center justify-center text-xs rounded-lg transition-all cursor-pointer border-0 ${cellClasses}`}
                     >
                       {day}
                     </button>
@@ -519,7 +519,7 @@ export default function SidebarFilter({
         </div>
 
         {/* Ringkasan Durasi Sewa */}
-        <div className="text-[11px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
+        <div className="text-[11px] leading-tight text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
           {rangeDays > 0
             ? `${rangeDays} hari sewa · 1 hari buffer`
             : dateRange.start && !dateRange.end
@@ -533,12 +533,12 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Sesuai Listrik Usaha Saya */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-row gap-2.5 justify-start items-center">
-        <div className="box-border flex-1 h-fit flex flex-col gap-1 justify-start items-start">
-          <div className="text-xs text-slate-900 font-bold text-left whitespace-nowrap">
+      <div className="box-border w-full h-fit shrink-0 flex flex-row gap-2.5 justify-between items-center">
+        <div className="box-border flex-1 min-w-0 h-fit flex flex-col gap-0.5 justify-start items-start">
+          <div className="text-xs text-slate-900 font-bold text-left">
             Sesuai listrik usaha saya
           </div>
-          <div className="text-[11px] leading-[15px] w-full text-slate-500 font-normal text-left tabular-nums">
+          <div className="text-[11px] leading-[14px] w-full text-slate-500 font-normal text-left tabular-nums">
             {`Maks. ${powerLimit || 1300} W · hanya alat yang aman`}
           </div>
         </div>
@@ -558,18 +558,18 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Harga Harian Maksimal */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2 justify-start items-start">
-        <div className="flex items-baseline justify-between w-full">
-          <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
+        <div className="flex items-baseline justify-between gap-2 w-full">
+          <div className="text-xs text-slate-600 font-semibold text-left">
             Harga harian maksimal
           </div>
-          <div className="text-sm text-blue-600 font-bold tabular-nums tracking-tight text-right whitespace-nowrap">
+          <div className="text-[13px] text-blue-600 font-bold tabular-nums tracking-tight text-right whitespace-nowrap shrink-0">
             {formatRupiah(maxPrice)}
           </div>
         </div>
 
         {/* Slider */}
-        <div className="w-full py-1">
+        <div className="w-full py-0.5">
           <input
             type="range"
             min={minPrice}
@@ -581,7 +581,7 @@ export default function SidebarFilter({
           />
         </div>
 
-        <div className="text-[11px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
+        <div className="text-[11px] leading-tight text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
           {`${formatRupiah(minPrice)} — ${formatRupiah(maxPriceLimit)}`}
         </div>
       </div>
@@ -589,11 +589,11 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Batas Security Deposit */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
         <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
           Batas security deposit
         </div>
-        <div className="box-border w-full h-fit shrink-0 flex flex-row gap-2 justify-start items-start">
+        <div className="box-border w-full h-fit shrink-0 flex flex-row gap-1.5 justify-start items-start">
           {DEPOSIT_OPTIONS.map((opt) => {
             const isSelected = maxDeposit === opt.value
             return (
@@ -602,7 +602,7 @@ export default function SidebarFilter({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => handleDepositSelect(opt.value)}
-                className={`box-border flex-1 h-fit flex flex-row py-1.5 px-0 justify-center items-start rounded-lg cursor-pointer transition-all border-0 ${
+                className={`box-border flex-1 h-fit flex flex-row py-1.5 px-1 justify-center items-start rounded-lg cursor-pointer transition-all border-0 ${
                   isSelected
                     ? 'bg-blue-50 ring-1 ring-blue-600 text-blue-700 font-bold'
                     : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:bg-slate-50 font-medium'
@@ -613,7 +613,7 @@ export default function SidebarFilter({
             )
           })}
         </div>
-        <div className="text-[11px] text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
+        <div className="text-[11px] leading-tight text-slate-500 font-normal tabular-nums text-left whitespace-nowrap">
           {maxDeposit === 'semua'
             ? 'Tanpa batas deposit'
             : `Deposit maksimal ${formatRupiah(maxDeposit)}`}
@@ -623,7 +623,7 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Metode Pengiriman */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
         <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
           Metode pengiriman
         </div>
@@ -640,7 +640,7 @@ export default function SidebarFilter({
             }
           }}
           onClick={() => handleDeliveryToggle('selfPickup')}
-          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2.5 justify-start items-center cursor-pointer select-none"
+          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2 justify-start items-center cursor-pointer select-none"
         >
           <div
             className={`box-border w-4 shrink-0 h-4 flex flex-row justify-center items-center rounded transition-colors ${
@@ -670,7 +670,7 @@ export default function SidebarFilter({
             }
           }}
           onClick={() => handleDeliveryToggle('courier')}
-          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2.5 justify-start items-center cursor-pointer select-none"
+          className="box-border w-fit h-fit shrink-0 flex flex-row gap-2 justify-start items-center cursor-pointer select-none"
         >
           <div
             className={`box-border w-4 shrink-0 h-4 flex flex-row justify-center items-center rounded transition-colors ${
@@ -692,7 +692,7 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Rating & Ulasan */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
+      <div className="box-border w-full h-fit shrink-0 flex flex-col gap-1.5 justify-start items-start">
         <div className="flex items-center justify-between w-full">
           <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
             Rating & Ulasan
@@ -705,7 +705,7 @@ export default function SidebarFilter({
         </div>
 
         {/* 3 Opsi: Radio Cards Modern / Selectable Pills */}
-        <div className="box-border w-full flex flex-col gap-2 justify-start items-start">
+        <div className="box-border w-full flex flex-col gap-1.5 justify-start items-start">
           {RATING_SORT_OPTIONS.map((opt) => {
             const isSelected = (currentSortRating || '') === opt.value
             return (
@@ -715,22 +715,22 @@ export default function SidebarFilter({
                 role="radio"
                 aria-checked={isSelected}
                 onClick={() => handleRatingSortChange(opt.value)}
-                className={`box-border w-full flex flex-row items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all border ${
+                className={`box-border w-full flex flex-row items-center justify-between py-1.5 px-2.5 rounded-lg cursor-pointer transition-all border ${
                   isSelected
                     ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500/30 text-blue-900 font-medium shadow-2xs'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-normal'
                 }`}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                    className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                       isSelected
                         ? 'border-blue-600 bg-blue-600'
                         : 'border-slate-300 bg-white'
                     }`}
                   >
                     {isSelected && (
-                      <div className="w-2 h-2 rounded-full bg-white shadow-2xs" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-white shadow-2xs" />
                     )}
                   </div>
                   <span className={`text-xs text-left truncate ${isSelected ? 'font-semibold text-blue-900' : 'text-slate-700'}`}>
@@ -830,7 +830,7 @@ export default function SidebarFilter({
   return (
     <aside
       ref={sidebarRef}
-      className={`relative box-border w-full shrink-0 h-fit lg:sticky lg:top-[140px] lg:max-h-[calc(100vh-160px)] lg:overflow-y-auto lg:overflow-x-hidden scrollbar-thin flex flex-col gap-4 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}
+      className={`box-border w-full shrink-0 h-fit lg:max-h-[calc(100vh-169px)] lg:overflow-y-auto lg:overflow-x-hidden scrollbar-thin flex flex-col gap-2.5 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}
     >
       {/* Desktop Head: Filter & Reset */}
       <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
@@ -849,7 +849,7 @@ export default function SidebarFilter({
       <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
 
       {/* Konten Filter Statis Sidebar Desktop */}
-      <div className="w-full flex flex-col gap-4">
+      <div className="w-full flex flex-col gap-2.5">
         {renderFilterSections()}
       </div>
     </aside>

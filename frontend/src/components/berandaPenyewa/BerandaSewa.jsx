@@ -596,23 +596,25 @@ export default function BerandaSewa({
       />
 
       {/* 2. Main Content */}
-      <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 pt-0 pb-10 flex flex-col justify-start items-start">
+      <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 pt-0 pb-6 flex flex-col justify-start items-start">
         {/* Header Halaman (Judul, Jumlah Alat, & Filter/Urutkan) */}
-        <div className="box-border w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-full -mx-6 md:-mx-10 lg:mx-0 px-6 md:px-10 lg:px-0 relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 sticky top-[68px] z-30 bg-white/95 backdrop-blur-sm pt-2.5 pb-3.5 border-b border-slate-100 lg:bg-slate-50 lg:backdrop-blur-none lg:border-none lg:h-[64px] lg:py-0">
+        <div className="box-border w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-full -mx-6 md:-mx-10 lg:mx-0 px-6 md:px-10 lg:px-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 sticky top-[69px] z-30 bg-white/95 backdrop-blur-sm pt-2.5 pb-3.5 border-b border-slate-100 lg:bg-slate-50 lg:backdrop-blur-none lg:border-none lg:h-auto lg:py-3">
           {/* Sisi Kiri: Teks Judul & Jumlah Alat (Rata Kiri, Sejajar Tepi Kiri Sidebar - HANYA Desktop) */}
-          <div className="hidden lg:flex box-border flex-col gap-0.5 justify-center items-start text-left">
+          <div className="hidden lg:flex box-border flex-col gap-0.5 justify-center items-start text-left min-w-0">
             <h1 className="text-lg sm:text-xl lg:text-2xl text-slate-900 font-bold text-left tracking-tight m-0 leading-tight">
               Alat tersedia untuk <span className="tabular-nums">{dateRangeLabel}</span>
             </h1>
-            <div className="text-xs sm:text-sm text-slate-600 font-normal text-left tabular-nums flex items-center gap-1.5 flex-wrap">
-              <span>{loading ? 'Memuat katalog…' : `${sortedProducts.length} alat · `}</span>
-              <span>{powerMatch ? `semua sesuai daya ${powerLimit} W` : 'semua kapasitas daya'}</span>
+            <div className="text-xs sm:text-sm text-slate-600 font-normal text-left tabular-nums flex items-center gap-1.5 flex-wrap lg:flex-nowrap min-w-0 max-w-full">
+              <span className="whitespace-nowrap">{loading ? 'Memuat katalog…' : `${sortedProducts.length} alat · `}</span>
+              <span className="whitespace-nowrap">{powerMatch ? `semua sesuai daya ${powerLimit} W` : 'semua kapasitas daya'}</span>
               {userLocation && (
                 <>
-                  <span className="text-slate-300">•</span>
-                  <span className="inline-flex items-center gap-1 text-slate-500">
+                  <span className="text-slate-300 shrink-0">•</span>
+                  <span className="inline-flex items-center gap-1 text-slate-500 min-w-0 truncate">
                     <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    Jarak dihitung dari <strong className="text-slate-700 font-medium">{userLocation}</strong>
+                    <span className="truncate">
+                      Jarak dihitung dari <strong className="text-slate-700 font-medium">{userLocation}</strong>
+                    </span>
                   </span>
                 </>
               )}
@@ -761,9 +763,9 @@ export default function BerandaSewa({
         </div>
 
         {/* Wrapper Utama: Penjajaran Sidebar dan Grid Produk */}
-        <div className="box-border w-full flex flex-col lg:flex-row gap-8 justify-start items-start">
+        <div className="box-border w-full flex flex-col lg:flex-row gap-6 lg:gap-7 justify-start items-start">
           {/* Sisi Kiri: Filter Sidebar (HANYA terlihat di Desktop agar tidak duplikat di mobile) */}
-          <div className="hidden lg:block relative w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-[140px] lg:max-h-[calc(100vh-160px)] z-20 lg:z-10 self-start">
+          <div className="hidden lg:block w-full lg:w-72 xl:w-[320px] lg:flex-shrink-0 shrink-0 lg:sticky lg:top-[153px] lg:z-10 self-start">
             <SidebarFilter
               filters={filters}
               onFiltersChange={setFilters}
@@ -782,7 +784,7 @@ export default function BerandaSewa({
           </div>
 
           {/* Sisi Kanan: Catalog Grid Area */}
-          <section className="box-border w-full flex-1 min-w-0 h-fit flex flex-col gap-6 justify-start items-start">
+          <section className="box-border w-full flex-1 min-w-0 h-fit pb-4 flex flex-col gap-6 justify-start items-start">
             {/* Status pemuatan / error */}
             {loading && (
               <div className="w-full bg-white rounded-2xl border border-slate-200 p-12 flex flex-col gap-3 items-center justify-center text-slate-500">
