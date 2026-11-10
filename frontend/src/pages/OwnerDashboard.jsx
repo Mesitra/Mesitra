@@ -211,7 +211,7 @@ function OwnerDashboardContent() {
   const navigate = useNavigate()
   const currentUser = getSessionUser() || { fullName: 'Kopi Senja Roastery', role: 'PEMILIK' }
   const [tenantProfile, setTenantProfile] = useState(currentUser?.tenantProfile || null)
-  const { escrowBalance } = useWallet()
+  const { escrowBalance, refreshWallet } = useWallet()
 
   // State
   const [orders, setOrders] = useState([])
@@ -386,6 +386,7 @@ function OwnerDashboardContent() {
 
   useEffect(() => {
     fetchData()
+    refreshWallet()
     getUnreadCount().then(setChatUnreadCount).catch(() => {})
 
     // Polling notifikasi in-app berkala (push-like sync)
@@ -1629,6 +1630,7 @@ function OwnerDashboardContent() {
         onInspectionCompleted={(updated, msg) => {
           showToast(msg || 'Status inspeksi berhasil diperbarui!')
           fetchData()
+          refreshWallet()
         }}
       />
     </div>

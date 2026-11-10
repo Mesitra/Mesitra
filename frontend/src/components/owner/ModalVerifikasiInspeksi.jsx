@@ -12,10 +12,16 @@ import {
   FileText,
   Camera,
   Plus,
-  Trash2
+  Trash2,
+  Upload
 } from 'lucide-react'
-import { completeInspection } from '../../lib/ordersApi'
+import { completeInspection, getOrder } from '../../lib/ordersApi'
+import { emitWalletUpdate } from '../../lib/walletApi'
 import { formatLongDate } from '../../lib/dateHelpers'
+import { fileToPreviewDataUrl } from '../../lib/registration'
+
+const DEFAULT_PLACEHOLDER_PHOTO =
+  'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
 
 export default function ModalVerifikasiInspeksi({
   isOpen,
@@ -39,11 +45,13 @@ export default function ModalVerifikasiInspeksi({
         ]
   )
   const [newPhotoUrl, setNewPhotoUrl] = useState('')
+  const [detailedOrder, setDetailedOrder] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     if (!isOpen || !order) return
+    let active = true
     const activeDecision = order.initialMode || initialMode || 'APPROVE'
     setDecisionMode(activeDecision)
     setOwnerNotes('')
@@ -54,34 +62,57 @@ export default function ModalVerifikasiInspeksi({
     setDamagePhotos(
       order.ownerInspectionPhotos && Array.isArray(order.ownerInspectionPhotos)
         ? order.ownerInspectionPhotos
-        : [
-            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
-          ]
+        : [DEFAULT_PLACEHOLDER_PHOTO]
     )
     setNewPhotoUrl('')
     setErrorMsg('')
+    setDetailedOrder(null)
+
+    if (order.id) {
+      getOrder(order.id)
+        .then((full) => {
+          if (active && full) setDetailedOrder(full)
+        })
+        .catch(() => {})
+    }
+    return () => {
+      active = false
+    }
   }, [order?.id, order?.initialMode, initialMode, isOpen])
 
   if (!isOpen || !order) return null
 
+  const activeOrder = detailedOrder || order
   const formatRupiah = (val) => `Rp ${(val || 0).toLocaleString('id-ID')}`
-  const equipment = order.equipment || {}
-  const renter = order.user || {}
+  const equipment = activeOrder.equipment || {}
+  const renter = activeOrder.user || {}
   const renterName = renter.kycData?.businessName || renter.fullName || renter.email || 'Penyewa UMKM'
 
   // Ekstraksi Foto BAST Awal
-  const initialBast = order.initialBast || {}
+  const initialBast = activeOrder.initialBast || {}
   const initialPhotosObj = initialBast.photos || {}
   const initialPhotos = Array.isArray(initialPhotosObj)
     ? initialPhotosObj
-    : [initialPhotosObj.front, initialPhotosObj.side, initialPhotosObj.panel, ...(initialPhotosObj.extra || [])].filter(Boolean)
+    : [initialPhotosObj.front, initialPhotosObj.side, initialPhotosObj.panel, initialPhotosObj.back, ...(initialPhotosObj.extra || [])].filter(Boolean)
 
   // Ekstraksi Foto BAST Akhir (Penyewa)
-  const returnData = order.returnData || {}
+  const returnData = activeOrder.returnData || {}
   const returnPhotosObj = returnData.photos || {}
   const returnPhotos = Array.isArray(returnPhotosObj)
     ? returnPhotosObj
-    : [returnPhotosObj.front, returnPhotosObj.side, returnPhotosObj.panel, ...(returnPhotosObj.extra || [])].filter(Boolean)
+    : [returnPhotosObj.front, returnPhotosObj.side, returnPhotosObj.panel, returnPhotosObj.back, ...(returnPhotosObj.extra || [])].filter(Boolean)
+
+  const handleUploadDamageFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const preview = await fileToPreviewDataUrl(file)
+    if (!preview) return
+    setDamagePhotos((prev) => {
+      const cleaned = prev.filter((p) => p !== DEFAULT_PLACEHOLDER_PHOTO)
+      return [...cleaned, preview]
+    })
+    e.target.value = ''
+  }
 
   const handleAddPhoto = () => {
     if (!newPhotoUrl.trim()) return
@@ -103,6 +134,7 @@ export default function ModalVerifikasiInspeksi({
           approveRefund: true,
           ownerNotes
         })
+        emitWalletUpdate()
         if (onInspectionCompleted) {
           onInspectionCompleted(res.data, 'Inspeksi disetujui. Dana deposit telah diteruskan ke penyewa dan dana sewa dicairkan ke saldo Anda.')
         }
@@ -136,6 +168,7 @@ export default function ModalVerifikasiInspeksi({
           ownerInspectionPhotos: damagePhotos
         })
 
+        emitWalletUpdate()
         if (onInspectionCompleted) {
           onInspectionCompleted(res.data, 'Klaim sengketa berhasil diajukan. Status pesanan diubah ke DISPUTE untuk mediasi Admin HQ.')
         }
@@ -462,9 +495,19 @@ export default function ModalVerifikasiInspeksi({
                   </label>
 
                   <div className="flex items-center gap-2">
+                    <label className="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shrink-0">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Unggah Foto</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUploadDamageFile}
+                        className="hidden"
+                      />
+                    </label>
                     <input
                       type="text"
-                      placeholder="Tempel URL foto bukti kerusakan (mis. https://...)"
+                      placeholder="Atau tempel URL foto bukti kerusakan (https://...)"
                       value={newPhotoUrl}
                       onChange={(e) => setNewPhotoUrl(e.target.value)}
                       className="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-rose-500"
@@ -472,7 +515,7 @@ export default function ModalVerifikasiInspeksi({
                     <button
                       type="button"
                       onClick={handleAddPhoto}
-                      className="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-xs flex items-center gap-1 cursor-pointer"
+                      className="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-xs flex items-center gap-1 cursor-pointer shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Tambah</span>

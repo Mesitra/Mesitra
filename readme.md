@@ -34,6 +34,18 @@ npm run dev        # http://localhost:5173
 Dev server Vite sudah mem-proxy semua request `/api/*` ke `http://localhost:3000`,
 jadi cukup jalankan backend dan frontend berdampingan.
 
+## Akun Demo (Login per Role)
+
+Akun berikut dibuat otomatis oleh seeder (`cd backend && npm run seed`) agar pengunjung dapat langsung mencoba website pada setiap role:
+
+| Role | Halaman Login | Email | Password | Dashboard Tujuan |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin / Superadmin** | `/admin/login` | `admin@mesitra.id`<br>`rani.admin@gmail.com` | `Admin#Sewa2026` | `/admin` |
+| **Pemilik Alat** | `/login` (tab **Pemilik Alat**) | `pemilik@mesitra.id`<br>`owner@mesitra.id` | `Pemilik#Sewa2026` | `/dashboard-pemilik` |
+| **Penyewa UMKM** | `/login` (tab **Penyewa UMKM**) | `penyewa@mesitra.id`<br>`andini@mesitra.id`<br>`pakhari@mesitra.id` | `Penyewa#Sewa2026` | `/beranda-sewa` |
+
+> **Catatan:** Jika menjalankan aplikasi secara lokal dengan database baru, jalankan `cd backend && npm run seed` terlebih dahulu untuk mengisi akun demo dan data katalog awal.
+
 ## Endpoint API
 
 | Method | Path | Deskripsi |
