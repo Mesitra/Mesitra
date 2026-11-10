@@ -318,7 +318,7 @@ export default function AdminLoginStep2({
 
       {/* Bottom Footer Note */}
       <div className="w-full text-center text-[11px] text-slate-400 py-2">
-        MyRent Admin Security Gateway &copy; 2026. All rights reserved.
+        Mesitra Admin Security Gateway &copy; 2026. All rights reserved.
       </div>
     </div>
   )

@@ -318,7 +318,7 @@ export default function AdminManajemenTim({ onLogout }) {
       setConfirmDialog({
         isOpen: true,
         title: 'Nonaktifkan Akun Staff',
-        message: `Apakah Anda yakin ingin menonaktifkan akun ${staff.name}? Staff ini tidak akan dapat mengakses portal admin MyRent sampai diaktifkan kembali.`,
+        message: `Apakah Anda yakin ingin menonaktifkan akun ${staff.name}? Staff ini tidak akan dapat mengakses portal admin Mesitra sampai diaktifkan kembali.`,
         confirmText: 'Ya, Nonaktifkan',
         cancelText: 'Batal',
         variant: 'danger',
@@ -729,7 +729,7 @@ export default function AdminManajemenTim({ onLogout }) {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Contoh: riko@myrent.id"
+                  placeholder="Contoh: riko@mesitra.id"
                   className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
                   required
                 />
@@ -838,7 +838,7 @@ export default function AdminManajemenTim({ onLogout }) {
             className="flex items-center gap-2 text-[15px] font-extrabold text-slate-900 cursor-pointer"
           >
             <Layers className="w-5 h-5 text-blue-600" />
-            MyRent HQ
+            Mesitra HQ
           </button>
           <div className="flex items-center gap-2">
             <select

@@ -37,7 +37,7 @@ export default function AdminLayout() {
         {/* Brand Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-black tracking-tight text-blue-600">MyRent</span>
+            <span className="text-xl font-black tracking-tight text-blue-600">Mesitra</span>
             <span className="rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider">
               Admin
             </span>
@@ -95,7 +95,7 @@ export default function AdminLayout() {
         {/* TOPBAR HEADER BREADCRUMB & AKSI CEPAT */}
         <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8">
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="font-semibold text-slate-400">MyRent Operasional</span>
+            <span className="font-semibold text-slate-400">Mesitra Operasional</span>
             <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
             <span className="font-bold text-slate-800">{currentMenu.label}</span>
           </div>

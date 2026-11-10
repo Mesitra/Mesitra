@@ -49,7 +49,7 @@ const STEP_HEADER_TITLES = {
   },
   5: {
     title: 'Review Data & Kirim Pendaftaran',
-    desc: 'Periksa kembali seluruh data sebelum dikirim ke Admin MyRent.'
+    desc: 'Periksa kembali seluruh data sebelum dikirim ke Admin Mesitra.'
   }
 }
 
@@ -446,7 +446,7 @@ export default function RegisterPenyewaAlat({
         newErrors.agreeTruth = 'Harap konfirmasi kebenaran data Anda'
       }
       if (!formData.agreeTerms) {
-        newErrors.agreeTerms = 'Harap setujui Syarat & Ketentuan Layanan MyRent'
+        newErrors.agreeTerms = 'Harap setujui Syarat & Ketentuan Layanan Mesitra'
       }
     }
 
@@ -936,7 +936,7 @@ export default function RegisterPenyewaAlat({
 
       {/* Footer */}
       <footer className="w-full py-4 text-center text-[11px] text-slate-400">
-        © 2026 MyRent. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
+        © 2026 Mesitra. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
       </footer>
     </div>
   )

@@ -46,7 +46,7 @@ import {
  *  - `GET /api/admin/submissions/:id`  → detail pengajuan + `kycData`
  *  - `GET /api/admin/submissions`      → daftar pengajuan (posisi & navigasi)
  *
- * `kycData` dipetakan menjadi 5 kartu langkah sesuai alur registrasi MyRent:
+ * `kycData` dipetakan menjadi 5 kartu langkah sesuai alur registrasi Mesitra:
  *  1. Akun & Kredensial
  *  2. Identitas & KTP
  *  3. Profil UMKM & Daya Listrik (Penyewa) / Lokasi & Gudang Operasional (Pemilik)

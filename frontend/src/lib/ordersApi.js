@@ -1,5 +1,5 @@
 /**
- * Client HTTP untuk endpoint pesanan (MyRent API).
+ * Client HTTP untuk endpoint pesanan (Mesitra API).
  *
  * Semua request menyertakan token JWT dari localStorage agar
  * backend bisa mengidentifikasi user yang sedang login.
@@ -210,7 +210,7 @@ export async function claimDispute(id, { disputeReason, damageFee = 0, ownerInsp
 }
 
 /**
- * Putuskan sengketa mediasi oleh Admin MyRent (Admin side).
+ * Putuskan sengketa mediasi oleh Admin Mesitra (Admin side).
  */
 export async function resolveDispute(id, { finalDamageFee = 0, adminResolutionNote = '' } = {}) {
   const res = await fetch(`${API_BASE}/orders/${id}/resolve-dispute`, {

@@ -392,14 +392,14 @@ async function main() {
     update: {
       password: hashedPassword,
       role: 'ADMIN',
-      fullName: 'Super Administrator MyRent',
+      fullName: 'Super Administrator Mesitra',
       phone: '081234567890'
     },
     create: {
       email: 'admin@myrent.com',
       password: hashedPassword,
       role: 'ADMIN',
-      fullName: 'Super Administrator MyRent',
+      fullName: 'Super Administrator Mesitra',
       phone: '081234567890'
     }
   })
@@ -498,12 +498,12 @@ async function main() {
     update: {
       password: hashedPemilikPassword,
       role: 'PEMILIK',
-      fullName: 'Mitra Owner MyRent',
+      fullName: 'Mitra Owner Mesitra',
       phone: '081299887755',
       verificationStatus: 'DISETUJUI',
       submissionCode: 'VR-1005',
       kycData: {
-        businessName: 'Mitra Owner MyRent',
+        businessName: 'Mitra Owner Mesitra',
         businessSector: 'Peralatan Usaha & Mesin',
         city: 'Jakarta Selatan',
         district: 'Kec. Cilandak',
@@ -519,12 +519,12 @@ async function main() {
       email: 'owner@myrent.com',
       password: hashedPemilikPassword,
       role: 'PEMILIK',
-      fullName: 'Mitra Owner MyRent',
+      fullName: 'Mitra Owner Mesitra',
       phone: '081299887755',
       verificationStatus: 'DISETUJUI',
       submissionCode: 'VR-1005',
       kycData: {
-        businessName: 'Mitra Owner MyRent',
+        businessName: 'Mitra Owner Mesitra',
         businessSector: 'Peralatan Usaha & Mesin',
         city: 'Jakarta Selatan',
         district: 'Kec. Cilandak',

@@ -629,7 +629,7 @@ export default function ChatPanel({
 
                   <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span>Terverifikasi MyRent</span>
+                    <span>Terverifikasi Mesitra</span>
                     {selectedChat.isDraft && (
                       <span className="text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.2 rounded text-[10px]">
                         Sesi Sementara (Draft)

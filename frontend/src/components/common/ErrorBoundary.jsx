@@ -6,7 +6,7 @@ import { AlertTriangle, RefreshCw, Home, ChevronDown, ChevronUp } from 'lucide-r
  *
  * Menangkap unhandled JavaScript exception di seluruh tree komponen React.
  * Menghindari "White Screen of Death" dan menyajikan fallback recovery UI
- * yang elegan dan konsisten dengan sistem desain MyRent.
+ * yang elegan dan konsisten dengan sistem desain Mesitra.
  */
 export default class ErrorBoundary extends React.Component {
   constructor(props) {

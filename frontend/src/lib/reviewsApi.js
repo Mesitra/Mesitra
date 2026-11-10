@@ -1,5 +1,5 @@
 /**
- * Client HTTP untuk endpoint Ulasan & Rating (MyRent API).
+ * Client HTTP untuk endpoint Ulasan & Rating (Mesitra API).
  */
 
 import { API_BASE } from './equipmentsApi'

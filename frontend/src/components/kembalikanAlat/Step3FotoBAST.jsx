@@ -469,7 +469,7 @@ export default function Step3FotoBAST({ order, returnData, onChange }) {
             <div className="flex justify-between">
               <span className="text-slate-500">Pemilik alat:</span>
               <span className="font-semibold text-slate-900">
-                {order.equipment?.owner?.fullName || order.equipment?.ownerName || 'Pemilik Alat Mitra MyRent'}
+                {order.equipment?.owner?.fullName || order.equipment?.ownerName || 'Pemilik Alat Mitra Mesitra'}
               </span>
             </div>
             <div className="flex justify-between">

@@ -21,7 +21,7 @@ const PASAL = [
   },
   {
     title: 'Pasal 3 — Harga Sewa & Escrow',
-    content: (d) => `Pihak Penyewa membayar biaya sewa sebesar Rp ${d.totalPaid.toLocaleString('id-ID')} (termasuk deposit Rp ${d.depositAmount.toLocaleString('id-ID')}) ke rekening escrow MyRent. Dana escrow hanya dilepaskan ke Pihak Pemilik setelah Pihak Penyewa mengkonfirmasi penerimaan unit dalam kondisi baik.`
+    content: (d) => `Pihak Penyewa membayar biaya sewa sebesar Rp ${d.totalPaid.toLocaleString('id-ID')} (termasuk deposit Rp ${d.depositAmount.toLocaleString('id-ID')}) ke rekening escrow Mesitra. Dana escrow hanya dilepaskan ke Pihak Pemilik setelah Pihak Penyewa mengkonfirmasi penerimaan unit dalam kondisi baik.`
   },
   {
     title: 'Pasal 4 — Deposit & Pengembalian',
@@ -37,7 +37,7 @@ const PASAL = [
   },
   {
     title: 'Pasal 7 — Force Majeure & Penyelesaian Sengketa',
-    content: () => `Dalam hal terjadi bencana alam, kebijakan pemerintah, atau kondisi di luar kendali para pihak, penyelesaian dilakukan dengan musyawarah. Sengketa yang tidak bisa diselesaikan secara mufakat diserahkan ke tim mediasi MyRent sebagai pihak netral.`
+    content: () => `Dalam hal terjadi bencana alam, kebijakan pemerintah, atau kondisi di luar kendali para pihak, penyelesaian dilakukan dengan musyawarah. Sengketa yang tidak bisa diselesaikan secara mufakat diserahkan ke tim mediasi Mesitra sebagai pihak netral.`
   }
 ]
 
@@ -95,7 +95,7 @@ export default function ModalKontrakSewa({
             <ScrollText className="w-5 h-5 text-blue-600" />
             <div>
               <h2 className="text-[15px] font-bold text-slate-900">Kontrak Sewa Digital</h2>
-              <p className="text-[11px] text-slate-500">MyRent — Platform Sewa Alat Terverifikasi</p>
+              <p className="text-[11px] text-slate-500">Mesitra — Platform Sewa Alat Terverifikasi</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">

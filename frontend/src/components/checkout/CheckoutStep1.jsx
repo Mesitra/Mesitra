@@ -497,7 +497,7 @@ export default function CheckoutStep1({ wizardData, updateWizard, onNext }) {
                 {rentalDays === 0 ? 'Pilih tanggal sewa dulu' : `Lanjut ke Kontrak Sewa →`}
               </button>
               <p className="text-[10px] text-slate-400 text-center m-0">
-                Dilindungi escrow MyRent · 100% aman
+                Dilindungi escrow Mesitra · 100% aman
               </p>
             </div>
           </div>

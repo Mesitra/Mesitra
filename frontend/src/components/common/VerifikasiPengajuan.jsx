@@ -80,7 +80,7 @@ export default function VerifikasiPengajuan({
   }
 
   const handleContactAdmin = () => {
-    showToast('Layanan Bantuan Admin MyRent: WhatsApp +62 812-9988-7766 (Senin–Jumat 08:00–18:00 WIB)')
+    showToast('Layanan Bantuan Admin Mesitra: WhatsApp +62 812-9988-7766 (Senin–Jumat 08:00–18:00 WIB)')
   }
 
   // ── Konfigurasi tampilan per status ──────────────────────────────────────
@@ -137,7 +137,7 @@ export default function VerifikasiPengajuan({
           Akun Anda aktif.
         </>
       ),
-      subtitle: `Selamat, ${displayName}. Akun Anda sudah disetujui admin dan dapat memakai seluruh fitur MyRent.`,
+      subtitle: `Selamat, ${displayName}. Akun Anda sudah disetujui admin dan dapat memakai seluruh fitur Mesitra.`,
       primaryLabel: isPenyewa ? 'Masuk ke Beranda Sewa' : 'Masuk ke Dashboard Pemilik',
       showEditButton: false
     },
@@ -153,7 +153,7 @@ export default function VerifikasiPengajuan({
           ditolak.
         </>
       ),
-      subtitle: `Maaf, pengajuan ${displayName} ditolak secara permanen. Hubungi Admin MyRent bila ingin mengajukan ulang dengan data yang berbeda.`,
+      subtitle: `Maaf, pengajuan ${displayName} ditolak secara permanen. Hubungi Admin Mesitra bila ingin mengajukan ulang dengan data yang berbeda.`,
       primaryLabel: 'Kembali ke Halaman Login',
       showEditButton: false
     }
@@ -202,7 +202,7 @@ export default function VerifikasiPengajuan({
         </div>
       )}
 
-      {/* Top Navbar Konsisten MyRent */}
+      {/* Top Navbar Konsisten Mesitra */}
       <RegisterTopBar
         roleTitle={roleTitle}
         onBackToHome={onBackToHome}
@@ -436,7 +436,7 @@ export default function VerifikasiPengajuan({
             </span>
             <span className="text-[13px] font-extrabold text-blue-600 tracking-wide">{regCode}</span>
             <span className="text-[10px] text-slate-400">
-              Terdaftar di sistem MyRent · diperbarui {updatedAtLabel}
+              Terdaftar di sistem Mesitra · diperbarui {updatedAtLabel}
             </span>
           </div>
 
@@ -512,7 +512,7 @@ export default function VerifikasiPengajuan({
 
       {/* Footer Bawah */}
       <footer className="w-full py-4 text-center text-[11px] text-slate-400">
-        © 2026 MyRent. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
+        © 2026 Mesitra. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
       </footer>
     </div>
   )

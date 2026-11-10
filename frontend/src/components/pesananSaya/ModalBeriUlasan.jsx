@@ -98,7 +98,7 @@ export default function ModalBeriUlasan({ isOpen, onClose, order, onSuccess }) {
                 {equipment.name || 'Peralatan UMKM'}
               </div>
               <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                {equipment.category || 'Alat Produksi'} · Pemilik: {equipment.owner?.fullName || 'Mitra MyRent'}
+                {equipment.category || 'Alat Produksi'} · Pemilik: {equipment.owner?.fullName || 'Mitra Mesitra'}
               </div>
             </div>
           </div>

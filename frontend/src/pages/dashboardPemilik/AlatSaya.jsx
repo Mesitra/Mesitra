@@ -340,7 +340,7 @@ export default function AlatSaya({
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
           </button>
 
-          {/* Tombol Aksi Primer: Tambah Alat (Biru Khas MyRent) */}
+          {/* Tombol Aksi Primer: Tambah Alat (Biru Khas Mesitra) */}
           <button
             type="button"
             onClick={handleAddClick}

@@ -10,7 +10,7 @@
  *  - Tombol "Saya sudah transfer, cek status" juga memicu mock payment
  *
  * ═══════════════════════════════════════════════════════════════════════════════
- * PRODUCTION PAYMENT GATEWAY BLUEPRINT — MyRent
+ * PRODUCTION PAYMENT GATEWAY BLUEPRINT — Mesitra
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * Komponen ini adalah DEMO SIMULASI. Pada produksi, diganti dengan integrasi
@@ -380,7 +380,7 @@ export default function CheckoutStep3() {
       </div>
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-extrabold">Pembayaran Berhasil!</h2>
-        <p className="text-emerald-200 text-sm">Dana diterima Escrow MyRent · {invoiceNumber}</p>
+        <p className="text-emerald-200 text-sm">Dana diterima Escrow Mesitra · {invoiceNumber}</p>
         <p className="text-emerald-300 text-xs">Mengarahkan ke Pesanan Saya…</p>
       </div>
     </div>
@@ -650,7 +650,7 @@ export default function CheckoutStep3() {
                 <div className="text-[14px] font-bold text-slate-900">Kartu Kredit / Debit</div>
                 {/* Preview Kartu */}
                 <div className="w-full h-[160px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 flex flex-col justify-between text-white shadow-lg">
-                  <div className="text-[11px] font-semibold opacity-80">MyRent Escrow Card</div>
+                  <div className="text-[11px] font-semibold opacity-80">Mesitra Escrow Card</div>
                   <div className="font-mono text-[18px] font-bold tracking-widest">
                     {cardNumber.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim() || '•••• •••• •••• ••••'}
                   </div>
@@ -786,17 +786,17 @@ export default function CheckoutStep3() {
             )}
             <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
               <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>Pembayaran diamankan oleh Escrow MyRent</span>
+              <span>Pembayaran diamankan oleh Escrow Mesitra</span>
             </div>
 
             {/* Info Escrow */}
             <div className="p-3.5 bg-emerald-50 ring-1 ring-emerald-200 rounded-xl">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 mb-1">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Perlindungan Escrow MyRent</span>
+                <span>Perlindungan Escrow Mesitra</span>
               </div>
               <p className="text-[10px] text-emerald-700 leading-relaxed">
-                Dana Anda tidak langsung masuk ke pemilik. MyRent menahan dana hingga Anda mengkonfirmasi alat diterima dengan baik.
+                Dana Anda tidak langsung masuk ke pemilik. Mesitra menahan dana hingga Anda mengkonfirmasi alat diterima dengan baik.
               </p>
             </div>
           </div>

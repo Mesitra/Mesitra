@@ -149,7 +149,7 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
       <div className="flex items-center gap-2.5 pb-4 px-2">
         <div className="flex items-center gap-2 text-lg font-bold text-slate-900">
           <Layers className="w-5 h-5 text-blue-600" />
-          <span className="whitespace-nowrap">MyRent HQ</span>
+          <span className="whitespace-nowrap">Mesitra HQ</span>
         </div>
         <span className="rounded-md bg-slate-900 px-[7px] py-[3px] text-[8px] font-extrabold tracking-[0.6px] text-white">
           ADMIN

@@ -6,7 +6,7 @@ import { hasAdminSession } from './adminAuth/adminSession'
  *
  * Sesuai panduan:
  * - Menyediakan akses navigasi kembali ke Halaman Login dan Beranda secara bersamaan.
- * - Menggunakan struktur isi dari navbar penyewa (Logo MyRent, divider, judul role pendaftaran,
+ * - Menggunakan struktur isi dari navbar penyewa (Logo Mesitra, divider, judul role pendaftaran,
  *   tombol cepat Isi Data Demo, tombol Kembali ke Beranda, dan Ke Halaman Login).
  * - Layout responsif untuk mobile, tablet, dan desktop.
  */
@@ -32,9 +32,9 @@ export default function RegisterTopBar({
           type="button"
           onClick={handleHome}
           className="text-lg text-blue-600 font-extrabold tracking-[-0.3px] select-none hover:opacity-90 cursor-pointer transition-opacity"
-          title="Ke Beranda MyRent"
+          title="Ke Beranda Mesitra"
         >
-          MyRent
+          Mesitra
         </button>
         {roleTitle && (
           <>
@@ -77,17 +77,17 @@ export default function RegisterTopBar({
             <span className="sm:hidden">Beranda</span>
           </button>
 
-          {/* Tombol Ke Halaman Login atau Kembali ke MyRent HQ */}
+          {/* Tombol Ke Halaman Login atau Kembali ke Mesitra HQ */}
           {hasAdminSession() ? (
             <button
               type="button"
               onClick={() => { window.location.href = '/admin/kyc' }}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl transition-all cursor-pointer shadow-2xs"
-              title="Kembali ke Dashboard MyRent HQ"
+              title="Kembali ke Dashboard Mesitra HQ"
             >
               <Layers className="w-3.5 h-3.5 text-blue-400" />
-              <span className="hidden sm:inline">Kembali ke MyRent HQ</span>
-              <span className="sm:hidden">MyRent HQ</span>
+              <span className="hidden sm:inline">Kembali ke Mesitra HQ</span>
+              <span className="sm:hidden">Mesitra HQ</span>
             </button>
           ) : (
             <button

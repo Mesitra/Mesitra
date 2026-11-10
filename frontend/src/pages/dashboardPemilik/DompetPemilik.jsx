@@ -532,7 +532,7 @@ export default function DompetPemilik() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.setAttribute('href', url)
-    link.setAttribute('download', `mutasi-dompet-myrent-${Date.now()}.csv`)
+    link.setAttribute('download', `mutasi-dompet-mesitra-${Date.now()}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

@@ -293,7 +293,7 @@ adminDisputesRouter.patch('/disputes/:id/resolve', async (req, res, next) => {
 
     const cleanNote = typeof adminArbitrageNote === 'string' && adminArbitrageNote.trim().length > 0
       ? adminArbitrageNote.trim()
-      : `Putusan resmi mediasi sengketa oleh Admin MyRent: ${resolutionStatus}.`
+      : `Putusan resmi mediasi sengketa oleh Admin Mesitra: ${resolutionStatus}.`
 
     const adminId = req.admin?.id || req.userId
     const now = new Date()

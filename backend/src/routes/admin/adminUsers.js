@@ -510,7 +510,7 @@ adminUsersRouter.patch('/users/:id/suspend', async (req, res, next) => {
 
     const suspendedReason = typeof reason === 'string' && reason.trim().length > 0
       ? reason.trim()
-      : 'Pelanggaran syarat dan ketentuan layanan MyRent'
+      : 'Pelanggaran syarat dan ketentuan layanan Mesitra'
 
     const adminId = req.admin?.id || req.userId
     const now = new Date()

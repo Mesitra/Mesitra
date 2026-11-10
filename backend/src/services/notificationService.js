@@ -1,5 +1,5 @@
 /**
- * Notification Service — MyRent
+ * Notification Service — Mesitra
  *
  * Menyimpan in-app notification ke tabel Notification.
  * Cek preferensi notifikasi pemilik (TenantProfile) sebelum insert.

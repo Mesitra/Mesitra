@@ -88,7 +88,7 @@ function buildTenantProfileFallback(user) {
   )
 
   return {
-    storeName: kyc.businessName || user?.fullName || 'Toko Alat MyRent',
+    storeName: kyc.businessName || user?.fullName || 'Toko Alat Mesitra',
     storeDescription: kyc.businessDesc || 'Penyedia rental alat dan mesin produksi terpercaya.',
     storeCategory: kyc.businessSector || 'Kuliner & Kopi',
     whatsappNumber: user?.phone || '',

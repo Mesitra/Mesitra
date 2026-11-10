@@ -132,7 +132,7 @@ export default function Step1BuatAkun({
   return (
     <RegisterFormCard
       step={1}
-      title="Buat akun MyRent"
+      title="Buat akun Mesitra"
       subtitle="Lengkapi informasi kontak dan kata sandi akun Anda."
       backLabel="Batal & kembali ke masuk"
       nextLabel="Lanjut ke Identitas"
@@ -196,7 +196,7 @@ export default function Step1BuatAkun({
                 if (errors.agreeTerms) setErrors((prev) => ({ ...prev, agreeTerms: '' }))
               }}
             >
-              Saya menyetujui Syarat &amp; Ketentuan serta Kebijakan Privasi MyRent.
+              Saya menyetujui Syarat &amp; Ketentuan serta Kebijakan Privasi Mesitra.
             </CheckItem>
             {errors.agreeTerms && <span className="text-[10px] text-red-500">{errors.agreeTerms}</span>}
 

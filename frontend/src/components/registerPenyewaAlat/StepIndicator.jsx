@@ -135,7 +135,7 @@ export default function StepIndicator({ currentStep, onSelectStep }) {
       <div className="mt-4 p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-start gap-2.5">
         <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
         <div className="text-[11px] leading-[17px] text-slate-600">
-          Semua data Anda dilindungi enkripsi bank-grade dan hanya digunakan untuk kontrak sewa resmi MyRent.
+          Semua data Anda dilindungi enkripsi bank-grade dan hanya digunakan untuk kontrak sewa resmi Mesitra.
         </div>
       </div>
     </aside>

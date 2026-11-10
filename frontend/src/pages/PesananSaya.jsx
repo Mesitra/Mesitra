@@ -526,7 +526,7 @@ export default function PesananSaya() {
           handleChatOwner(ord)
         }}
         onDefenseSubmitted={() => {
-          showToast('Nota sanggahan berhasil dikirim ke Admin MyRent!')
+          showToast('Nota sanggahan berhasil dikirim ke Admin Mesitra!')
           fetchOrders()
         }}
       />

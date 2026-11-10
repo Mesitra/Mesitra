@@ -49,7 +49,7 @@ export default function AdminLayout() {
         {/* Brand */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-extrabold text-blue-600">MyRent</span>
+            <span className="text-lg font-extrabold text-blue-600">Mesitra</span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-900 text-white uppercase">Admin</span>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function AdminLayout() {
           <h1 className="text-lg font-bold text-slate-900">{pageTitle}</h1>
           <div className="flex items-center gap-3">
             <div className="text-xs text-slate-500">
-              <span className="font-semibold text-slate-700">{adminUser?.email || 'admin@myrent.id'}</span>
+              <span className="font-semibold text-slate-700">{adminUser?.email || 'admin@mesitra.id'}</span>
             </div>
           </div>
         </header>

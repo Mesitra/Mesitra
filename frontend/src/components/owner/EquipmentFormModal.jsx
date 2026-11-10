@@ -199,7 +199,7 @@ function processImageFile(file) {
 
 /**
  * Modal Form Komprehensif untuk Tambah Alat Baru dan Kelola / Edit Alat.
- * Membagi formulir ke dalam 6 seksi logis terstruktur dengan tema desain MyRent.
+ * Membagi formulir ke dalam 6 seksi logis terstruktur dengan tema desain Mesitra.
  */
 export default function EquipmentFormModal({
   isOpen,

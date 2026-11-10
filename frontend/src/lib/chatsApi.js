@@ -1,5 +1,5 @@
 /**
- * Client HTTP untuk endpoint chat / percakapan kontekstual (MyRent API).
+ * Client HTTP untuk endpoint chat / percakapan kontekstual (Mesitra API).
  */
 
 import { API_BASE } from './equipmentsApi'

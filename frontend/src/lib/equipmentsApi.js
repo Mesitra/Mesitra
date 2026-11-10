@@ -1,7 +1,7 @@
 import { getUserToken } from './userSession'
 
 /**
- * Client HTTP untuk katalog alat (MyRent API).
+ * Client HTTP untuk katalog alat (Mesitra API).
  *
  * Semua request memakai base URL absolut `http://localhost:3000/api` agar
  * halaman katalog tetap bisa dipanggil langsung dari dev server Vite.

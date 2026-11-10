@@ -113,7 +113,8 @@ function generateInvoiceNumber() {
 const PROMO_CODES = {
   UMKMAJU: { type: 'FIXED', amount: 50000, description: 'Potongan Rp 50.000 untuk UMKM baru' },
   SEWAHEMAT: { type: 'PERCENT', amount: 10, description: 'Diskon 10% total sewa' },
-  MYRENT10: { type: 'PERCENT', amount: 10, description: 'Diskon 10% khusus MyRent' },
+  MYRENT10: { type: 'PERCENT', amount: 10, description: 'Diskon 10% khusus Mesitra' },
+  MESITRA10: { type: 'PERCENT', amount: 10, description: 'Diskon 10% khusus Mesitra' },
   COBA50: { type: 'FIXED', amount: 50000, description: 'Gratis ongkir + potongan Rp 50.000' }
 }
 
@@ -544,7 +545,7 @@ ordersRouter.post('/', requireKyc, async (req, res, next) => {
 })
 
 /**
- * PRODUCTION PAYMENT GATEWAY BLUEPRINT — MyRent
+ * PRODUCTION PAYMENT GATEWAY BLUEPRINT — Mesitra
  * ==============================================
  *
  * CATATAN PENTING UNTUK JURI / AUDITOR:
@@ -1614,7 +1615,7 @@ ordersRouter.patch('/:id/resolve-dispute', async (req, res, next) => {
     }
 
     const { finalDamageFee = 0, adminResolutionNote = '' } = req.body ?? {}
-    const cleanNote = String(adminResolutionNote || '').trim() || 'Putusan resmi mediasi sengketa oleh Admin MyRent.'
+    const cleanNote = String(adminResolutionNote || '').trim() || 'Putusan resmi mediasi sengketa oleh Admin Mesitra.'
 
     const damageFeeAmount = Math.max(0, Math.min(Number(finalDamageFee) || 0, order.depositAmount))
     const settlement = calculateSettlement({ ...order, damageFee: damageFeeAmount })

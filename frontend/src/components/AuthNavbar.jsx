@@ -8,8 +8,8 @@ import { hasAdminSession } from './adminAuth/adminSession'
  * Mengikuti prinsip desain:
  * - Minimalist Auth Navbar yang konsisten dengan RegisterTopBar (h-16, bg-white, border-b, sticky top-0, px-4 sm:px-8).
  * - Responsif optimal di layar Mobile (<640px), Tablet (sm/md), dan Desktop (lg/xl).
- * - Sisi kiri: Logo MyRent + divider & label "Masuk ke Akun" (tampil pada sm ke atas).
- * - Sisi kanan: tombol "Kembali ke Beranda" atau "Kembali ke MyRent HQ" bila terdeteksi sesi admin.
+ * - Sisi kiri: Logo Mesitra + divider & label "Masuk ke Akun" (tampil pada sm ke atas).
+ * - Sisi kanan: tombol "Kembali ke Beranda" atau "Kembali ke Mesitra HQ" bila terdeteksi sesi admin.
  */
 export default function AuthNavbar({ onBackToHome }) {
   const navigate = useNavigate()
@@ -24,9 +24,9 @@ export default function AuthNavbar({ onBackToHome }) {
             type="button"
             onClick={onBackToHome}
             className="text-lg text-blue-600 font-extrabold tracking-[-0.3px] select-none hover:opacity-90 cursor-pointer transition-opacity"
-            title="Ke Beranda MyRent"
+            title="Ke Beranda Mesitra"
           >
-            MyRent
+            Mesitra
           </button>
           <div className="w-px h-4 bg-slate-200 hidden sm:block" />
           <span className="text-xs text-slate-600 font-semibold hidden sm:inline-block">
@@ -34,18 +34,18 @@ export default function AuthNavbar({ onBackToHome }) {
           </span>
         </div>
 
-        {/* Sisi Kanan: Tombol Kembali ke MyRent HQ atau Beranda */}
+        {/* Sisi Kanan: Tombol Kembali ke Mesitra HQ atau Beranda */}
         <div className="flex items-center gap-2.5 sm:gap-4">
           {isAdmin ? (
             <button
               type="button"
               onClick={() => navigate('/admin/kyc')}
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 py-1.5 sm:py-2 px-2.5 sm:px-3.5 rounded-xl border border-slate-800 transition-all cursor-pointer shadow-2xs"
-              title="Kembali ke Dashboard MyRent HQ"
+              title="Kembali ke Dashboard Mesitra HQ"
             >
               <Layers className="w-3.5 h-3.5 text-blue-400" />
-              <span className="hidden sm:inline">Kembali ke MyRent HQ</span>
-              <span className="sm:hidden">MyRent HQ</span>
+              <span className="hidden sm:inline">Kembali ke Mesitra HQ</span>
+              <span className="sm:hidden">Mesitra HQ</span>
             </button>
           ) : (
             <button

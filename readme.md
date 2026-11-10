@@ -1,4 +1,4 @@
-# MyRent
+# Mesitra
 
 Platform manajemen rental (properti, kendaraan, peralatan) — React + Vite (frontend) dan Express.js (backend).
 

@@ -164,7 +164,7 @@ export default function LandingPage({
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="text-[22px] sm:text-2xl text-blue-600 font-extrabold tracking-[-0.5px] select-none cursor-pointer flex items-center group"
             >
-              <span>MyRent</span>
+              <span>Mesitra</span>
             </button>
           </div>
 
@@ -207,7 +207,7 @@ export default function LandingPage({
                 title="Kembali ke Dashboard Admin HQ"
               >
                 <Layers className="w-4 h-4 text-blue-400 shrink-0" />
-                <span>Kembali ke MyRent HQ</span>
+                <span>Kembali ke Mesitra HQ</span>
               </button>
             </div>
           ) : isUserLoggedIn ? (
@@ -242,7 +242,7 @@ export default function LandingPage({
                 className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer border border-slate-800"
               >
                 <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                <span>MyRent HQ</span>
+                <span>Mesitra HQ</span>
               </button>
               <button
                 type="button"
@@ -334,7 +334,7 @@ export default function LandingPage({
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-center rounded-xl text-sm font-bold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Layers className="w-4 h-4 text-blue-400 shrink-0" />
-                  <span>Kembali ke MyRent HQ</span>
+                  <span>Kembali ke Mesitra HQ</span>
                 </button>
               ) : isUserLoggedIn ? (
                 <button
@@ -391,7 +391,7 @@ export default function LandingPage({
                   className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl shadow-md shadow-slate-900/20 hover:shadow-lg transition-all cursor-pointer border border-slate-800"
                 >
                   <Layers className="w-4 h-4 text-blue-400" />
-                  <span>Kembali ke MyRent HQ</span>
+                  <span>Kembali ke Mesitra HQ</span>
                   <ArrowRight className="w-4 h-4 text-blue-400" />
                 </button>
               ) : (
@@ -456,7 +456,7 @@ export default function LandingPage({
         <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-16">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Mengapa Ekosistem MyRent Jadi Pilihan Utama UMKM?
+              Mengapa Ekosistem Mesitra Jadi Pilihan Utama UMKM?
             </h2>
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
               Kami menghapus friksi pengadaan aset produksi dengan perlindungan hukum, escrow finansial, dan inspeksi teknis yang adil untuk kedua belah pihak.
@@ -563,7 +563,7 @@ export default function LandingPage({
         <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-10">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Bagaimana MyRent Bekerja?
+              Bagaimana Mesitra Bekerja?
             </h2>
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
               Pilih peran Anda untuk melihat kemudahan langkah transaksi dari awal hingga selesai.
@@ -712,7 +712,7 @@ export default function LandingPage({
                       Verifikasi Kelaikan
                     </h4>
                     <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                      Tim kurator MyRent memvalidasi kesiapan unit agar langsung tayang dan dapat disewa oleh UMKM yang terverifikasi KYC.
+                      Tim kurator Mesitra memvalidasi kesiapan unit agar langsung tayang dan dapat disewa oleh UMKM yang terverifikasi KYC.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-blue-600 font-semibold flex items-center gap-1">
@@ -902,7 +902,7 @@ export default function LandingPage({
             {/* Col 1: Brand & Tagline */}
             <div className="lg:col-span-2 space-y-4">
               <div className="text-2xl text-blue-600 font-extrabold tracking-[-0.5px]">
-                MyRent
+                Mesitra
               </div>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-sm">
                 Ekosistem platform sewa mesin &amp; alat produksi terverifikasi pertama di Indonesia untuk memberdayakan UMKM naik kelas secara efisien dan aman.
@@ -983,7 +983,7 @@ export default function LandingPage({
                       className="text-blue-600 font-bold hover:underline transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                       <Layers className="w-3.5 h-3.5" />
-                      <span>Kembali ke MyRent HQ</span>
+                      <span>Kembali ke Mesitra HQ</span>
                     </button>
                   ) : (
                     <button
@@ -1024,14 +1024,14 @@ export default function LandingPage({
                   <span className="text-slate-700 font-medium">Kebijakan Privasi</span>
                 </li>
                 <li className="pt-1 text-slate-500">
-                  Email: support@myrent.id
+                  Email: support@mesitra.id
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-            <p>© 2026 MyRent Indonesia. Seluruh hak cipta dilindungi undang-undang.</p>
+            <p>© 2026 Mesitra Indonesia. Seluruh hak cipta dilindungi undang-undang.</p>
             <div className="flex items-center gap-4">
               <span>Jakarta, Indonesia</span>
               <span>•</span>

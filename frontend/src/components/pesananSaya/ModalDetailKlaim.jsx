@@ -217,7 +217,7 @@ export default function ModalDetailKlaim({ isOpen, onClose, order, onChatOwner, 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-emerald-900 font-extrabold text-xs">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Hasil Putusan Resmi Admin MyRent</span>
+                      <span>Hasil Putusan Resmi Admin Mesitra</span>
                     </div>
                     {order.resolvedAt && (
                       <span className="text-[10px] text-emerald-700 font-medium">
@@ -397,10 +397,10 @@ export default function ModalDetailKlaim({ isOpen, onClose, order, onChatOwner, 
               <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl space-y-1">
                 <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-blue-600" />
-                  Hak Pembelaan Mediasi Independen MyRent
+                  Hak Pembelaan Mediasi Independen Mesitra
                 </span>
                 <p className="text-[11px] text-blue-800 m-0 leading-relaxed">
-                  Sebagai Penyewa UMKM, Anda berhak memberikan klarifikasi faktual dan melampirkan foto bukti tandingan bila klaim kerusakan pemilik tidak sesuai kenyataan. Mediator Admin MyRent akan memutus pembagian escrow secara adil berdasarkan fakta kedua belah pihak.
+                  Sebagai Penyewa UMKM, Anda berhak memberikan klarifikasi faktual dan melampirkan foto bukti tandingan bila klaim kerusakan pemilik tidak sesuai kenyataan. Mediator Admin Mesitra akan memutus pembagian escrow secara adil berdasarkan fakta kedua belah pihak.
                 </p>
               </div>
 
@@ -551,7 +551,7 @@ export default function ModalDetailKlaim({ isOpen, onClose, order, onChatOwner, 
             <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl space-y-1">
               <span className="text-[11px] font-bold text-blue-900 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                Jaminan Perlindungan Escrow MyRent
+                Jaminan Perlindungan Escrow Mesitra
               </span>
               <p className="text-[11px] text-blue-800 m-0 leading-relaxed">
                 Deposit Anda sebesar <strong>{formatRupiah(order.depositAmount)}</strong> aman ditahan di rekening penampungan resmi. Admin HQ bertindak sebagai mediator netral independen dan tidak akan melepaskan dana sebelum kesepakatan atau putusan faktual selesai.

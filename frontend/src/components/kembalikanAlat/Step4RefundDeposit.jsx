@@ -223,7 +223,7 @@ export default function Step4RefundDeposit({ order, returnData }) {
                 <div className="p-2.5 bg-blue-50/70 border border-blue-200/80 rounded-xl text-[11px] text-blue-900 mt-1 flex items-start gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
                   <span>
-                    <strong>Proteksi SLA Escrow:</strong> Bila unit telah diserahkan dan pemilik tidak melakukan konfirmasi dalam batas waktu 24 jam setelah jadwal, sistem MyRent akan melakukan verifikasi otomatis (Auto-Confirm) demi melindungi hak penyewa.
+                    <strong>Proteksi SLA Escrow:</strong> Bila unit telah diserahkan dan pemilik tidak melakukan konfirmasi dalam batas waktu 24 jam setelah jadwal, sistem Mesitra akan melakukan verifikasi otomatis (Auto-Confirm) demi melindungi hak penyewa.
                   </span>
                 </div>
               </div>

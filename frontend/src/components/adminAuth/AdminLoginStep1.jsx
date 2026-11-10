@@ -151,7 +151,7 @@ export default function AdminLoginStep1({
                   type="button"
                   onClick={() =>
                     setInfoModal(
-                      'Untuk mereset kata sandi admin, silakan hubungi tim DevOps internal HQ di it-support@myrent.id.'
+                      'Untuk mereset kata sandi admin, silakan hubungi tim DevOps internal HQ di it-support@mesitra.id.'
                     )
                   }
                   className="text-[11px] text-blue-600 hover:text-blue-700 font-bold text-left cursor-pointer"
@@ -278,7 +278,7 @@ export default function AdminLoginStep1({
 
       {/* Bottom Footer Note */}
       <div className="w-full text-center text-[11px] text-slate-400 py-2">
-        MyRent Admin Security Gateway &copy; 2026. All rights reserved.
+        Mesitra Admin Security Gateway &copy; 2026. All rights reserved.
       </div>
     </div>
   )

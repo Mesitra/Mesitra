@@ -701,7 +701,7 @@ function OwnerDashboardContent() {
             </div>
             <div>
               <div className="text-base font-extrabold text-slate-900 tracking-tight leading-tight">
-                MyRent
+                Mesitra
               </div>
               <div className="text-[10px] font-bold text-blue-600 tracking-wider uppercase">
                 PEMILIK ALAT
@@ -940,7 +940,7 @@ function OwnerDashboardContent() {
                 {activeTab === 'ulasan'
                   ? `Menampilkan ulasan pelanggan untuk seluruh alat di ${tenantProfile?.storeName || 'Toko Anda'}`
                   : activeTab === 'bantuan'
-                    ? 'Pusat panduan operasional dan layanan bantuan resmi MyRent'
+                    ? 'Pusat panduan operasional dan layanan bantuan resmi Mesitra'
                     : `Gudang Cilandak · ${pendingOrders.length} pesanan baru menunggu konfirmasi`}
               </p>
             </div>
@@ -1554,11 +1554,11 @@ function OwnerDashboardContent() {
                     Pusat Bantuan &amp; Dukungan Operasional
                   </h2>
                   <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
-                    Tim Customer Support MyRent siap mendampingi Anda terkait proses verifikasi BAST serah terima unit, penarikan dana escrow dompet, hingga kendala penyewa.
+                    Tim Customer Support Mesitra siap mendampingi Anda terkait proses verifikasi BAST serah terima unit, penarikan dana escrow dompet, hingga kendala penyewa.
                   </p>
                 </div>
                 <a
-                  href="https://wa.me/6281234567890?text=Halo%20Admin%20MyRent,%20saya%20pemilik%20alat%20butuh%20bantuan"
+                  href="https://wa.me/6281234567890?text=Halo%20Admin%20Mesitra,%20saya%20pemilik%20alat%20butuh%20bantuan"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all"
@@ -1577,7 +1577,7 @@ function OwnerDashboardContent() {
                 </div>
                 <h3 className="text-xs font-bold text-slate-900">Proses Escrow &amp; Pencairan</h3>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Dana sewa disimpan aman di rekening escrow MyRent dan otomatis masuk ke dompet Anda setelah masa sewa &amp; inspeksi BAST selesai disetujui.
+                  Dana sewa disimpan aman di rekening escrow Mesitra dan otomatis masuk ke dompet Anda setelah masa sewa &amp; inspeksi BAST selesai disetujui.
                 </p>
               </div>
 
@@ -1597,7 +1597,7 @@ function OwnerDashboardContent() {
                 </div>
                 <h3 className="text-xs font-bold text-slate-900">Kebijakan Pembatalan</h3>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Penyewa dapat membatalkan pesanan sebelum alat dikirim dengan ketentuan penalti sesuai ketentuan durasi yang berlaku di MyRent.
+                  Penyewa dapat membatalkan pesanan sebelum alat dikirim dengan ketentuan penalti sesuai ketentuan durasi yang berlaku di Mesitra.
                 </p>
               </div>
             </div>

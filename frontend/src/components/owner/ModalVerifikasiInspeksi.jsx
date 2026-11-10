@@ -336,7 +336,7 @@ export default function ModalVerifikasiInspeksi({
                 <div>
                   <h4 className="font-bold text-slate-900 text-xs">Ajukan Klaim Kerusakan (Dispute)</h4>
                   <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                    Tolak BAST akhir karena unit rusak/cacat/kurang kelengkapan. Dana dibekukan di escrow untuk dimediasi Admin MyRent.
+                    Tolak BAST akhir karena unit rusak/cacat/kurang kelengkapan. Dana dibekukan di escrow untuk dimediasi Admin Mesitra.
                   </p>
                 </div>
               </button>

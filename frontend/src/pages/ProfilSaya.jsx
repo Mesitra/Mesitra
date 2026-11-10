@@ -465,7 +465,7 @@ export default function ProfilSaya() {
           </div>
           <div className="space-y-1 text-xs text-slate-700 leading-relaxed">
             <div className="font-bold text-slate-900 text-[13px] flex items-center gap-2">
-              <span>Prinsip Keamanan &amp; Integritas Data Akun MyRent</span>
+              <span>Prinsip Keamanan &amp; Integritas Data Akun Mesitra</span>
             </div>
             <p>
               Halaman ini menampilkan seluruh data yang Anda daftarkan saat registrasi awal. Demi kepatuhan hukum transaksi sewa alat industri dan keabsahan Berita Acara Serah Terima (BAST):
@@ -475,7 +475,7 @@ export default function ProfilSaya() {
                 <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-slate-900 font-bold block">Data Kependudukan Resmi (Terkunci)</strong>
-                  NIK, Nama KTP, Tempat/Tanggal Lahir, serta Berkas Foto KTP berstatus <strong>read-only</strong> karena telah diaudit verifikator admin MyRent.
+                  NIK, Nama KTP, Tempat/Tanggal Lahir, serta Berkas Foto KTP berstatus <strong>read-only</strong> karena telah diaudit verifikator admin Mesitra.
                 </div>
               </div>
               <div className="bg-white/80 p-2.5 rounded-lg border border-blue-200/80 flex items-start gap-2">
@@ -698,7 +698,7 @@ export default function ProfilSaya() {
                 </div>
 
                 <p className="text-[11.5px] text-slate-600 leading-relaxed">
-                  Bila Anda baru saja menambah daya meteran PLN di tempat usaha (misal dari 1300 W menjadi 2200 W), sesuaikan pilihan di bawah. Sistem MyRent akan otomatis membuka akses sewa mesin produksi berdaya lebih tinggi.
+                  Bila Anda baru saja menambah daya meteran PLN di tempat usaha (misal dari 1300 W menjadi 2200 W), sesuaikan pilihan di bawah. Sistem Mesitra akan otomatis membuka akses sewa mesin produksi berdaya lebih tinggi.
                 </p>
 
                 {/* Pill Selector Daya */}
@@ -970,7 +970,7 @@ export default function ProfilSaya() {
                 <div>
                   <h2 className="text-base font-bold text-slate-900">Rekening Bank untuk Refund Deposit</h2>
                   <p className="text-xs text-slate-500">
-                    Rekening ini digunakan escrow MyRent untuk pencairan kembali deposit jaminan sewa setelah alat selesai diinspeksi.
+                    Rekening ini digunakan escrow Mesitra untuk pencairan kembali deposit jaminan sewa setelah alat selesai diinspeksi.
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 bg-slate-100/90 px-2.5 py-1 rounded-lg border border-slate-200 select-none">
@@ -1039,7 +1039,7 @@ export default function ProfilSaya() {
                 <div>
                   <h2 className="text-base font-bold text-slate-900">Identitas Resmi Kependudukan (KTP &amp; KYC)</h2>
                   <p className="text-xs text-slate-500">
-                    Data kependudukan resmi yang telah diverifikasi oleh tim kepatuhan MyRent demi perlindungan hukum BAST sewa alat.
+                    Data kependudukan resmi yang telah diverifikasi oleh tim kepatuhan Mesitra demi perlindungan hukum BAST sewa alat.
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 select-none">
@@ -1055,7 +1055,7 @@ export default function ProfilSaya() {
                   <span>Mengapa data identitas ini tidak dapat diubah sembarangan?</span>
                 </div>
                 <p className="leading-relaxed text-[11.5px] text-amber-900/90">
-                  NIK dan nama sesuai KTP merupakan acuan penandatanganan Berita Acara Serah Terima (BAST) dan polis asuransi alat berat bernilai puluhan juta rupiah. Untuk mencegah penyalahgunaan akun dan manipulasi identitas, perubahan data ini memerlukan audit manual oleh tim Administrator MyRent.
+                  NIK dan nama sesuai KTP merupakan acuan penandatanganan Berita Acara Serah Terima (BAST) dan polis asuransi alat berat bernilai puluhan juta rupiah. Untuk mencegah penyalahgunaan akun dan manipulasi identitas, perubahan data ini memerlukan audit manual oleh tim Administrator Mesitra.
                 </p>
               </div>
 
@@ -1191,7 +1191,7 @@ export default function ProfilSaya() {
                 <div className="space-y-0.5">
                   <div className="text-xs font-bold text-slate-900">Perlu mengoreksi data kependudukan resmi?</div>
                   <div className="text-[11px] text-slate-500">
-                    Jika ada kesalahan ketik nama atau pergantian KTP baru, hubungi pusat bantuan MyRent.
+                    Jika ada kesalahan ketik nama atau pergantian KTP baru, hubungi pusat bantuan Mesitra.
                   </div>
                 </div>
                 <button
@@ -1427,7 +1427,7 @@ export default function ProfilSaya() {
             <div className="space-y-1">
               <h3 className="text-base font-bold text-slate-900">Pengajuan Koreksi Data KTP Resmi</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Untuk menjaga legalitas kontrak BAST sewa alat berat, perubahan NIK atau nama resmi KTP harus ditinjau ulang oleh tim verifikasi MyRent.
+                Untuk menjaga legalitas kontrak BAST sewa alat berat, perubahan NIK atau nama resmi KTP harus ditinjau ulang oleh tim verifikasi Mesitra.
               </p>
             </div>
 

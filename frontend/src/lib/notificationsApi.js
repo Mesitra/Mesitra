@@ -1,5 +1,5 @@
 /**
- * Client HTTP untuk endpoint In-App Notifications (MyRent API).
+ * Client HTTP untuk endpoint In-App Notifications (Mesitra API).
  */
 
 import { API_BASE } from './equipmentsApi'

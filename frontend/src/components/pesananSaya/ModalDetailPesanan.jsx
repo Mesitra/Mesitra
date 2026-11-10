@@ -439,7 +439,7 @@ export default function ModalDetailPesanan({
                     Total Pembayaran
                   </span>
                   <span className="text-[10px] text-slate-500">
-                    Metode: {order.paymentMethod ? (order.paymentMethod === 'QRIS' ? 'QRIS Escrow' : order.paymentMethod) : 'Escrow MyRent'}
+                    Metode: {order.paymentMethod ? (order.paymentMethod === 'QRIS' ? 'QRIS Escrow' : order.paymentMethod) : 'Escrow Mesitra'}
                   </span>
                 </div>
                 <span className="text-lg font-black text-blue-600 tabular-nums">
@@ -453,7 +453,7 @@ export default function ModalDetailPesanan({
           <div className="flex items-start gap-2.5 p-3.5 bg-blue-50/80 border border-blue-200/70 rounded-xl text-blue-900 text-[11px]">
             <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
             <p className="m-0 leading-relaxed">
-              Seluruh dana sewa dan security deposit Anda ditahan aman di rekening escrow MyRent. Dana sewa hanya diteruskan ke pemilik setelah konfirmasi penerimaan alat, dan deposit dikembalikan utuh pasca inspeksi akhir.
+              Seluruh dana sewa dan security deposit Anda ditahan aman di rekening escrow Mesitra. Dana sewa hanya diteruskan ke pemilik setelah konfirmasi penerimaan alat, dan deposit dikembalikan utuh pasca inspeksi akhir.
             </p>
           </div>
         </div>

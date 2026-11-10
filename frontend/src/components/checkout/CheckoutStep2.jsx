@@ -512,7 +512,7 @@ export default function CheckoutStep2({ wizardData, updateWizard, onBack, onNext
               </p>
             )}
             <p className="text-[10px] text-slate-400 text-center">
-              Dana Anda aman di escrow MyRent hingga sewa selesai
+              Dana Anda aman di escrow Mesitra hingga sewa selesai
             </p>
           </div>
         </div>

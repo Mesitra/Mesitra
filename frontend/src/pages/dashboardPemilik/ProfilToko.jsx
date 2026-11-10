@@ -1025,7 +1025,7 @@ export default function ProfilToko({ currentUser, onSwitchTab, setToastMessage }
 
             <div className="flex items-center justify-between pt-2">
               <span className="text-xs text-slate-400">
-                Begini tampilan toko Anda bagi penyewa di katalog MyRent.
+                Begini tampilan toko Anda bagi penyewa di katalog Mesitra.
               </span>
               <button
                 type="button"

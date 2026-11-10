@@ -128,7 +128,7 @@ export default function Step5ReviewKirim({ formData, errors, handleInputChange, 
             {formData.agreeTerms && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
           </div>
           <span className="text-[11px] text-slate-600 leading-tight">
-            Saya telah membaca serta menyetujui Ketentuan Layanan, Ketentuan Escrow Deposit, dan Kebijakan Privasi MyRent.
+            Saya telah membaca serta menyetujui Ketentuan Layanan, Ketentuan Escrow Deposit, dan Kebijakan Privasi Mesitra.
           </span>
         </label>
 

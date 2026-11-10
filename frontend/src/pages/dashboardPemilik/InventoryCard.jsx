@@ -281,7 +281,7 @@ export default function InventoryCard({
           </div>
         </div>
 
-        {/* Tombol Aksi Primer: Kelola Alat (Biru MyRent) */}
+        {/* Tombol Aksi Primer: Kelola Alat (Biru Mesitra) */}
         <button
           type="button"
           onClick={() => handleKelola && handleKelola(rawItem || item || { ...itemData, nama: itemNama, status: itemStatus })}

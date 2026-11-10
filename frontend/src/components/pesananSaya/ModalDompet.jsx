@@ -77,7 +77,7 @@ export default function ModalDompet({ isOpen, onClose, initialView = 'OVERVIEW' 
             </div>
             <div>
               <h3 className="text-sm font-extrabold text-slate-900 m-0">Dompet Digital &amp; Escrow</h3>
-              <p className="text-[11px] text-slate-500 m-0">Platform manajemen saldo sewa MyRent</p>
+              <p className="text-[11px] text-slate-500 m-0">Platform manajemen saldo sewa Mesitra</p>
             </div>
           </div>
           <button

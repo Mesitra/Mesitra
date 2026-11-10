@@ -1,5 +1,5 @@
 /**
- * Rate Limiter Middleware — MyRent API Protection
+ * Rate Limiter Middleware — Mesitra API Protection
  *
  * Mengamankan endpoint sensitif terhadap serangan brute-force, DDoS, dan abuse:
  * - Auth (Login, Register, OTP)

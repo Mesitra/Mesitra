@@ -684,7 +684,7 @@ export default function OrderDetail({
                 Tolak
               </button>
 
-              {/* Tombol Terima Pesanan (Wajib MyRent Blue) */}
+              {/* Tombol Terima Pesanan (Wajib Mesitra Blue) */}
               <button
                 type="button"
                 disabled={isLoading}

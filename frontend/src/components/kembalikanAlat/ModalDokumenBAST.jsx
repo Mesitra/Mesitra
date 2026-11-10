@@ -64,7 +64,7 @@ export default function ModalDokumenBAST({ isOpen, onClose, order, returnData })
           {/* Document Letterhead */}
           <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
             <div>
-              <div className="text-lg font-black text-blue-600 tracking-tight">MyRent</div>
+              <div className="text-lg font-black text-blue-600 tracking-tight">Mesitra</div>
               <p className="text-[10px] text-slate-500 m-0">
                 Platform Sewa Mesin &amp; Alat Usaha UMKM Terverifikasi Indonesia
               </p>
@@ -104,13 +104,13 @@ export default function ModalDokumenBAST({ isOpen, onClose, order, returnData })
                 PIHAK KEDUA (Pemilik Alat / Penerima)
               </div>
               <div className="font-bold text-slate-900 text-sm">
-                {owner.fullName || equipment.ownerName || 'Pemilik Alat Mitra MyRent'}
+                {owner.fullName || equipment.ownerName || 'Pemilik Alat Mitra Mesitra'}
               </div>
               <div className="text-slate-600">
                 Lokasi Gudang: {equipment.location || 'Gudang Pusat Pemilik'}
               </div>
               <div className="text-slate-500 text-[11px]">
-                Platform Escrow: PT MyRent Solusi Digital
+                Platform Escrow: PT Mesitra Solusi Digital
               </div>
               <div className="text-slate-500 text-[11px]">
                 Deposit Escrow: Rp {formatRupiah(order.depositAmount)} (Dijamin Aman)
@@ -250,7 +250,7 @@ export default function ModalDokumenBAST({ isOpen, onClose, order, returnData })
                   <span className="text-[9px] text-amber-700">Saat inspeksi fisik selesai</span>
                 </div>
                 <div className="font-bold text-slate-900">
-                  {owner.fullName || equipment.ownerName || 'Pemilik Alat Mitra MyRent'}
+                  {owner.fullName || equipment.ownerName || 'Pemilik Alat Mitra Mesitra'}
                 </div>
                 <div className="text-[10px] text-slate-500">Batas verifikasi maksimal 2x24 jam kerja</div>
               </div>

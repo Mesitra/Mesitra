@@ -236,7 +236,7 @@ export default function App() {
           }
         />
 
-        {/* Dashboard Demo / Portal Katalog MyRent */}
+        {/* Dashboard Demo / Portal Katalog Mesitra */}
         <Route
           path="/dashboard"
           element={
@@ -488,9 +488,9 @@ function DashboardView({
               type="button"
               onClick={onNavigateHome}
               className="text-lg text-blue-600 font-extrabold tracking-[-0.3px] select-none hover:opacity-90 transition-opacity cursor-pointer"
-              title="Kembali ke Beranda MyRent"
+              title="Kembali ke Beranda Mesitra"
             >
-              MyRent
+              Mesitra
             </button>
             <span className="hidden sm:inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
               {currentUser?.role === 'pemilik' ? 'Mode Pemilik Alat' : 'Mode Penyewa UMKM'}
@@ -555,7 +555,7 @@ function DashboardView({
                 title="Kembali ke Dashboard Admin HQ"
               >
                 <Layers className="w-3.5 h-3.5 text-blue-400" />
-                <span>MyRent HQ</span>
+                <span>Mesitra HQ</span>
               </button>
             ) : (
               <button
@@ -746,7 +746,7 @@ function DashboardView({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 px-4 text-center text-xs text-slate-500">
-        <p>© 2026 MyRent. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.</p>
+        <p>© 2026 Mesitra. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.</p>
       </footer>
     </div>
   )
@@ -784,7 +784,7 @@ function DashboardPemilikPlaceholder({ onLogout }) {
               onClick={() => navigate('/')}
               className="text-lg text-blue-600 font-extrabold tracking-[-0.3px] cursor-pointer"
             >
-              MyRent
+              Mesitra
             </button>
             <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
               Mode Pemilik Alat
@@ -835,7 +835,7 @@ function DashboardPemilikPlaceholder({ onLogout }) {
       </main>
 
       <footer className="w-full py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white">
-        © 2026 MyRent. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
+        © 2026 Mesitra. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
       </footer>
     </div>
   )

@@ -247,7 +247,7 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
               className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2"
             >
               <Layers className="w-4 h-4 text-blue-400" />
-              <span>Kembali ke MyRent HQ</span>
+              <span>Kembali ke Mesitra HQ</span>
             </button>
           </div>
         </div>
@@ -359,7 +359,7 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
               Elevasi: Bayangan halus berdimensi (shadow-md shadow-slate-200/50 dengan border slate-200/80)
               Di mobile: Otomatis full-width dan menjadi fokus utama tanpa logo internal redundan */}
           <div className="w-full max-w-[440px] shrink-0 bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 flex flex-col gap-5 shadow-md shadow-slate-200/50">
-            {/* Header Kartu: Judul & Subjudul Berkontras Tinggi (Tanpa Logo MyRent Redundan) */}
+            {/* Header Kartu: Judul & Subjudul Berkontras Tinggi (Tanpa Logo Mesitra Redundan) */}
             <div>
               <h2 className="text-xl sm:text-[22px] font-bold text-slate-900 tracking-tight">
                 Masuk ke akun Anda
@@ -520,7 +520,7 @@ export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToL
 
       {/* Global Footer */}
       <footer className="w-full py-5 text-center text-xs text-slate-600 font-medium">
-        © 2026 MyRent. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
+        © 2026 Mesitra. Platform Sewa Alat Terverifikasi untuk UMKM Indonesia.
       </footer>
     </div>
   )

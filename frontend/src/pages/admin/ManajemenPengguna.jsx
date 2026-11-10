@@ -160,7 +160,7 @@ function ActionUserModal({
               </p>
             ) : (
               <p>
-                Mencabut status penangguhan akan mengembalikan hak akses penuh pengguna ke platform MyRent
+                Mencabut status penangguhan akan mengembalikan hak akses penuh pengguna ke platform Mesitra
                 sesuai dengan peran dan status verifikasi KYC akun.
               </p>
             )}
@@ -790,7 +790,7 @@ export default function ManajemenPengguna() {
             className="flex items-center gap-2 text-[15px] font-extrabold text-slate-900 cursor-pointer"
           >
             <Layers className="w-5 h-5 text-blue-600" />
-            MyRent HQ
+            Mesitra HQ
           </button>
           <div className="flex items-center gap-2">
             <select
