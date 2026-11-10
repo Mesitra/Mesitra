@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   X,
   AlertTriangle,
@@ -24,15 +24,13 @@ import { formatLongDate } from '../../lib/dateHelpers'
 import { submitRenterDefense } from '../../lib/ordersApi'
 
 export default function ModalDetailKlaim({ isOpen, onClose, order, onChatOwner, onDefenseSubmitted }) {
-  if (!isOpen || !order) return null
-
   const [activeTab, setActiveTab] = useState('komparasi') // 'komparasi' | 'sanggahan'
 
   // Form Pembelaan / Sanggahan State
-  const initialExistingNote = order.disputeTicket?.renterDefenseNote || order.renterDefenseNote || ''
-  const initialExistingPhotos = Array.isArray(order.disputeTicket?.renterCounterPhotos)
+  const initialExistingNote = order?.disputeTicket?.renterDefenseNote || order?.renterDefenseNote || ''
+  const initialExistingPhotos = Array.isArray(order?.disputeTicket?.renterCounterPhotos)
     ? order.disputeTicket.renterCounterPhotos
-    : (Array.isArray(order.renterCounterPhotos) ? order.renterCounterPhotos : [])
+    : (Array.isArray(order?.renterCounterPhotos) ? order.renterCounterPhotos : [])
 
   const [defenseNote, setDefenseNote] = useState('')
   const [counterPhotos, setCounterPhotos] = useState([])
@@ -42,6 +40,22 @@ export default function ModalDetailKlaim({ isOpen, onClose, order, onChatOwner, 
   const [submittedData, setSubmittedData] = useState(
     initialExistingNote ? { note: initialExistingNote, photos: initialExistingPhotos } : null
   )
+
+  useEffect(() => {
+    if (!isOpen || !order) return
+    const existingNote = order.disputeTicket?.renterDefenseNote || order.renterDefenseNote || ''
+    const existingPhotos = Array.isArray(order.disputeTicket?.renterCounterPhotos)
+      ? order.disputeTicket.renterCounterPhotos
+      : (Array.isArray(order.renterCounterPhotos) ? order.renterCounterPhotos : [])
+    setActiveTab('komparasi')
+    setDefenseNote('')
+    setCounterPhotos([])
+    setDefenseError('')
+    setDefenseSuccess(false)
+    setSubmittedData(existingNote ? { note: existingNote, photos: existingPhotos } : null)
+  }, [isOpen, order?.id])
+
+  if (!isOpen || !order) return null
 
   const formatRupiah = (val) => `Rp ${(val || 0).toLocaleString('id-ID')}`
   const reason = order.disputeReason || order.disputeNote || order.returnData?.ownerNotes || 'Tidak ada keterangan klaim terperinci.'

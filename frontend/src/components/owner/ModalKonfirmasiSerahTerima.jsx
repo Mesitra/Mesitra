@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   X,
   PackageCheck,
@@ -18,12 +18,6 @@ export default function ModalKonfirmasiSerahTerima({
   order,
   onHandoverSuccess
 }) {
-  if (!isOpen || !order) return null
-
-  const tenant = order.user || order.tenant || {}
-  const equipment = order.equipment || {}
-  const renterName = tenant.kycData?.businessName || tenant.fullName || 'Penyewa UMKM'
-
   const [checklist, setChecklist] = useState({
     mesinMenyala: true,
     bodiMulus: true,
@@ -32,6 +26,24 @@ export default function ModalKonfirmasiSerahTerima({
   const [notes, setNotes] = useState('Unit diserahkan dalam kondisi baik dan siap pakai, aksesoris lengkap.')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    if (isOpen && order?.id) {
+      setChecklist({
+        mesinMenyala: true,
+        bodiMulus: true,
+        aksesorisLengkap: true
+      })
+      setNotes('Unit diserahkan dalam kondisi baik dan siap pakai, aksesoris lengkap.')
+      setErrorMessage('')
+    }
+  }, [isOpen, order?.id])
+
+  if (!isOpen || !order) return null
+
+  const tenant = order.user || order.tenant || {}
+  const equipment = order.equipment || {}
+  const renterName = tenant.kycData?.businessName || tenant.fullName || 'Penyewa UMKM'
 
   const handleToggleCheck = (key) => {
     setChecklist((prev) => ({ ...prev, [key]: !prev[key] }))

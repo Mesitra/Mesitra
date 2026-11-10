@@ -631,7 +631,8 @@ ordersRouter.patch('/:id/mock-pay', async (req, res, next) => {
     const { paymentMethod = 'QRIS' } = req.body ?? {}
 
     const order = await prisma.order.findFirst({
-      where: { id: req.params.id, userId: req.userId }
+      where: { id: req.params.id, userId: req.userId },
+      include: { equipment: { select: { ownerId: true } } }
     })
 
     if (!order) {
@@ -860,7 +861,8 @@ ordersRouter.patch('/:id/reject', async (req, res, next) => {
 ordersRouter.patch('/:id/cancel', async (req, res, next) => {
   try {
     const order = await prisma.order.findFirst({
-      where: { id: req.params.id, userId: req.userId }
+      where: { id: req.params.id, userId: req.userId },
+      include: { equipment: { select: { ownerId: true } } }
     })
 
     if (!order) {
@@ -1076,7 +1078,8 @@ ordersRouter.patch('/:id/return-draft', async (req, res, next) => {
     const { returnData } = req.body ?? {}
 
     const order = await prisma.order.findFirst({
-      where: { id: req.params.id, userId: req.userId }
+      where: { id: req.params.id, userId: req.userId },
+      include: { equipment: { select: { ownerId: true } } }
     })
 
     if (!order) {
@@ -1103,7 +1106,8 @@ ordersRouter.post('/:id/return-submit', async (req, res, next) => {
     const { returnData } = req.body ?? {}
 
     const order = await prisma.order.findFirst({
-      where: { id: req.params.id, userId: req.userId }
+      where: { id: req.params.id, userId: req.userId },
+      include: { equipment: { select: { ownerId: true } } }
     })
 
     if (!order) {
@@ -1165,7 +1169,8 @@ ordersRouter.post('/:id/return-submit', async (req, res, next) => {
 ordersRouter.patch('/:id/mark-handed-over', async (req, res, next) => {
   try {
     const order = await prisma.order.findFirst({
-      where: { id: req.params.id, userId: req.userId }
+      where: { id: req.params.id, userId: req.userId },
+      include: { equipment: { select: { ownerId: true } } }
     })
 
     if (!order) {
@@ -1233,7 +1238,7 @@ ordersRouter.patch('/:id/confirm-return-receipt', async (req, res, next) => {
     }
 
     const expectedPin = order.returnData?.handoverPin
-    if (!handoverPin || String(handoverPin).trim() !== String(expectedPin).trim()) {
+    if (!expectedPin || !handoverPin || String(handoverPin).trim() !== String(expectedPin).trim()) {
       return res.status(400).json({
         error: {
           code: 'INVALID_HANDOVER_PIN',
@@ -1298,6 +1303,12 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
     if (order.equipment.ownerId !== req.userId && req.userRole !== 'ADMIN') {
       return res.status(403).json({
         error: { code: 'FORBIDDEN', message: 'Hanya pemilik alat yang berhak menyelesaikan inspeksi' }
+      })
+    }
+
+    if (order.status !== 'INSPEKSI') {
+      return res.status(400).json({
+        error: { code: 'INVALID_STATUS', message: 'Inspeksi hanya dapat diselesaikan untuk pesanan berstatus INSPEKSI' }
       })
     }
 
@@ -1411,7 +1422,10 @@ ordersRouter.patch('/:id/complete-inspection', async (req, res, next) => {
               damageFeeClaimed: claimedFee
             }
           },
-          include: { disputeTicket: true }
+          include: {
+            disputeTicket: true,
+            equipment: { select: { ownerId: true } }
+          }
         })
 
         // [KRUSIAL] Buat DisputeTicket otomatis agar Admin Mediasi Sengketa

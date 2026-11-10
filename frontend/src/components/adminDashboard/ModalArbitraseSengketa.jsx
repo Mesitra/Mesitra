@@ -22,6 +22,17 @@ const formatRupiah = (val) => {
   }).format(val || 0)
 }
 
+function extractBastPhotos(photosSource) {
+  if (!photosSource) return []
+  if (Array.isArray(photosSource)) return photosSource.filter(Boolean)
+  if (typeof photosSource === 'object') {
+    const { front, side, panel, back, extra } = photosSource
+    const extraArr = Array.isArray(extra) ? extra : []
+    return [front, side, panel, back, ...extraArr].filter(Boolean)
+  }
+  return []
+}
+
 export default function ModalArbitraseSengketa({ isOpen, onClose, disputeId, onSuccess }) {
   const [dispute, setDispute] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -146,18 +157,21 @@ export default function ModalArbitraseSengketa({ isOpen, onClose, disputeId, onS
 
   if (!isOpen) return null
 
-  // Normalisasi Foto-foto
-  const initialPhotos = Array.isArray(dispute?.order?.initialBast?.photos)
-    ? dispute.order.initialBast.photos
-    : []
+  // Normalisasi Foto-foto (mendukung array maupun objek front/side/panel/back)
+  const initialPhotos = extractBastPhotos(dispute?.order?.initialBast?.photos)
+  const returnPhotos = extractBastPhotos(dispute?.order?.returnData?.photos)
+  const initialChecklist =
+    dispute?.order?.initialBast?.conditionChecklist ||
+    dispute?.order?.initialBast?.checklist ||
+    null
 
   const ownerInspectionPhotos = Array.isArray(dispute?.ownerPhotos) && dispute.ownerPhotos.length > 0
     ? dispute.ownerPhotos
-    : (Array.isArray(dispute?.order?.ownerInspectionPhotos) ? dispute.order.ownerInspectionPhotos : [])
+    : extractBastPhotos(dispute?.order?.ownerInspectionPhotos)
 
   const renterCounterPhotos = Array.isArray(dispute?.renterCounterPhotos)
     ? dispute.renterCounterPhotos
-    : []
+    : extractBastPhotos(dispute?.order?.renterCounterPhotos)
 
   return (
     <div
@@ -311,16 +325,40 @@ export default function ModalArbitraseSengketa({ isOpen, onClose, disputeId, onS
                     </div>
 
                     {/* Checklist BAST */}
-                    {dispute.order?.initialBast?.conditionChecklist ? (
+                    {initialChecklist ? (
                       <div className="pt-2 border-t border-slate-100">
                         <span className="text-xs text-slate-500 block mb-1 font-medium">Checklist:</span>
                         <div className="grid grid-cols-2 gap-1.5 text-xs">
-                          {Object.entries(dispute.order.initialBast.conditionChecklist).map(([key, ok]) => (
+                          {Object.entries(initialChecklist).map(([key, ok]) => (
                             <div key={key} className="flex items-center gap-1.5 text-slate-700">
                               <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-500' : 'bg-red-500'}`} />
                               <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
                               <span className="font-semibold">{ok ? 'Normal' : 'Bermasalah'}</span>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Foto BAST Akhir (Saat Pengembalian oleh Penyewa) */}
+                    {returnPhotos.length > 0 ? (
+                      <div className="pt-2 border-t border-slate-100">
+                        <span className="text-xs text-slate-500 block mb-2 font-medium">Foto BAST Akhir (Saat Dikembalikan):</span>
+                        <div className="grid grid-cols-3 gap-2">
+                          {returnPhotos.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="aspect-square rounded-lg bg-slate-100 overflow-hidden border border-slate-200 block group relative"
+                            >
+                              <img
+                                src={url}
+                                alt={`BAST Akhir ${idx + 1}`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </a>
                           ))}
                         </div>
                       </div>

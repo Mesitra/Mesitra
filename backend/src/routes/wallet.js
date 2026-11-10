@@ -549,7 +549,7 @@ walletRouter.get('/', async (req, res, next) => {
       where: {
         userId: req.userId,
         status: {
-          in: ['MENUNGGU_KONFIRMASI', 'DIKIRIM', 'SEWA_AKTIF', 'INSPEKSI']
+          in: ['MENUNGGU_KONFIRMASI', 'DIKIRIM', 'SEWA_AKTIF', 'INSPEKSI', 'DISPUTE']
         }
       },
       select: { depositAmount: true }

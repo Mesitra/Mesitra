@@ -24,22 +24,15 @@ export default function ModalVerifikasiInspeksi({
   onInspectionCompleted,
   initialMode = 'APPROVE'
 }) {
-  if (!isOpen || !order) return null
-
-  const defaultDecision = order.initialMode || initialMode || 'APPROVE'
+  const defaultDecision = order?.initialMode || initialMode || 'APPROVE'
   const [decisionMode, setDecisionMode] = useState(defaultDecision) // 'APPROVE' | 'DISPUTE'
-
-  useEffect(() => {
-    const activeDecision = order?.initialMode || initialMode || 'APPROVE'
-    setDecisionMode(activeDecision)
-  }, [order?.initialMode, initialMode, isOpen])
   const [ownerNotes, setOwnerNotes] = useState('')
   const [disputeReason, setDisputeReason] = useState('')
   const [damageFee, setDamageFee] = useState(
-    order.damageFee || order.returnData?.damageFeeClaimed || Math.round((order.depositAmount || 0) * 0.5)
+    order?.damageFee || order?.returnData?.damageFeeClaimed || Math.round((order?.depositAmount || 0) * 0.5)
   )
   const [damagePhotos, setDamagePhotos] = useState(
-    order.ownerInspectionPhotos && Array.isArray(order.ownerInspectionPhotos)
+    order?.ownerInspectionPhotos && Array.isArray(order.ownerInspectionPhotos)
       ? order.ownerInspectionPhotos
       : [
           'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
@@ -48,6 +41,28 @@ export default function ModalVerifikasiInspeksi({
   const [newPhotoUrl, setNewPhotoUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  useEffect(() => {
+    if (!isOpen || !order) return
+    const activeDecision = order.initialMode || initialMode || 'APPROVE'
+    setDecisionMode(activeDecision)
+    setOwnerNotes('')
+    setDisputeReason('')
+    setDamageFee(
+      order.damageFee || order.returnData?.damageFeeClaimed || Math.round((order.depositAmount || 0) * 0.5)
+    )
+    setDamagePhotos(
+      order.ownerInspectionPhotos && Array.isArray(order.ownerInspectionPhotos)
+        ? order.ownerInspectionPhotos
+        : [
+            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+          ]
+    )
+    setNewPhotoUrl('')
+    setErrorMsg('')
+  }, [order?.id, order?.initialMode, initialMode, isOpen])
+
+  if (!isOpen || !order) return null
 
   const formatRupiah = (val) => `Rp ${(val || 0).toLocaleString('id-ID')}`
   const equipment = order.equipment || {}

@@ -110,10 +110,12 @@ export default function KembalikanAlatWizard() {
         }
 
         const initialDraft = savedDraft || orderData.returnData || {}
+        const defaultMethod = orderData.deliveryMethod === 'PICKUP' ? 'STORE_DROPOFF' : 'COURIER_PICKUP'
 
         setReturnData((prev) => ({
           ...prev,
           ...initialDraft,
+          returnMethod: initialDraft.returnMethod || defaultMethod,
           returnDate: initialDraft.returnDate ? new Date(initialDraft.returnDate) : new Date(orderData.endDate),
           pickupAddress: initialDraft.pickupAddress || user?.kycData?.address || '',
           pickupLandmark: initialDraft.pickupLandmark || user?.kycData?.landmark || '',
@@ -215,6 +217,9 @@ export default function KembalikanAlatWizard() {
         const updatedOrder = await submitReturn(order.id, returnData)
         if (updatedOrder) {
           setOrder(updatedOrder)
+          if (updatedOrder.returnData) {
+            setReturnData((prev) => ({ ...prev, ...updatedOrder.returnData }))
+          }
         }
         // Bersihkan draf localStorage setelah sukses kirim BAST
         try {
@@ -419,6 +424,13 @@ export default function KembalikanAlatWizard() {
             <Step4RefundDeposit
               order={order}
               returnData={returnData}
+              onOrderUpdated={(updated) => {
+                if (!updated) return
+                setOrder(updated)
+                if (updated.returnData) {
+                  setReturnData((prev) => ({ ...prev, ...updated.returnData }))
+                }
+              }}
             />
           )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ArrowLeft,
   X,
@@ -16,8 +16,11 @@ import {
   ShieldCheck,
   Truck,
   AlertCircle,
-  PackageCheck
+  PackageCheck,
+  KeyRound,
+  Loader2
 } from 'lucide-react'
+import { confirmReturnReceipt } from '../../lib/ordersApi'
 import ModalKonfirmasiSerahTerima from '../../components/owner/ModalKonfirmasiSerahTerima'
 import ModalVerifikasiInspeksi from '../../components/owner/ModalVerifikasiInspeksi'
 
@@ -301,13 +304,27 @@ export default function OrderDetail({
   onOpenChat,
   onInspectOrder,
   onConfirmHandover,
+  onRefreshOrders,
   isLoading = false
 }) {
-  if (!order) return null
-
   const [isHandoverModalOpen, setIsHandoverModalOpen] = useState(false)
-  const [isHandoverLoading, setIsHandoverLoading] = useState(false)
+  const [isHandoverLoading] = useState(false)
   const [inspectionModalConfig, setInspectionModalConfig] = useState({ isOpen: false, mode: 'APPROVE' })
+  const [handoverPinInput, setHandoverPinInput] = useState('')
+  const [isVerifyingPin, setIsVerifyingPin] = useState(false)
+  const [pinError, setPinError] = useState('')
+  const [pinSuccessMsg, setPinSuccessMsg] = useState('')
+  const [verifiedReturnData, setVerifiedReturnData] = useState(null)
+
+  useEffect(() => {
+    setHandoverPinInput('')
+    setPinError('')
+    setPinSuccessMsg('')
+    setVerifiedReturnData(null)
+    setIsHandoverModalOpen(false)
+  }, [order?.id])
+
+  if (!order) return null
 
   const handleOpenInspection = (mode = 'APPROVE') => {
     if (onInspectOrder) {
@@ -317,9 +334,41 @@ export default function OrderDetail({
     }
   }
 
-  const handleHandoverSuccess = async (updatedData, message) => {
+  const handleHandoverSuccess = async (updatedData) => {
     if (onConfirmHandover) {
       await onConfirmHandover(order.id, updatedData?.initialBast || {})
+    }
+    if (onRefreshOrders) {
+      await onRefreshOrders()
+    }
+  }
+
+  const handleVerifyReturnPin = async (e) => {
+    e.preventDefault()
+    const pinClean = handoverPinInput.replace(/\D/g, '').slice(0, 6)
+    if (pinClean.length !== 6) {
+      setPinError('Masukkan 6 digit kode PIN serah terima dari penyewa.')
+      return
+    }
+    setIsVerifyingPin(true)
+    setPinError('')
+    setPinSuccessMsg('')
+    try {
+      const res = await confirmReturnReceipt(order.id, pinClean)
+      const nextReturnData = res?.data?.returnData || {
+        ...(order.returnData || {}),
+        unitReceivedAt: new Date().toISOString()
+      }
+      setVerifiedReturnData(nextReturnData)
+      setPinSuccessMsg(res?.message || 'Serah terima fisik terverifikasi! Timer inspeksi 2x24 jam dimulai.')
+      setHandoverPinInput('')
+      if (onRefreshOrders) {
+        await onRefreshOrders()
+      }
+    } catch (err) {
+      setPinError(err?.message || 'Kode PIN tidak sesuai. Periksa kembali kode dari penyewa.')
+    } finally {
+      setIsVerifyingPin(false)
     }
   }
 
@@ -596,6 +645,123 @@ export default function OrderDetail({
           </div>
         </div>
 
+        {/* 4B. VERIFIKASI KODE PIN SERAH TERIMA PENGEMBALIAN (FASE 5) */}
+        {statusUpper === 'INSPEKSI' && (() => {
+          const activeReturnData = verifiedReturnData || order.returnData || {}
+          const isPhysicalReceived = Boolean(activeReturnData.unitReceivedAt)
+          const returnMethodLabel =
+            activeReturnData.returnMethod === 'STORE_DROPOFF'
+              ? 'Diantar Sendiri ke Gudang'
+              : 'Dijemput Kurir Toko'
+
+          return isPhysicalReceived ? (
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs sm:text-sm">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Serah Terima Pengembalian Terverifikasi</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  {returnMethodLabel}
+                </span>
+              </div>
+              <p className="text-xs text-emerald-800 leading-relaxed m-0">
+                Unit fisik diterima pada{' '}
+                <strong>
+                  {new Date(activeReturnData.unitReceivedAt).toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </strong>
+                . Silakan periksa kondisi fisik alat dan pilih <strong>Alat Aman</strong> atau{' '}
+                <strong>Ajukan Klaim Kerusakan</strong> di bawah sebelum batas inspeksi 48 jam berakhir
+                {activeReturnData.inspectionDeadline
+                  ? ` (${new Date(activeReturnData.inspectionDeadline).toLocaleString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })})`
+                  : ''}.
+              </p>
+            </div>
+          ) : (
+            <form
+              onSubmit={handleVerifyReturnPin}
+              className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 m-0">
+                      Validasi Kode Serah Terima Pengembalian
+                    </h4>
+                    <p className="text-[11px] text-slate-600 m-0">
+                      Metode: <strong>{returnMethodLabel}</strong>
+                      {activeReturnData.handedOverAt
+                        ? ' · Penyewa menandai unit sudah diserahkan'
+                        : ' · Menunggu input PIN 6-digit dari penyewa'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {pinError && (
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{pinError}</span>
+                </div>
+              )}
+
+              {pinSuccessMsg && (
+                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>{pinSuccessMsg}</span>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={handoverPinInput}
+                  onChange={(e) => {
+                    setHandoverPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))
+                    if (pinError) setPinError('')
+                  }}
+                  placeholder="Masukkan 6-digit PIN penyewa"
+                  aria-label="Kode PIN Serah Terima Pengembalian"
+                  className="flex-1 bg-white border border-blue-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono font-bold tracking-widest text-slate-900 placeholder:font-sans placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                />
+                <button
+                  type="submit"
+                  disabled={isVerifyingPin || handoverPinInput.length !== 6}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer shrink-0"
+                >
+                  {isVerifyingPin ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Memvalidasi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Validasi PIN &amp; Terima Unit</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )
+        })()}
+
         {/* 5. RIWAYAT PESANAN / TIMELINE DINAMIS (TASK 3) */}
         <OrderTimeline
           order={order}
@@ -714,8 +880,9 @@ export default function OrderDetail({
           order={{ ...order, initialMode: inspectionModalConfig.mode }}
           initialMode={inspectionModalConfig.mode}
           onClose={() => setInspectionModalConfig({ isOpen: false, mode: 'APPROVE' })}
-          onInspectionCompleted={(updated, msg) => {
+          onInspectionCompleted={() => {
             setInspectionModalConfig({ isOpen: false, mode: 'APPROVE' })
+            onRefreshOrders?.()
           }}
         />
       )}

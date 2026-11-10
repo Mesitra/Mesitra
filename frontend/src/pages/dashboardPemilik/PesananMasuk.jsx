@@ -3,7 +3,6 @@ import axios from 'axios'
 import { Search, Download, Calendar, ChevronDown, RefreshCw } from 'lucide-react'
 import { API_BASE } from '../../lib/equipmentsApi'
 import { getUserToken } from '../../lib/userSession'
-import { confirmDelivery } from '../../lib/ordersApi'
 import OrderList from './OrderList'
 import OrderDetail from './OrderDetail'
 
@@ -155,7 +154,7 @@ export default function PesananMasuk({
 
   // Sinkronisasi saat parent mengirim update propOrders
   useEffect(() => {
-    if (propOrders && propOrders.length > 0 && orders.length === 0) {
+    if (Array.isArray(propOrders) && propOrders.length > 0 && orders.length === 0) {
       setOrders(propOrders)
     }
   }, [propOrders, orders.length])
@@ -251,13 +250,11 @@ export default function PesananMasuk({
     }
   }
 
-  const handleConfirmHandover = async (id, bastData) => {
+  const handleConfirmHandover = async () => {
     try {
-      await confirmDelivery(id, bastData)
       await fetchOwnerOrders()
     } catch (err) {
-      console.error('Gagal konfirmasi serah terima:', err)
-      throw err
+      console.error('Gagal memuat ulang status serah terima:', err)
     }
   }
 
@@ -417,6 +414,7 @@ export default function PesananMasuk({
               onOpenChat={onOpenChat}
               onInspectOrder={onInspectOrder}
               onConfirmHandover={handleConfirmHandover}
+              onRefreshOrders={fetchOwnerOrders}
               isLoading={actionLoadingId === currentSelectedOrder.id}
             />
           </div>

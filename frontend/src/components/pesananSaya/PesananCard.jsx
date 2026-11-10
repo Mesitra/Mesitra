@@ -8,7 +8,8 @@ import {
   AlertCircle,
   Clock,
   ChevronRight,
-  Star
+  Star,
+  KeyRound
 } from 'lucide-react'
 import { formatShortDate, formatLongDate } from '../../lib/dateHelpers'
 import {
@@ -250,16 +251,29 @@ export default function PesananCard({
       )}
 
       {status === 'INSPEKSI' && (
-        <div className="flex items-center gap-3 p-3 sm:p-3.5 bg-amber-50/70 border border-amber-200/60 rounded-xl">
-          <Clock className="w-4 h-4 text-amber-700 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="text-xs sm:text-[13px] font-bold text-amber-900">
-              Menunggu verifikasi inspeksi pemilik alat
-            </div>
-            <div className="text-[11px] sm:text-xs text-amber-800 mt-0.5 leading-relaxed">
-              BAST Akhir telah diserahkan. Dana security deposit akan diteruskan ke dompet Anda setelah inspeksi disetujui.
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 bg-amber-50/70 border border-amber-200/60 rounded-xl">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-xs sm:text-[13px] font-bold text-amber-900">
+                {order.returnData?.unitReceivedAt
+                  ? 'Unit fisik diterima pemilik — Inspeksi BAST berjalan'
+                  : 'Menunggu serah terima & verifikasi inspeksi pemilik'}
+              </div>
+              <div className="text-[11px] sm:text-xs text-amber-800 mt-0.5 leading-relaxed">
+                {order.returnData?.unitReceivedAt
+                  ? 'Pemilik sedang melakukan pemeriksaan fisik unit. Deposit akan diteruskan ke dompet Anda setelah inspeksi disetujui.'
+                  : 'Berikan PIN serah terima kepada kurir / pemilik alat saat unit fisik diserahkan.'}
+              </div>
             </div>
           </div>
+          {order.returnData?.handoverPin && !order.returnData?.unitReceivedAt && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-950 shrink-0 self-start sm:self-auto">
+              <KeyRound className="w-3.5 h-3.5 text-amber-700" />
+              <span className="text-[10px] font-bold uppercase text-amber-700">PIN:</span>
+              <span className="font-mono text-xs font-black tracking-widest">{order.returnData.handoverPin}</span>
+            </div>
+          )}
         </div>
       )}
 
