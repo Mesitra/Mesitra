@@ -70,7 +70,7 @@ export const INITIAL_FORM = {
 }
 
 /**
- * Ambil checkpoint draft dari localStorage (`myrent_draft_penyewa`).
+ * Ambil checkpoint draft dari localStorage (`mesitra_draft_penyewa`).
  * @returns {object|null} formData terakhir yang tersimpan
  */
 export function getStoredDraft() {

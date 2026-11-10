@@ -9,7 +9,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 3000),
   corsOrigins: parseOrigins(process.env.CORS_ORIGINS),
-  jwtSecret: process.env.JWT_SECRET ?? 'myrent_super_secret_jwt_key_2026',
+  jwtSecret: process.env.JWT_SECRET ?? 'mesitra_super_secret_jwt_key_2026',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d'
 }
 

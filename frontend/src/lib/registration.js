@@ -8,25 +8,26 @@
  *  4. Pemanggilan endpoint status pengajuan dari backend
  */
 
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+import { API_BASE_URL } from './apiClient'
+
 export const API_BASE = `${API_BASE_URL}/api`
 
 /** Key localStorage draft (checkpoint) per peran. */
 export const DRAFT_KEYS = {
-  PENYEWA: 'myrent_draft_penyewa',
-  PEMILIK: 'myrent_draft_pemilik'
+  PENYEWA: 'mesitra_draft_penyewa',
+  PEMILIK: 'mesitra_draft_pemilik'
 }
 
 /** Key localStorage lock pengajuan (anti-spam) per peran. */
 export const PENDING_KEYS = {
-  PENYEWA: 'myrent_pending_penyewa',
-  PEMILIK: 'myrent_pending_pemilik'
+  PENYEWA: 'mesitra_pending_penyewa',
+  PEMILIK: 'mesitra_pending_pemilik'
 }
 
 /** Key draft lama (tombol "Simpan Draf" versi sebelumnya) — tetap dipertahankan. */
 export const LEGACY_DRAFT_KEYS = {
-  PENYEWA: 'myrent_register_penyewa_draft',
-  PEMILIK: 'myrent_register_pemilik_draft'
+  PENYEWA: 'mesitra_register_penyewa_draft',
+  PEMILIK: 'mesitra_register_pemilik_draft'
 }
 
 const readJson = (key) => {

@@ -121,7 +121,7 @@ export function createApp() {
   app.use(express.json({ limit: '12mb' }))
 
   app.get('/', (req, res) => {
-    res.json({ name: 'MyRent API', version: config.version, docs: '/openapi.yaml', endpoints: ENDPOINTS })
+    res.json({ name: 'Mesitra API', version: config.version, docs: '/openapi.yaml', endpoints: ENDPOINTS })
   })
 
   app.get('/openapi.yaml', (req, res) => {

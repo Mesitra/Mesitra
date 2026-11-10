@@ -1,0 +1,21 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /beranda-sewa
+Allow: /login
+Allow: /register/penyewa
+Allow: /register/pemilik
+
+# Cegah crawler mengindeks area internal, admin HQ, dan transaksi privat
+Disallow: /admin/
+Disallow: /portal-internal-hq/
+Disallow: /checkout/
+Disallow: /kembalikan-alat/
+Disallow: /dompet
+Disallow: /profil-saya
+Disallow: /pesanan-saya
+Disallow: /pesan
+Disallow: /api/
+
+Sitemap: https://mesitra.id/sitemap.xml
+

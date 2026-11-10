@@ -54,7 +54,7 @@ export function getStoreLocation() {
   if (kyc.city || kyc.kota) return kyc.city || kyc.kota
 
   try {
-    const raw = localStorage.getItem('myrent_register_pemilik_form')
+    const raw = localStorage.getItem('mesitra_register_pemilik_form')
     if (raw) {
       const parsed = JSON.parse(raw)
       const data = parsed?.formData || parsed

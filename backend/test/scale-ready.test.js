@@ -38,7 +38,7 @@ describe('Scale-Ready Architecture & Observability Tests', () => {
 
       const body = await res.json()
       assert.equal(body.status, 'ok')
-      assert.equal(body.service, 'myrent-api')
+      assert.equal(body.service, 'mesitra-api')
       assert.ok(typeof body.uptimeSeconds === 'number')
       assert.ok(body.timestamp)
       assert.ok(body.system?.memory?.heapUsed)

@@ -60,12 +60,12 @@ jadi cukup jalankan backend dan frontend berdampingan.
 ## Alur Registrasi & Verifikasi Admin
 
 1. Penyewa/Pemilik mengisi formulir 5 langkah (`/register/penyewa`, `/register/pemilik`).
-   Draft tersimpan otomatis di `localStorage` (`myrent_draft_penyewa` /
-   `myrent_draft_pemilik`) sehingga data tidak hilang saat user bolak-balik
+   Draft tersimpan otomatis di `localStorage` (`mesitra_draft_penyewa` /
+   `mesitra_draft_pemilik`) sehingga data tidak hilang saat user bolak-balik
    ke halaman login.
 2. Setelah dikirim, pengajuan masuk antrean admin dengan status `MENUNGGU`
-   dan dikunci (anti-spam) lewat `localStorage` (`myrent_pending_penyewa` /
-   `myrent_pending_pemilik`).
+   dan dikunci (anti-spam) lewat `localStorage` (`mesitra_pending_penyewa` /
+   `mesitra_pending_pemilik`).
 3. Admin memverifikasi lewat portal `/portal-internal-hq/dashboard`:
    setujui / minta perbaikan / tolak.
 4. Saat user login:

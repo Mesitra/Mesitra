@@ -1,6 +1,6 @@
 import { getUserToken, getSessionUser, setUserSession } from './userSession'
+import { API_BASE_URL } from './apiClient'
 
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
 export const API_BASE = `${API_BASE_URL}/api`
 
 /**
@@ -15,7 +15,7 @@ export function emitWalletUpdate(newBalance) {
       setUserSession(null, user)
     }
     window.dispatchEvent(
-      new CustomEvent('myrent:wallet-updated', {
+      new CustomEvent('mesitra:wallet-updated', {
         detail: { newBalance }
       })
     )

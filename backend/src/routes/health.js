@@ -34,7 +34,7 @@ healthRouter.get('/', async (req, res) => {
 
   const payload = {
     status: isHealthy ? 'ok' : 'degraded',
-    service: 'myrent-api',
+    service: 'mesitra-api',
     version: config.version,
     environment: config.env || process.env.NODE_ENV || 'development',
     uptimeSeconds,

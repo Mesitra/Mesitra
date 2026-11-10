@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AdminLoginStep1 from './AdminLoginStep1'
 import AdminLoginStep2 from './AdminLoginStep2'
 import { setAdminSession } from './adminSession'
-
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+import { API_BASE_URL } from '../../lib/apiClient'
 
 export default function AdminAuthWrapper({ onAdminLoginSuccess }) {
   const navigate = useNavigate()

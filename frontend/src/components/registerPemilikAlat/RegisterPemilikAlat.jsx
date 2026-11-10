@@ -18,12 +18,12 @@ import {
   writeDraft,
   writePending
 } from '../../lib/registration'
+import { API_BASE_URL } from '../../lib/apiClient'
 
 const TOTAL_STEPS = 5
-const STORAGE_KEY_STEP = 'myrent_register_pemilik_step'
-const STORAGE_KEY_FORM = 'myrent_register_pemilik_form'
+const STORAGE_KEY_STEP = 'mesitra_register_pemilik_step'
+const STORAGE_KEY_FORM = 'mesitra_register_pemilik_form'
 const ROLE = 'PEMILIK'
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
 
 const INITIAL_PEMILIK_FORM = {
   email: 'pemilik@kopisenja.id',

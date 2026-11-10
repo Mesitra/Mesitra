@@ -50,8 +50,8 @@ export default function ModalDompet({ isOpen, onClose, initialView = 'OVERVIEW' 
     const handleWalletUpdated = () => {
       loadData()
     }
-    window.addEventListener('myrent:wallet-updated', handleWalletUpdated)
-    return () => window.removeEventListener('myrent:wallet-updated', handleWalletUpdated)
+    window.addEventListener('mesitra:wallet-updated', handleWalletUpdated)
+    return () => window.removeEventListener('mesitra:wallet-updated', handleWalletUpdated)
   }, [loadData])
 
   const walletBalance = walletData?.walletBalance ?? 0

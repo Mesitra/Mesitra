@@ -113,7 +113,6 @@ function generateInvoiceNumber() {
 const PROMO_CODES = {
   UMKMAJU: { type: 'FIXED', amount: 50000, description: 'Potongan Rp 50.000 untuk UMKM baru' },
   SEWAHEMAT: { type: 'PERCENT', amount: 10, description: 'Diskon 10% total sewa' },
-  MYRENT10: { type: 'PERCENT', amount: 10, description: 'Diskon 10% khusus Mesitra' },
   MESITRA10: { type: 'PERCENT', amount: 10, description: 'Diskon 10% khusus Mesitra' },
   COBA50: { type: 'FIXED', amount: 50000, description: 'Gratis ongkir + potongan Rp 50.000' }
 }

@@ -117,18 +117,19 @@ test('Auth API Flow', async (t) => {
   })
 
   await t.test('POST /api/auth/login untuk role ADMIN (SUPERADMIN) langsung mengembalikan JWT token', async () => {
+    const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin#Sewa2026'
     const res = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@myrent.com',
-        password: 'admin123'
+        email: 'admin@mesitra.id',
+        password: adminPassword
       })
     })
     assert.equal(res.status, 200)
     const data = await res.json()
     assert.ok(data.token, 'Superadmin harus langsung mendapatkan token JWT')
-    assert.equal(data.user.email, 'admin@myrent.com')
+    assert.equal(data.user.email, 'admin@mesitra.id')
     assert.equal(data.user.role, 'ADMIN')
     assert.equal(data.user.adminRole, 'SUPERADMIN')
   })
@@ -138,7 +139,7 @@ test('Auth API Flow', async (t) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@myrent.com',
+        email: 'admin@mesitra.id',
         password: 'wrongpassword'
       })
     })
@@ -148,12 +149,13 @@ test('Auth API Flow', async (t) => {
   })
 
   await t.test('POST /api/auth/login untuk SUPERADMIN menyertakan payload profil lengkap', async () => {
+    const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin#Sewa2026'
     const res = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@myrent.com',
-        password: 'admin123'
+        email: 'admin@mesitra.id',
+        password: adminPassword
       })
     })
     assert.equal(res.status, 200)

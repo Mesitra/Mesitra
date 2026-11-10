@@ -20,10 +20,10 @@ const SORT_OPTIONS = [
 ]
 
 // Filter sidebar: rentang tanggal + batas security deposit.
-const FILTER_STORAGE_KEY = 'myrent_beranda_filters'
+const FILTER_STORAGE_KEY = 'mesitra_beranda_filters'
 const POWER_STORAGE_KEY = 'filter_sesuai_listrik'
-const MAX_PRICE_STORAGE_KEY = 'myrent_filter_max_price'
-const DELIVERY_STORAGE_KEY = 'myrent_filter_delivery_methods'
+const MAX_PRICE_STORAGE_KEY = 'mesitra_filter_max_price'
+const DELIVERY_STORAGE_KEY = 'mesitra_filter_delivery_methods'
 const DEFAULT_MAX_PRICE = 10000000
 const DEFAULT_DELIVERY_METHODS = { selfPickup: false, courier: false }
 
@@ -124,7 +124,7 @@ const createInitialMaxPrice = () => {
     // Abaikan jika tidak tersedia window / URLSearchParams
   }
 
-  // 2. Cek localStorage ('myrent_filter_max_price')
+  // 2. Cek localStorage ('mesitra_filter_max_price')
   try {
     const saved = localStorage.getItem(MAX_PRICE_STORAGE_KEY)
     if (saved !== null) {
@@ -152,7 +152,7 @@ const createInitialDeliveryMethods = () => {
     }
   } catch {}
 
-  // 2. Cek localStorage ('myrent_filter_delivery_methods')
+  // 2. Cek localStorage ('mesitra_filter_delivery_methods')
   try {
     const saved = localStorage.getItem(DELIVERY_STORAGE_KEY)
     if (saved !== null) {
@@ -799,7 +799,7 @@ export default function BerandaSewa({
                 <p className="text-sm font-semibold">Katalog alat gagal dimuat</p>
                 <p className="text-xs text-center">{error}</p>
                 <p className="text-[11px] text-amber-700/80 text-center">
-                  Pastikan backend berjalan di http://localhost:3000
+                  Pastikan koneksi internet aktif dan server API Mesitra sedang berjalan.
                 </p>
               </div>
             )}

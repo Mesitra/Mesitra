@@ -46,9 +46,9 @@ export function WalletProvider({ children }) {
       fetchWallet()
     }
 
-    window.addEventListener('myrent:wallet-updated', handleWalletUpdated)
+    window.addEventListener('mesitra:wallet-updated', handleWalletUpdated)
     return () => {
-      window.removeEventListener('myrent:wallet-updated', handleWalletUpdated)
+      window.removeEventListener('mesitra:wallet-updated', handleWalletUpdated)
     }
   }, [fetchWallet])
 

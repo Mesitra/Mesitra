@@ -19,7 +19,7 @@ test('Chat & Lazy Session API Flow', async (t) => {
 
   // Cari ownerAlt untuk pengujian lazy session
   const ownerAlt = await prisma.user.findUnique({
-    where: { email: 'owner@myrent.com' }
+    where: { email: 'owner@mesitra.id' }
   })
   assert.ok(ownerAlt, 'ownerAlt must exist in DB')
   const ownerAltToken = jwt.sign({ userId: ownerAlt.id, role: 'PEMILIK' }, config.jwtSecret, { expiresIn: '1h' })

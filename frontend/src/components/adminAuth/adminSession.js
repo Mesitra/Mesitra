@@ -47,7 +47,7 @@ export function getAdminUser() {
 
 /**
  * Simpan token & data user admin ke localStorage.
- * Menembakkan event sinkronisasi 'myrent:admin-session-updated'.
+ * Menembakkan event sinkronisasi 'mesitra:admin-session-updated'.
  * @param {string} token
  * @param {object} user
  */
@@ -61,7 +61,7 @@ export function setAdminSession(token, user) {
       localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(user))
       localStorage.setItem('adminUser', JSON.stringify(user))
     }
-    window.dispatchEvent(new Event('myrent:admin-session-updated'))
+    window.dispatchEvent(new Event('mesitra:admin-session-updated'))
   } catch {
     // abaikan error storage
   }
@@ -115,10 +115,10 @@ export function useAdminAuth() {
 
     syncAdminSession()
     window.addEventListener('storage', syncAdminSession)
-    window.addEventListener('myrent:admin-session-updated', syncAdminSession)
+    window.addEventListener('mesitra:admin-session-updated', syncAdminSession)
     return () => {
       window.removeEventListener('storage', syncAdminSession)
-      window.removeEventListener('myrent:admin-session-updated', syncAdminSession)
+      window.removeEventListener('mesitra:admin-session-updated', syncAdminSession)
     }
   }, [])
 
@@ -135,7 +135,7 @@ export function clearAdminSession() {
     localStorage.removeItem(ADMIN_USER_KEY)
     localStorage.removeItem('adminToken')
     localStorage.removeItem('adminUser')
-    window.dispatchEvent(new Event('myrent:admin-session-updated'))
+    window.dispatchEvent(new Event('mesitra:admin-session-updated'))
   } catch {
     // abaikan error storage, token sudah dianggap tidak berlaku
   }

@@ -18,10 +18,14 @@ import {
   Scissors,
   Flame,
   BadgeCheck,
-  Layers
+  Layers,
+  Sparkles,
+  HelpCircle,
+  ChevronDown
 } from 'lucide-react'
 import { useAdminAuth } from './adminAuth/adminSession'
 import { hasPenyewaSession, hasPemilikSession } from '../lib/userSession'
+import { useSEO } from '../lib/useSEO'
 
 export default function LandingPage({
   onNavigateLogin,
@@ -45,12 +49,12 @@ export default function LandingPage({
     }
     syncUser()
     window.addEventListener('storage', syncUser)
-    window.addEventListener('myrent:user-updated', syncUser)
+    window.addEventListener('mesitra:user-updated', syncUser)
     window.addEventListener('popstate', syncUser)
     window.addEventListener('focus', syncUser)
     return () => {
       window.removeEventListener('storage', syncUser)
-      window.removeEventListener('myrent:user-updated', syncUser)
+      window.removeEventListener('mesitra:user-updated', syncUser)
       window.removeEventListener('popstate', syncUser)
       window.removeEventListener('focus', syncUser)
     }
@@ -60,6 +64,41 @@ export default function LandingPage({
   const isPemilikUser = userAuth.isPemilik
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [howItWorksRole, setHowItWorksRole] = useState('penyewa') // 'penyewa' | 'pemilik'
+  const [openFaq, setOpenFaq] = useState(0)
+
+  // Optimasi SEO Dinamis untuk Beranda / Landing Page Mesitra
+  useSEO({
+    title: 'Mesitra - Platform Sewa Alat & Mesin Usaha UMKM Terpercaya',
+    description: 'Sewa mesin usaha UMKM (mesin kopi espresso, packaging continuous band sealer, mesin jahit industri, oven bakery) tanpa modal beli besar. Dilindungi escrow & BAST digital resmi di Mesitra.',
+    keywords: 'sewa alat umkm, sewa mesin usaha, rental alat produksi, sewa mesin kopi, sewa continuous sealer, sewa mesin jahit konveksi, sewa oven bakery, mesitra'
+  })
+
+  const faqList = [
+    {
+      q: 'Apa itu Mesitra dan mengapa lebih hemat untuk usaha UMKM?',
+      a: 'Mesitra adalah platform sewa alat dan mesin produksi usaha terverifikasi di Indonesia. Pelaku UMKM dapat menyewa mesin berkapasitas tinggi (seperti mesin espresso commercial, continuous band sealer, mesin jahit industri, dan oven gas bakery) dengan sistem harian atau bulanan tanpa harus menghabiskan modal puluhan juta rupiah di awal.'
+    },
+    {
+      q: 'Bagaimana sistem Rekening Bersama Escrow melindungi penyewa dan pemilik?',
+      a: 'Dana sewa dan uang jaminan deposit penyewa disimpan aman di rekening escrow Mesitra. Dana baru diteruskan ke pemilik setelah kedua belah pihak menyelesaikan inspeksi fisik dan menandatangani BAST digital. Setelah masa sewa tuntas dan unit dikembalikan sesuai kondisi awal, deposit langsung dicairkan kembali 100% ke penyewa.'
+    },
+    {
+      q: 'Alat atau mesin usaha apa saja yang bisa disewa di Mesitra?',
+      a: 'Katalog Mesitra mencakup berbagai sektor bisnis UMKM: F&B & Kafe (Mesin Espresso komersial, Grinder biji kopi), Pengemasan & Kemasan (Continuous Band Sealer, Vacuum Sealer, Cup Sealer), Konveksi & Fashion (Mesin Jahit Industri High Speed, Mesin Obras), serta Kuliner Roti/Pastry (Deck Oven Gas, Planetary Mixer).'
+    },
+    {
+      q: 'Bagaimana prosedur serah terima alat dan pengembalian (BAST)?',
+      a: 'Saat alat tiba di gudang atau lokasi usaha penyewa, kedua belah pihak melakukan inspeksi bersama meliputi kondisi fisik mesin, fungsi tombol, kelengkapan aksesoris, dan mendokumentasikan foto sebelum menandatangani Berita Acara Serah Terima (BAST) digital. Prosedur yang sama dilakukan saat pengembalian alat.'
+    },
+    {
+      q: 'Bagaimana jika alat mengalami kendala teknis selama masa sewa?',
+      a: 'Mesitra menyediakan fitur laporan kendala dan pusat arbitrase terpadu. Kendala aus operasional wajar ditangani sesuai ketentuan kontrak digital, dan penyewa dapat mengajukan bantuan teknis dari pemilik atau klaim penggantian unit secara transparan.'
+    },
+    {
+      q: 'Bisakah saya mendaftarkan mesin usaha saya yang sedang menganggur?',
+      a: 'Sangat bisa! Pelaku usaha atau pemilik peralatan dapat mendaftar sebagai Pemilik Alat di Mesitra. Unggah spesifikasi alat, tentukan tarif sewa harian/bulanan, dan dapatkan passive income aman dengan jaminan deposit escrow dan kontrak digital terlindungi hukum.'
+    }
+  ]
 
   const handleLoginClick = (role = 'penyewa') => {
     setMobileMenuOpen(false)
@@ -195,6 +234,12 @@ export default function LandingPage({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Keamanan Escrow</span>
             </button>
+            <button
+              onClick={() => scrollToSection('faq')}
+              className="hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              Tanya Jawab (FAQ)
+            </button>
           </nav>
 
           {/* Right Action Button: Dynamic CTA */}
@@ -321,6 +366,13 @@ export default function LandingPage({
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>Keamanan Escrow &amp; BAST</span>
               </button>
+              <button
+                onClick={() => scrollToSection('faq')}
+                className="text-left text-sm font-medium text-slate-700 py-2 hover:text-blue-600 flex items-center gap-1.5"
+              >
+                <HelpCircle className="w-4 h-4 text-blue-600" />
+                <span>Tanya Jawab (FAQ)</span>
+              </button>
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
@@ -368,10 +420,16 @@ export default function LandingPage({
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-gradient-to-b from-blue-100/50 via-indigo-50/20 to-transparent blur-3xl pointer-events-none -z-10" />
 
         <div className="w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12">
-          <div className="max-w-4xl mx-auto text-center flex flex-col items-center space-y-8">
+          <div className="max-w-4xl mx-auto text-center flex flex-col items-center space-y-6 sm:space-y-8">
+            {/* SEO & Trust Keyword Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-semibold shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span>Platform Sewa Alat &amp; Mesin Usaha UMKM #1 di Indonesia</span>
+            </div>
+
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-extrabold text-slate-900 tracking-[-1px] leading-[1.15]">
-              Akses Mesin Usaha Berkualitas <span className="text-blue-600">Tanpa Beban Biaya Modal</span> Tinggi.
+              Sewa Alat &amp; Mesin Usaha UMKM <span className="text-blue-600">Tanpa Beban Modal</span> Tinggi.
             </h1>
 
             {/* Sub-headline */}
@@ -846,6 +904,56 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* 5.5 FAQ SECTION (SEO & TANYA JAWAB SEWA ALAT UMKM) */}
+      <section id="faq" className="py-20 bg-slate-50 border-t border-slate-200/80">
+        <div className="w-full max-w-4xl mx-auto px-6 md:px-10">
+          <div className="text-center space-y-3 mb-12">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200 shadow-2xs">
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Tanya Jawab Seputar Sewa Alat UMKM</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Pertanyaan yang Sering Diajukan
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto">
+              Pelajari bagaimana Mesitra mempermudah UMKM menyewa mesin usaha dengan proteksi escrow, inspeksi BAST digital, dan kontrak legal yang transparan.
+            </p>
+          </div>
+
+          <div className="space-y-3.5">
+            {faqList.map((faq, idx) => {
+              const isOpen = openFaq === idx
+              return (
+                <div
+                  key={idx}
+                  className={`bg-white rounded-2xl border transition-all duration-200 ${
+                    isOpen ? 'border-blue-400 shadow-sm' : 'border-slate-200/90 hover:border-slate-300 shadow-2xs'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full flex items-center justify-between gap-4 p-5 text-left font-bold text-slate-900 text-sm sm:text-base cursor-pointer"
+                  >
+                    <span>{faq.q}</span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-blue-600' : ''
+                      }`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* 6. CALL-TO-ACTION (CTA) BANNER BAWAH */}
       <section className="py-16 sm:py-20 bg-slate-900 relative overflow-hidden">
         {/* Glow Effects */}
@@ -949,6 +1057,14 @@ export default function LandingPage({
                     className="hover:text-blue-600 transition-colors cursor-pointer"
                   >
                     Keamanan Rekening Escrow
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => scrollToSection('faq')}
+                    className="hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    Tanya Jawab (FAQ)
                   </button>
                 </li>
               </ul>

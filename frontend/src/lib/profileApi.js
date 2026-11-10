@@ -1,6 +1,6 @@
 import { getUserToken, setUserSession, getSessionUser } from './userSession'
+import { API_BASE_URL } from './apiClient'
 
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
 const API_BASE = `${API_BASE_URL}/api`
 
 /**
@@ -29,7 +29,7 @@ export async function fetchUserProfile() {
 
 /**
  * Menyimpan pembaruan data profil yang dapat diedit oleh penyewa.
- * Otomatis memperbarui sesi user di localStorage dan memicu event 'myrent:user-updated'.
+ * Otomatis memperbarui sesi user di localStorage dan memicu event 'mesitra:user-updated'.
  *
  * @param {object} payload
  * @returns {Promise<{ message: string, profile: object, user: object }>}
@@ -59,7 +59,7 @@ export async function updateUserProfile(payload) {
     setUserSession(token, data.user)
     try {
       window.dispatchEvent(
-        new CustomEvent('myrent:user-updated', {
+        new CustomEvent('mesitra:user-updated', {
           detail: { user: data.user, profile: data.profile }
         })
       )

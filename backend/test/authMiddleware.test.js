@@ -155,7 +155,7 @@ describe('Auth & Admin Guard Middleware Tests', () => {
       data: {
         email: adminEmail,
         password: 'password123',
-        fullName: 'Admin Utama MyRent',
+        fullName: 'Admin Utama Mesitra',
         phone: '081277777777',
         role: 'ADMIN',
         isSuspended: false

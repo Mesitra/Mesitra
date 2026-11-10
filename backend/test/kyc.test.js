@@ -112,7 +112,10 @@ test('Alur verifikasi KYC', async (t) => {
   // ── Token admin (Superadmin Login) ───────────────────────────────────────
   const adminLogin = await json('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email: 'admin@myrent.com', password: 'admin123' })
+    body: JSON.stringify({
+      email: 'admin@mesitra.id',
+      password: process.env.ADMIN_DEFAULT_PASSWORD || 'Admin#Sewa2026'
+    })
   })
   const adminToken = adminLogin.body.token
   const adminHeaders = { Authorization: `Bearer ${adminToken}` }

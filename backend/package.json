@@ -1,8 +1,8 @@
 {
-  "name": "myrent-backend",
+  "name": "mesitra-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "MyRent API — Express.js backend untuk platform manajemen rental MyRent",
+  "description": "Mesitra API — Express.js backend untuk platform manajemen sewa alat Mesitra",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

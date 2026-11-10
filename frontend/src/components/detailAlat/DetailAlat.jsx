@@ -23,6 +23,7 @@ import WarningBanner from './WarningBanner'
 import AvailabilityCalendar from './AvailabilityCalendar'
 import CheckoutPanel from './CheckoutPanel'
 import { formatRupiah, getEquipment } from '../../lib/equipmentsApi'
+import { useSEO } from '../../lib/useSEO'
 import { getSessionUser, getUserInitials, getUserPowerLimit } from '../../lib/userSession'
 import {
   MONTH_NAMES,
@@ -55,7 +56,7 @@ export default function DetailAlat({
       return fromState
     }
     try {
-      const saved = sessionStorage.getItem('myrent_beranda_filters')
+      const saved = sessionStorage.getItem('mesitra_beranda_filters')
       if (saved) {
         const parsed = JSON.parse(saved)
         if (parsed?.dateRange?.start || parsed?.dateRange?.end) {
@@ -94,6 +95,13 @@ export default function DetailAlat({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false)
+
+  // SEO dinamis per unit alat
+  useSEO({
+    title: equipment?.name ? `${equipment.name} - Sewa Alat UMKM | Mesitra` : 'Detail Alat Mesin Usaha - Mesitra',
+    description: equipment?.description ? `${equipment.name} - ${equipment.description.slice(0, 150)}...` : 'Sewa alat dan mesin usaha UMKM terverifikasi di Mesitra.',
+    keywords: `${equipment?.name || ''}, ${equipment?.category || ''}, sewa alat umkm, sewa mesin usaha, mesitra`
+  })
 
   // ── Seleksi tanggal sewa (dikendalikan dari AvailabilityCalendar) ──────
   const [selectionStart, setSelectionStart] = useState(() => getValidatedInitialRange(null).start)

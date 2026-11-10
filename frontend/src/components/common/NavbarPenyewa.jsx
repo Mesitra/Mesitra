@@ -100,11 +100,11 @@ export default function NavbarPenyewa({
         setLiveBalance(e.detail.newBalance)
       }
     }
-    window.addEventListener('myrent:wallet-updated', handleWalletUpdated)
+    window.addEventListener('mesitra:wallet-updated', handleWalletUpdated)
 
     return () => {
       isMounted = false
-      window.removeEventListener('myrent:wallet-updated', handleWalletUpdated)
+      window.removeEventListener('mesitra:wallet-updated', handleWalletUpdated)
     }
   }, [])
 
@@ -131,8 +131,8 @@ export default function NavbarPenyewa({
         setUser(getSessionUser())
       }
     }
-    window.addEventListener('myrent:user-updated', handleUserUpdated)
-    return () => window.removeEventListener('myrent:user-updated', handleUserUpdated)
+    window.addEventListener('mesitra:user-updated', handleUserUpdated)
+    return () => window.removeEventListener('mesitra:user-updated', handleUserUpdated)
   }, [])
 
   const userInitials = getUserInitials(user)

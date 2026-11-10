@@ -14,8 +14,7 @@ import AuthNavbar from './AuthNavbar'
 import { clearPending, writePending } from '../lib/registration'
 import { clearUserSession } from '../lib/userSession'
 import { hasAdminSession } from './adminAuth/adminSession'
-
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000'
+import { API_BASE_URL } from '../lib/apiClient'
 
 export default function AuthPage({ onLoginSuccess, onNavigateRegister, onBackToLanding }) {
   const navigate = useNavigate()

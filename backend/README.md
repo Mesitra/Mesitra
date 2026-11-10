@@ -1,6 +1,6 @@
-# MyRent API (backend)
+# Mesitra API (backend)
 
-Backend Express.js untuk platform manajemen rental MyRent.
+Backend Express.js untuk platform manajemen sewa alat Mesitra.
 
 ## Menjalankan
 
@@ -73,8 +73,8 @@ Koneksi MySQL diambil dari `DATABASE_URL` (lihat `.env`).
 
 Seeder membuat:
 
-- 2 akun admin (`admin@myrent.com`, `rani.admin@gmail.com`)
-- 1 akun **PEMILIK** dummy (`pemilik@myrent.com` / `Pemilik#Sewa2026`) sebagai pemilik katalog
+- 2 akun admin (`admin@mesitra.id`, `rani.admin@gmail.com`)
+- 1 akun **PEMILIK** dummy (`pemilik@mesitra.id` / `Pemilik#Sewa2026`) sebagai pemilik katalog
 - 6 unit alat milik akun tersebut (5 `TERSEDIA` + 1 `DISEWA` sebagai kontrol filter)
 
 ## Struktur

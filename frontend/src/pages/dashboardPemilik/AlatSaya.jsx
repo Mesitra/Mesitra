@@ -62,7 +62,7 @@ export default function AlatSaya({
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
 
-        const endpoint = `${API_BASE || 'http://localhost:3000/api'}/equipments/me`
+        const endpoint = `${API_BASE}/equipments/me`
         const response = await axios.get(endpoint, { headers })
         const data = Array.isArray(response.data?.data) ? response.data.data : []
         if (!isCancelled) {

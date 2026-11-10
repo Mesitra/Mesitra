@@ -55,7 +55,7 @@ import {
  *
  * @param {function} props.onLogout - callback logout opsional
  */
-const CHECKLIST_STORAGE_PREFIX = 'myrent_admin_checklist_'
+const CHECKLIST_STORAGE_PREFIX = 'mesitra_admin_checklist_'
 
 function readChecklistFromStorage(keys) {
   const keyList = (Array.isArray(keys) ? keys : [keys]).filter(Boolean)

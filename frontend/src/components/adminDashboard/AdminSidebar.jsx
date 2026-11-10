@@ -59,7 +59,7 @@ export default function AdminSidebar({ activeKey, onNavigate, counts = {}, onLog
   const location = useLocation()
   const adminUser = getAdminUser()
   const namaAdmin = adminUser?.fullName || adminUser?.name || 'Rani Admin'
-  const emailAdmin = adminUser?.email || 'admin@myrent.com'
+  const emailAdmin = adminUser?.email || 'admin@mesitra.id'
   const adminRole = adminUser?.adminRole || null
   const isSuperadmin = adminRole === 'SUPERADMIN'
   

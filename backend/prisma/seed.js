@@ -4,24 +4,25 @@ import bcrypt from 'bcrypt'
 const prisma = new PrismaClient()
 
 /**
- * Seeder MyRent.
+ * Seeder Mesitra.
  *
  * 1. Akun admin default (utama + template desain UI).
  * 2. Satu akun PEMILIK dummy yang dipakai pemilik data katalog alat.
- * 3. Lima unit alat berstatus TERSEDIA + satu unit DISEWA (kontrol status filter).
+ * 3. Unit alat berstatus TERSEDIA + unit kontrol status filter.
  *
  * Semua id ditulis eksplisit supaya seeder aman dijalankan berulang kali
- * (idempotent) — tidakMenduplikasi data katalog.
+ * (idempotent) — tidak menduplikasi data katalog.
  */
 
 const PEMILIK_ID = '11111111-1111-4111-8111-111111111111'
-const PEMILIK_EMAIL = 'pemilik@myrent.com'
+const PEMILIK_EMAIL = 'pemilik@mesitra.id'
 const PEMILIK_PASSWORD = 'Pemilik#Sewa2026'
 
 const OWNER_ALT_ID = '33333333-3333-4333-8333-333333333333'
+const OWNER_ALT_EMAIL = 'owner@mesitra.id'
 
 const PENYEWA_ID = '22222222-2222-4222-8222-222222222222'
-const PENYEWA_EMAIL = 'penyewa@myrent.com'
+const PENYEWA_EMAIL = 'penyewa@mesitra.id'
 const PENYEWA_PASSWORD = 'Penyewa#Sewa2026'
 
 const EQUIPMENTS = [
@@ -386,9 +387,18 @@ async function main() {
   const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin#Sewa2026'
   const hashedPassword = await bcrypt.hash(adminPassword, 10)
 
-  // 1. Akun Admin Default Utama
+  // 1. Akun Admin Default Utama (migrasi otomatis bila sebelumnya memakai email lama)
+  const legacyAdmin = await prisma.user.findUnique({ where: { email: 'admin@myrent.com' } })
+  const newAdmin = await prisma.user.findUnique({ where: { email: 'admin@mesitra.id' } })
+  if (legacyAdmin && !newAdmin) {
+    await prisma.user.update({
+      where: { id: legacyAdmin.id },
+      data: { email: 'admin@mesitra.id' }
+    })
+  }
+
   const defaultAdmin = await prisma.user.upsert({
-    where: { email: 'admin@myrent.com' },
+    where: { email: 'admin@mesitra.id' },
     update: {
       password: hashedPassword,
       role: 'ADMIN',
@@ -396,7 +406,7 @@ async function main() {
       phone: '081234567890'
     },
     create: {
-      email: 'admin@myrent.com',
+      email: 'admin@mesitra.id',
       password: hashedPassword,
       role: 'ADMIN',
       fullName: 'Super Administrator Mesitra',
@@ -422,11 +432,44 @@ async function main() {
     }
   })
 
+  // Sinkronkan juga tabel AdminUser agar login admin multi-role & Superadmin langsung aktif
+  const legacyAdminUser = await prisma.adminUser.findUnique({ where: { email: 'admin@myrent.com' } })
+  const newAdminUser = await prisma.adminUser.findUnique({ where: { email: 'admin@mesitra.id' } })
+  if (legacyAdminUser && !newAdminUser) {
+    await prisma.adminUser.update({
+      where: { id: legacyAdminUser.id },
+      data: { email: 'admin@mesitra.id' }
+    })
+  }
+
+  for (const adm of [
+    { email: 'admin@mesitra.id', name: 'Super Administrator Mesitra' },
+    { email: 'rani.admin@gmail.com', name: 'Rani Admin' }
+  ]) {
+    await prisma.adminUser.upsert({
+      where: { email: adm.email },
+      update: {
+        passwordHash: hashedPassword,
+        name: adm.name,
+        role: 'SUPERADMIN',
+        isActive: true
+      },
+      create: {
+        email: adm.email,
+        passwordHash: hashedPassword,
+        name: adm.name,
+        role: 'SUPERADMIN',
+        isActive: true
+      }
+    })
+  }
+
   // 3. Akun PEMILIK dummy — pemilik seluruh data katalog alat di bawah.
   const hashedPemilikPassword = await bcrypt.hash(PEMILIK_PASSWORD, 10)
   const pemilik = await prisma.user.upsert({
-    where: { email: PEMILIK_EMAIL },
+    where: { id: PEMILIK_ID },
     update: {
+      email: PEMILIK_EMAIL,
       password: hashedPemilikPassword,
       role: 'PEMILIK',
       fullName: 'Kopi Senja Roastery',
@@ -492,10 +535,11 @@ async function main() {
     }
   })
 
-  // 3b. Akun Pemilik dummy alternatif (owner@myrent.com)
+  // 3b. Akun Pemilik dummy alternatif (owner@mesitra.id)
   const ownerAlt = await prisma.user.upsert({
-    where: { email: 'owner@myrent.com' },
+    where: { id: OWNER_ALT_ID },
     update: {
+      email: OWNER_ALT_EMAIL,
       password: hashedPemilikPassword,
       role: 'PEMILIK',
       fullName: 'Mitra Owner Mesitra',
@@ -516,7 +560,7 @@ async function main() {
     },
     create: {
       id: OWNER_ALT_ID,
-      email: 'owner@myrent.com',
+      email: OWNER_ALT_EMAIL,
       password: hashedPemilikPassword,
       role: 'PEMILIK',
       fullName: 'Mitra Owner Mesitra',
@@ -540,8 +584,9 @@ async function main() {
   // 4. Akun PENYEWA dummy — dipakai untuk mencoba alur beranda sewa & detail alat.
   const hashedPenyewaPassword = await bcrypt.hash(PENYEWA_PASSWORD, 10)
   const penyewa = await prisma.user.upsert({
-    where: { email: PENYEWA_EMAIL },
+    where: { id: PENYEWA_ID },
     update: {
+      email: PENYEWA_EMAIL,
       password: hashedPenyewaPassword,
       role: 'PENYEWA',
       fullName: 'Budi Santoso',
@@ -595,10 +640,11 @@ async function main() {
 
   // 4b. Penyewa tambahan untuk ragam ulasan dan riwayat transaksi
   const PENYEWA_2_ID = '22222222-2222-4222-8222-222222222223'
-  const PENYEWA_2_EMAIL = 'andini@myrent.com'
+  const PENYEWA_2_EMAIL = 'andini@mesitra.id'
   const penyewa2 = await prisma.user.upsert({
-    where: { email: PENYEWA_2_EMAIL },
+    where: { id: PENYEWA_2_ID },
     update: {
+      email: PENYEWA_2_EMAIL,
       fullName: 'Siti Andini',
       phone: '081234567891',
       verificationStatus: 'DISETUJUI',
@@ -633,10 +679,11 @@ async function main() {
   })
 
   const PENYEWA_3_ID = '22222222-2222-4222-8222-222222222224'
-  const PENYEWA_3_EMAIL = 'pakhari@myrent.com'
+  const PENYEWA_3_EMAIL = 'pakhari@mesitra.id'
   const penyewa3 = await prisma.user.upsert({
-    where: { email: PENYEWA_3_EMAIL },
+    where: { id: PENYEWA_3_ID },
     update: {
+      email: PENYEWA_3_EMAIL,
       fullName: 'Hari Wibowo',
       phone: '081298765431',
       verificationStatus: 'DISETUJUI',
@@ -705,7 +752,7 @@ async function main() {
     })
   }
 
-  // 6. Reset seluruh pesanan milik akun default penyewa@myrent.com
+  // 6. Reset seluruh pesanan milik akun default penyewa@mesitra.id
   //    Hapus terlebih dahulu ulasan terkait agar aman dari constraint foreign key
   await prisma.review.deleteMany({
     where: {
@@ -720,7 +767,7 @@ async function main() {
   })
 
   // 7. Data Order awal:
-  //    - 4 data pesanan spesifik untuk penyewa@myrent.com mewakili 4 siklus status:
+  //    - 4 data pesanan spesifik untuk penyewa@mesitra.id mewakili 4 siklus status:
   //      1. MENUNGGU_KONFIRMASI (Baru checkout, menunggu ACC pemilik)
   //      2. SEWA_AKTIF (Pemilik sudah ACC, alat sedang digunakan + countdown timer)
   //      3. SELESAI (Masa sewa habis, BAST akhir tervalidasi)
@@ -728,7 +775,7 @@ async function main() {
   //    - Pesanan pendukung untuk penyewa 2 & 3 agar katalog dan toko pemilik hidup.
   const now = new Date()
   const ORDER_SEEDS = [
-    // ── 4 Pesanan Siklus Status Penyewa Default (penyewa@myrent.com) ───────────
+    // ── 4 Pesanan Siklus Status Penyewa Default (penyewa@mesitra.id) ───────────
     {
       id: 'b2000000-0000-4000-8000-000000000011',
       invoiceNumber: 'INV-2610-001',

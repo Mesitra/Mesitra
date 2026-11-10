@@ -1,4 +1,4 @@
-// Prisma schema untuk MyRent
+// Prisma schema untuk Mesitra
 // Dokumentasi: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -229,7 +229,7 @@ model Order {
   // Foto bukti kerusakan dari pemilik saat mengajukan klaim / menolak BAST
   ownerInspectionPhotos Json?
 
-  // Data putusan mediasi admin MyRent
+  // Data putusan mediasi admin Mesitra
   finalDamageFee      Int?
   adminResolutionNote String?   @db.Text
   resolvedAt          DateTime?

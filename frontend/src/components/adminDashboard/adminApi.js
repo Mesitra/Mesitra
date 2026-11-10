@@ -1,4 +1,5 @@
 import { getAdminToken } from '../adminAuth/adminSession'
+import { API_BASE_URL } from '../../lib/apiClient'
 
 /**
  * Client helper untuk endpoint verifikasi admin (`/api/admin`).
@@ -7,8 +8,7 @@ import { getAdminToken } from '../adminAuth/adminSession'
  * penyewa yang tersimpan di `token` tidak pernah terpakai di sini.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-export const ADMIN_API_BASE = `${API_BASE}/api/admin`
+export const ADMIN_API_BASE = `${API_BASE_URL}/api/admin`
 
 /**
  * Request generik ke backend admin.

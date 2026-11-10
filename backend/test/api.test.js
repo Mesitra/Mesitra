@@ -27,7 +27,7 @@ test('GET /api/health mengembalikan status ok', async () => {
   assert.equal(res.status, 200)
   const body = await res.json()
   assert.equal(body.status, 'ok')
-  assert.equal(body.service, 'myrent-api')
+  assert.equal(body.service, 'mesitra-api')
   assert.equal(typeof body.uptimeSeconds, 'number')
 })
 
@@ -231,6 +231,6 @@ test('GET / mengembalikan info API dan daftar endpoint', async () => {
   const res = await api('/')
   assert.equal(res.status, 200)
   const body = await res.json()
-  assert.equal(body.name, 'MyRent API')
+  assert.equal(body.name, 'Mesitra API')
   assert.ok(body.endpoints.includes('GET /api/rentals'))
 })

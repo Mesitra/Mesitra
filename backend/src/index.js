@@ -22,11 +22,8 @@ mainServer.on('error', (err) => {
   console.error('[Server] Main server error:', err)
 })
 
-/* ==============================================================================
- * [KONFIGURASI PRODUCTION RAILWAY - DIKOMENTARI UNTUK LOCAL DEVELOPMENT]
- * Aktifkan kembali (uncomment) blok di bawah ini saat siap rilis ke Railway production:
- * Mencegah 502 Port Mismatch di Railway Cloud Proxy.
- * ==============================================================================
+// Mencegah 502 Port Mismatch di Railway Cloud:
+// Memastikan port 3000 dan 8080 sama-sama aktif mendengarkan request dari Railway Proxy
 const fallbackPorts = [3000, 8080].filter(p => p !== port)
 for (const p of fallbackPorts) {
   try {
@@ -34,10 +31,10 @@ for (const p of fallbackPorts) {
       console.log(`Mesitra API juga mendengarkan di http://${host}:${p} (Railway Proxy Multi-Port)`)
     })
     fallbackServer.on('error', (err) => {
+      // Abaikan jika port sudah terpakai
       console.warn(`[Server] Port ${p} note:`, err?.message)
     })
   } catch (err) {
     console.warn(`[Server] Could not bind fallback port ${p}:`, err?.message)
   }
 }
-============================================================================== */

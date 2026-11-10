@@ -100,7 +100,7 @@ export default function KembalikanAlatWizard() {
         }
 
         // Cek draft dari localStorage atau dari database order.returnData
-        const storageKey = `myrent_return_draft_${orderData.id}`
+        const storageKey = `mesitra_return_draft_${orderData.id}`
         let savedDraft = null
         try {
           const raw = localStorage.getItem(storageKey)
@@ -135,7 +135,7 @@ export default function KembalikanAlatWizard() {
   useEffect(() => {
     if (!order) return
     try {
-      const storageKey = `myrent_return_draft_${order.id}`
+      const storageKey = `mesitra_return_draft_${order.id}`
       localStorage.setItem(storageKey, JSON.stringify(returnData))
     } catch {
       // ignore
@@ -223,7 +223,7 @@ export default function KembalikanAlatWizard() {
         }
         // Bersihkan draf localStorage setelah sukses kirim BAST
         try {
-          localStorage.removeItem(`myrent_return_draft_${order.id}`)
+          localStorage.removeItem(`mesitra_return_draft_${order.id}`)
         } catch {
           // ignore
         }
