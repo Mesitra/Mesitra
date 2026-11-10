@@ -46,7 +46,8 @@ export default function SidebarFilter({
   deliveryMethods = { selfPickup: false, courier: false },
   onDeliveryMethodChange,
   onReset,
-  className = ''
+  className = '',
+  variant = 'desktop'
 }) {
   const [internalDelivery, setInternalDelivery] = useState(deliveryMethods)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -261,56 +262,8 @@ export default function SidebarFilter({
   const rangeDays =
     dateRange.start && dateRange.end ? diffDays(dateRange.start, dateRange.end) + 1 : 0
 
-  return (
-    <aside
-      ref={sidebarRef}
-      className={`relative box-border w-full shrink-0 h-fit lg:sticky lg:top-[140px] lg:max-h-[calc(100vh-160px)] lg:overflow-y-auto lg:overflow-x-hidden scrollbar-thin flex flex-col gap-4 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}
-    >
-      {/* Head */}
-      <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm text-slate-900 font-bold text-left whitespace-nowrap m-0">
-            Filter
-          </h2>
-          <button
-            type="button"
-            onClick={() => setIsMobileOpen((prev) => !prev)}
-            aria-expanded={isMobileOpen}
-            aria-controls="mobile-filter-panel"
-            className={`lg:hidden flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md transition-colors ${
-              isMobileOpen
-                ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-                : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
-            }`}
-          >
-            <span>{isMobileOpen ? 'Tutup Filter' : 'Buka Filter'}</span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                isMobileOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-        </div>
-        <button
-          type="button"
-          onClick={handleReset}
-          className="text-xs text-blue-600 font-semibold text-left whitespace-nowrap bg-transparent border-0 cursor-pointer hover:underline p-0"
-        >
-          Reset
-        </button>
-      </div>
-
-      {/* Konten Filter — Mobile Overlay Dropdown / Desktop Normal Sidebar */}
-      <div
-        id="mobile-filter-panel"
-        className={`w-full flex-col gap-4 transition-all duration-300 ease-in-out origin-top ${
-          isMobileOpen
-            ? 'opacity-100 translate-y-0 pointer-events-auto visible'
-            : 'opacity-0 -translate-y-2 pointer-events-none invisible'
-        } absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white ring-1 ring-slate-200 rounded-[14px] shadow-xl p-4 max-h-[70vh] overflow-y-auto overflow-x-hidden overscroll-contain flex lg:static lg:top-auto lg:left-auto lg:right-auto lg:z-auto lg:bg-transparent lg:ring-0 lg:rounded-none lg:shadow-none lg:p-0 lg:max-h-none lg:overflow-visible lg:opacity-100 lg:translate-y-0 lg:pointer-events-auto lg:visible lg:transition-none`}
-      >
-        <div className="hidden lg:block box-border w-full h-px shrink-0 bg-slate-200"></div>
-
+  const renderFilterSections = () => (
+    <>
       {/* Rentang Tanggal Popover Kalender Mini */}
       <div className="box-border w-full h-fit shrink-0 flex flex-col gap-2.5 justify-start items-start">
         <div className="text-xs text-slate-600 font-semibold text-left whitespace-nowrap">
@@ -805,23 +758,99 @@ export default function SidebarFilter({
         </div>
       </div>
 
-      {/* Footer aksi mobile untuk menutup filter */}
-      <div className="lg:hidden pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+    </>
+  )
+
+  if (variant === 'mobile') {
+    return (
+      <div ref={sidebarRef} className={`static ${className}`}>
+        {/* Head Kontrol Mobile: Filter / Buka Filter / Reset */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-xs font-bold text-slate-900">Filter</span>
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen((prev) => !prev)}
+            aria-expanded={isMobileOpen}
+            aria-controls="mobile-filter-panel"
+            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer border-0 select-none ${
+              isMobileOpen
+                ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
+            }`}
+          >
+            <span>{isMobileOpen ? 'Tutup Filter' : 'Buka Filter'}</span>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                isMobileOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="text-xs text-blue-600 font-semibold cursor-pointer hover:underline bg-transparent border-0 p-0 ml-1"
+          >
+            Reset
+          </button>
+        </div>
+
+        {/* Konten Filter — Mobile Overlay Dropdown */}
+        <div
+          id="mobile-filter-panel"
+          className={`w-full flex-col gap-4 transition-all duration-300 ease-in-out origin-top ${
+            isMobileOpen
+              ? 'opacity-100 translate-y-0 pointer-events-auto visible'
+              : 'opacity-0 -translate-y-2 pointer-events-none invisible'
+          } absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white ring-1 ring-slate-200 rounded-[14px] shadow-xl p-4 max-h-[70vh] overflow-y-auto overflow-x-hidden overscroll-contain flex`}
+        >
+          {renderFilterSections()}
+
+          {/* Footer aksi mobile untuk menutup filter */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-xs text-slate-500 hover:text-slate-800 font-medium py-2 px-3 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer border-0 bg-transparent"
+            >
+              Reset Filter
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen(false)}
+              className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer text-center shadow-xs border-0"
+            >
+              Tutup & Terapkan
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <aside
+      ref={sidebarRef}
+      className={`relative box-border w-full shrink-0 h-fit lg:sticky lg:top-[140px] lg:max-h-[calc(100vh-160px)] lg:overflow-y-auto lg:overflow-x-hidden scrollbar-thin flex flex-col gap-4 p-4 justify-start items-start bg-white ring-1 ring-slate-200 rounded-[14px] ${className}`}
+    >
+      {/* Desktop Head: Filter & Reset */}
+      <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
+        <h2 className="text-sm text-slate-900 font-bold text-left whitespace-nowrap m-0">
+          Filter
+        </h2>
         <button
           type="button"
           onClick={handleReset}
-          className="text-xs text-slate-500 hover:text-slate-800 font-medium py-2 px-3 rounded-lg hover:bg-slate-100 transition-colors"
+          className="text-xs text-blue-600 font-semibold text-left whitespace-nowrap bg-transparent border-0 cursor-pointer hover:underline p-0"
         >
-          Reset Filter
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsMobileOpen(false)}
-          className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer text-center shadow-xs"
-        >
-          Tutup & Terapkan
+          Reset
         </button>
       </div>
+
+      <div className="box-border w-full h-px shrink-0 bg-slate-200"></div>
+
+      {/* Konten Filter Statis Sidebar Desktop */}
+      <div className="w-full flex flex-col gap-4">
+        {renderFilterSections()}
       </div>
     </aside>
   )

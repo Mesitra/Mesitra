@@ -7,6 +7,7 @@ import ProductCard from './ProductCard'
 import { listEquipments } from '../../lib/equipmentsApi'
 import { getSessionUser, getUserPowerLimit } from '../../lib/userSession'
 import { formatShortDate, isEquipmentAvailableInRange } from '../../lib/dateHelpers'
+import { useSEO } from '../../lib/useSEO'
 
 const ALL_CATEGORY = 'Semua Alat'
 const NEAREST_CATEGORY = 'Terdekat'
@@ -200,6 +201,13 @@ export default function BerandaSewa({
 
   // ── Filter sidebar ──────────────────────────────────────────────────────
   const [filters, setFilters] = useState(createInitialFilters)
+
+  // SEO dinamis untuk halaman Katalog Sewa Alat UMKM
+  useSEO({
+    title: 'Katalog Sewa Alat & Mesin Usaha UMKM - Mesitra',
+    description: 'Jelajahi katalog lengkap sewa mesin usaha dan alat produksi UMKM: mesin kopi espresso, continuous band sealer, mesin jahit konveksi, hingga deck oven bakery dengan deposit aman.',
+    keywords: 'katalog sewa alat, sewa mesin usaha umkm, sewa mesin espresso, sewa continuous sealer, sewa mesin jahit, mesitra'
+  })
 
   useEffect(() => {
     try {
@@ -590,9 +598,9 @@ export default function BerandaSewa({
       {/* 2. Main Content */}
       <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 pt-0 pb-10 flex flex-col justify-start items-start">
         {/* Header Halaman (Judul, Jumlah Alat, & Filter/Urutkan) */}
-        <div className="box-border w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 sticky top-[68px] z-30 bg-slate-50 py-2 sm:py-2.5 lg:h-[64px] lg:py-0">
-          {/* Sisi Kiri: Teks Judul & Jumlah Alat (Rata Kiri, Sejajar Tepi Kiri Sidebar) */}
-          <div className="box-border flex flex-col gap-0.5 justify-center items-start text-left">
+        <div className="box-border w-full relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 sticky top-[68px] z-30 bg-white/95 backdrop-blur-sm pb-2 pt-2 border-b border-slate-100 lg:bg-slate-50 lg:backdrop-blur-none lg:border-none lg:h-[64px] lg:py-0">
+          {/* Sisi Kiri: Teks Judul & Jumlah Alat (Rata Kiri, Sejajar Tepi Kiri Sidebar - HANYA Desktop) */}
+          <div className="hidden lg:flex box-border flex-col gap-0.5 justify-center items-start text-left">
             <h1 className="text-lg sm:text-xl lg:text-2xl text-slate-900 font-bold text-left tracking-tight m-0 leading-tight">
               Alat tersedia untuk <span className="tabular-nums">{dateRangeLabel}</span>
             </h1>
@@ -611,122 +619,151 @@ export default function BerandaSewa({
             </div>
           </div>
 
-          {/* Sisi Kanan: Kontainer Dropdown Filter Kategori & Urutkan */}
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
-            {/* Dropdown Kategori */}
-            <div ref={categoryRef} className="relative box-border w-fit shrink-0 h-fit">
-              <button
-                type="button"
-                onClick={() => setCategoryOpen((open) => !open)}
-                aria-haspopup="listbox"
-                aria-expanded={categoryOpen}
-                className="box-border w-fit shrink-0 h-fit flex flex-row gap-2 py-2 px-3 justify-start items-center bg-white ring-1 ring-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors shadow-2xs"
-              >
-                <span className="text-xs text-slate-900 font-semibold whitespace-nowrap">
-                  Kategori: {selectedCategory}
-                </span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
-                    categoryOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {categoryOpen && (
-                <ul
-                  role="listbox"
-                  aria-label="Filter kategori"
-                  className="absolute left-0 top-[calc(100%+6px)] z-50 min-w-[220px] max-h-[320px] overflow-y-auto box-border flex flex-col gap-0.5 p-1.5 bg-white ring-1 ring-slate-200 rounded-[10px] shadow-lg shadow-slate-900/10"
-                >
-                  {categories.map((cat) => {
-                    const isSelected = selectedCategory === cat
-
-                    return (
-                      <li key={cat}>
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => {
-                            setSelectedCategory(cat)
-                            setCategoryOpen(false)
-                          }}
-                          className={`box-border w-full flex flex-row gap-2 py-2 px-2.5 justify-between items-center rounded-lg cursor-pointer border-0 transition-colors ${
-                            isSelected
-                              ? 'bg-blue-50 text-blue-700 font-bold'
-                              : 'bg-white text-slate-600 hover:bg-slate-50 font-medium'
-                          }`}
-                        >
-                          <span className="text-xs whitespace-nowrap">{cat}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
+          {/* Area Kontrol Mobile & Desktop (Filter Mobile, Kategori, & Urutkan) */}
+          <div className="w-full lg:w-auto flex items-center justify-between lg:justify-end gap-2 shrink-0 flex-wrap">
+            {/* Kontrol Filter Mobile: "Filter / Buka Filter / Reset" + Overlay Dropdown */}
+            <div className="lg:hidden">
+              <SidebarFilter
+                variant="mobile"
+                filters={filters}
+                onFiltersChange={setFilters}
+                powerMatch={powerMatch}
+                onPowerMatchChange={handlePowerMatchChange}
+                powerLimit={powerLimit}
+                maxPrice={maxPrice}
+                minPrice={0}
+                maxPriceLimit={DEFAULT_MAX_PRICE}
+                priceStep={100000}
+                onMaxPriceChange={handleMaxPriceChange}
+                deliveryMethods={deliveryMethods}
+                onDeliveryMethodChange={handleDeliveryMethodChange}
+                onReset={resetFilters}
+              />
             </div>
 
-            {/* Dropdown Urutkan */}
-            <div ref={sortRef} className="relative box-border w-fit shrink-0 h-fit">
-              <button
-                type="button"
-                onClick={() => setSortOpen((open) => !open)}
-                aria-haspopup="listbox"
-                aria-expanded={sortOpen}
-                className="box-border w-fit shrink-0 h-fit flex flex-row gap-2 py-2 px-3 justify-start items-center bg-white ring-1 ring-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors shadow-2xs"
-              >
-                <span className="text-xs text-slate-900 font-semibold whitespace-nowrap">
-                  Urutkan: {activeSortLabel}
-                </span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
-                    sortOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {sortOpen && (
-                <ul
-                  role="listbox"
-                  aria-label="Urutkan alat"
-                  className="absolute right-0 top-[calc(100%+6px)] z-50 w-[168px] box-border flex flex-col gap-0.5 p-1.5 bg-white ring-1 ring-slate-200 rounded-[10px] shadow-lg shadow-slate-900/10"
+            {/* Kontainer Dropdown Filter Kategori & Urutkan */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Dropdown Kategori */}
+              <div ref={categoryRef} className="relative box-border w-fit shrink-0 h-fit">
+                <button
+                  type="button"
+                  onClick={() => setCategoryOpen((open) => !open)}
+                  aria-haspopup="listbox"
+                  aria-expanded={categoryOpen}
+                  className="box-border w-fit shrink-0 h-fit flex flex-row gap-2 py-2 px-3 justify-start items-center bg-white ring-1 ring-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors shadow-2xs"
                 >
-                  {SORT_OPTIONS.map((option) => {
-                    const isSelected = sortBy === option.value
+                  <span
+                    title={`Kategori: ${selectedCategory}`}
+                    className="text-xs text-slate-900 font-semibold truncate max-w-[110px] sm:max-w-none"
+                  >
+                    Kategori: {selectedCategory}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                      categoryOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
 
-                    return (
-                      <li key={option.value}>
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => {
-                            setSortBy(option.value)
-                            setSortOpen(false)
-                          }}
-                          className={`box-border w-full flex flex-row gap-2 py-2 px-2.5 justify-between items-center rounded-lg cursor-pointer border-0 transition-colors ${
-                            isSelected
-                              ? 'bg-blue-50 text-blue-700 font-bold'
-                              : 'bg-white text-slate-600 hover:bg-slate-50 font-medium'
-                          }`}
-                        >
-                          <span className="text-xs whitespace-nowrap">{option.label}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
+                {categoryOpen && (
+                  <ul
+                    role="listbox"
+                    aria-label="Filter kategori"
+                    className="absolute left-0 top-[calc(100%+6px)] z-50 min-w-[220px] max-h-[320px] overflow-y-auto box-border flex flex-col gap-0.5 p-1.5 bg-white ring-1 ring-slate-200 rounded-[10px] shadow-lg shadow-slate-900/10"
+                  >
+                    {categories.map((cat) => {
+                      const isSelected = selectedCategory === cat
+
+                      return (
+                        <li key={cat}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => {
+                              setSelectedCategory(cat)
+                              setCategoryOpen(false)
+                            }}
+                            className={`box-border w-full flex flex-row gap-2 py-2 px-2.5 justify-between items-center rounded-lg cursor-pointer border-0 transition-colors ${
+                              isSelected
+                                ? 'bg-blue-50 text-blue-700 font-bold'
+                                : 'bg-white text-slate-600 hover:bg-slate-50 font-medium'
+                            }`}
+                          >
+                            <span className="text-xs whitespace-nowrap">{cat}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              {/* Dropdown Urutkan */}
+              <div ref={sortRef} className="relative box-border w-fit shrink-0 h-fit">
+                <button
+                  type="button"
+                  onClick={() => setSortOpen((open) => !open)}
+                  aria-haspopup="listbox"
+                  aria-expanded={sortOpen}
+                  className="box-border w-fit shrink-0 h-fit flex flex-row gap-2 py-2 px-3 justify-start items-center bg-white ring-1 ring-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors shadow-2xs"
+                >
+                  <span
+                    title={`Urutkan: ${activeSortLabel}`}
+                    className="text-xs text-slate-900 font-semibold truncate max-w-[110px] sm:max-w-none"
+                  >
+                    Urutkan: {activeSortLabel}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                      sortOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {sortOpen && (
+                  <ul
+                    role="listbox"
+                    aria-label="Urutkan alat"
+                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-[168px] box-border flex flex-col gap-0.5 p-1.5 bg-white ring-1 ring-slate-200 rounded-[10px] shadow-lg shadow-slate-900/10"
+                  >
+                    {SORT_OPTIONS.map((option) => {
+                      const isSelected = sortBy === option.value
+
+                      return (
+                        <li key={option.value}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => {
+                              setSortBy(option.value)
+                              setSortOpen(false)
+                            }}
+                            className={`box-border w-full flex flex-row gap-2 py-2 px-2.5 justify-between items-center rounded-lg cursor-pointer border-0 transition-colors ${
+                              isSelected
+                                ? 'bg-blue-50 text-blue-700 font-bold'
+                                : 'bg-white text-slate-600 hover:bg-slate-50 font-medium'
+                            }`}
+                          >
+                            <span className="text-xs whitespace-nowrap">{option.label}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Wrapper Utama: Penjajaran Sidebar dan Grid Produk */}
         <div className="box-border w-full flex flex-col lg:flex-row gap-8 justify-start items-start">
-          {/* Sisi Kiri: Filter Sidebar (Sticky di Desktop agar tetap terlihat saat katalog digulir) */}
-          <div className="relative w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-[140px] lg:max-h-[calc(100vh-160px)] z-20 lg:z-10 self-start">
+          {/* Sisi Kiri: Filter Sidebar (HANYA terlihat di Desktop agar tidak duplikat di mobile) */}
+          <div className="hidden lg:block relative w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-[140px] lg:max-h-[calc(100vh-160px)] z-20 lg:z-10 self-start">
             <SidebarFilter
               filters={filters}
               onFiltersChange={setFilters}
