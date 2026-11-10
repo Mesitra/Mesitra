@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertTriangle, RefreshCw, Home, ChevronDown, ChevronUp } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 
 /**
  * Global ErrorBoundary Component
@@ -14,8 +14,7 @@ export default class ErrorBoundary extends React.Component {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null,
-      showDetails: false
+      errorInfo: null
     }
   }
 
@@ -41,14 +40,8 @@ export default class ErrorBoundary extends React.Component {
     window.location.href = '/'
   }
 
-  toggleDetails = () => {
-    this.setState((prev) => ({ showDetails: !prev.showDetails }))
-  }
-
   render() {
     if (this.state.hasError) {
-      const { error, errorInfo, showDetails } = this.state
-
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-800">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 flex flex-col items-center text-center gap-5 animate-in zoom-in-95 duration-200">
@@ -87,35 +80,6 @@ export default class ErrorBoundary extends React.Component {
                 <Home className="w-4 h-4" />
                 <span>Ke Beranda</span>
               </button>
-            </div>
-
-            {/* Collapsible Developer Details */}
-            <div className="w-full border-t border-slate-100 pt-3 text-left">
-              <button
-                type="button"
-                onClick={this.toggleDetails}
-                className="flex items-center justify-between w-full text-[11px] font-semibold text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
-                <span>Rincian Diagnostik Teknis</span>
-                {showDetails ? (
-                  <ChevronUp className="w-3.5 h-3.5" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5" />
-                )}
-              </button>
-
-              {showDetails && (
-                <div className="mt-2 p-3 bg-slate-900 text-slate-100 rounded-xl text-[10.5px] font-mono overflow-x-auto max-h-48 leading-relaxed">
-                  <div className="text-red-400 font-bold mb-1">
-                    {error?.toString() || 'Unknown Error'}
-                  </div>
-                  {errorInfo?.componentStack && (
-                    <pre className="text-slate-400 whitespace-pre-wrap text-[10px]">
-                      {errorInfo.componentStack}
-                    </pre>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>

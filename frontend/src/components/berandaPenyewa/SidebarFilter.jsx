@@ -50,7 +50,10 @@ export default function SidebarFilter({
 }) {
   const [internalDelivery, setInternalDelivery] = useState(deliveryMethods)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  // Popover kalender mini: 'start' (Tanggal Sewa) | 'end' (Tanggal Akhir Sewa) | null
+  const [activePicker, setActivePicker] = useState(null)
   const sidebarRef = useRef(null)
+  const calendarRef = useRef(null)
 
   // Tutup dropdown mobile saat klik di luar atau tekan Escape
   useEffect(() => {
@@ -107,10 +110,6 @@ export default function SidebarFilter({
       }))
     }
   }
-
-  // Popover kalender mini: 'start' (Tanggal Sewa) | 'end' (Tanggal Akhir Sewa) | null
-  const [activePicker, setActivePicker] = useState(null)
-  const calendarRef = useRef(null)
 
   // Inisialisasi tampilan bulan & tahun kalender
   const getInitialView = () => {
