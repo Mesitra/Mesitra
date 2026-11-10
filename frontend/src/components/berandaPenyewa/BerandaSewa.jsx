@@ -598,7 +598,7 @@ export default function BerandaSewa({
       {/* 2. Main Content */}
       <main className="box-border w-full max-w-[1920px] mx-auto px-6 md:px-10 lg:px-12 pt-0 pb-10 flex flex-col justify-start items-start">
         {/* Header Halaman (Judul, Jumlah Alat, & Filter/Urutkan) */}
-        <div className="box-border w-full relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 sticky top-[68px] z-30 bg-white/95 backdrop-blur-sm pb-2 pt-2 border-b border-slate-100 lg:bg-slate-50 lg:backdrop-blur-none lg:border-none lg:h-[64px] lg:py-0">
+        <div className="box-border w-[calc(100%+3rem)] md:w-[calc(100%+5rem)] lg:w-full -mx-6 md:-mx-10 lg:mx-0 px-6 md:px-10 lg:px-0 relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 sticky top-[68px] z-30 bg-white/95 backdrop-blur-sm pt-2.5 pb-3.5 border-b border-slate-100 lg:bg-slate-50 lg:backdrop-blur-none lg:border-none lg:h-[64px] lg:py-0">
           {/* Sisi Kiri: Teks Judul & Jumlah Alat (Rata Kiri, Sejajar Tepi Kiri Sidebar - HANYA Desktop) */}
           <div className="hidden lg:flex box-border flex-col gap-0.5 justify-center items-start text-left">
             <h1 className="text-lg sm:text-xl lg:text-2xl text-slate-900 font-bold text-left tracking-tight m-0 leading-tight">
@@ -620,7 +620,7 @@ export default function BerandaSewa({
           </div>
 
           {/* Area Kontrol Mobile & Desktop (Filter Mobile, Kategori, & Urutkan) */}
-          <div className="w-full lg:w-auto flex items-center justify-between lg:justify-end gap-2 shrink-0 flex-wrap">
+          <div className="w-full lg:w-auto flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end gap-y-3 sm:gap-y-0 gap-x-2.5 shrink-0">
             {/* Kontrol Filter Mobile: "Filter / Buka Filter / Reset" + Overlay Dropdown */}
             <div className="lg:hidden">
               <SidebarFilter

@@ -797,11 +797,11 @@ export default function SidebarFilter({
         {/* Konten Filter — Mobile Overlay Dropdown */}
         <div
           id="mobile-filter-panel"
-          className={`w-full flex-col gap-4 transition-all duration-300 ease-in-out origin-top ${
+          className={`w-auto flex-col gap-4 transition-all duration-300 ease-in-out origin-top ${
             isMobileOpen
               ? 'opacity-100 translate-y-0 pointer-events-auto visible'
               : 'opacity-0 -translate-y-2 pointer-events-none invisible'
-          } absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white ring-1 ring-slate-200 rounded-[14px] shadow-xl p-4 max-h-[70vh] overflow-y-auto overflow-x-hidden overscroll-contain flex`}
+          } absolute top-[calc(100%+8px)] left-4 right-4 sm:left-6 sm:right-6 md:left-10 md:right-10 z-50 bg-white ring-1 ring-slate-200 rounded-[14px] shadow-xl p-4 max-h-[70vh] overflow-y-auto overflow-x-hidden overscroll-contain flex`}
         >
           {renderFilterSections()}
 
