@@ -40,7 +40,7 @@ Akun berikut dibuat otomatis oleh seeder (`cd backend && npm run seed`) agar pen
 
 | Role | Halaman Login | Email | Password | Dashboard Tujuan |
 | :--- | :--- | :--- | :--- | :--- |
-| **Admin / Superadmin** | `/admin/login` | `admin@mesitra.id`<br>`rani.admin@gmail.com` | `Admin#Sewa2026` | `/admin` |
+| **Admin / Superadmin** | `/portal-internal-hq` | `admin@mesitra.id`<br>`rani.admin@gmail.com` | `Admin#Sewa2026` | `/admin` |
 | **Pemilik Alat** | `/login` (tab **Pemilik Alat**) | `pemilik@mesitra.id`<br>`owner@mesitra.id` | `Pemilik#Sewa2026` | `/dashboard-pemilik` |
 | **Penyewa UMKM** | `/login` (tab **Penyewa UMKM**) | `penyewa@mesitra.id`<br>`andini@mesitra.id`<br>`pakhari@mesitra.id` | `Penyewa#Sewa2026` | `/beranda-sewa` |
 
